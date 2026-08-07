@@ -1,0 +1,148 @@
+@page "/"
+@using AgentHQDemo.Web.Services
+@using AgentHQDemo.Web.Components
+@using System.Text
+@inject ChatService ChatService
+@inject StorageService Storage
+@inject IJSRuntime JS
+
+<PageTitle>Retail Analytics Assistant</PageTitle>
+
+<div class="chat-app @(IsDarkTheme ? "dark" : "light")">
+    <Header SelectedModel="@SelectedModel" 
+            SelectedModelChanged="OnModelChanged"
+            IsDarkTheme="@IsDarkTheme"
+            OnThemeToggle="ToggleTheme"
+            OnClear="ClearChat" />
+
+    <main class="chat-main">
+        <div class="messages-container" @ref="MessagesContainer">
+            @if (Messages.Count == 0)
+            {
+                <div class="welcome">
+                    <h2>Retail Analytics Assistant</h2>
+                    <p>Ask about customer spending patterns, segment performance, and retail insights.</p>
+                    <SuggestionChips OnSuggestionSelected="HandleSuggestion" />
+                </div>
+            }
+            else
+            {
+                @foreach (var msg in Messages)
+                {
+                    <Message Content="@msg.Content" IsUser="@msg.IsUser" />
+                }
+            }
+        </div>
+
+        <ChatInput @ref="ChatInputRef" OnSend="SendMessage" IsLoading="@IsStreaming" />
+    </main>
+</div>
+
+@code {
+    private List<ChatMessage> Messages { get; set; } = [];
+    private string SelectedModel { get; set; } = "claude-haiku-4.5";
+    private bool IsDarkTheme { get; set; } = true;
+    private bool IsStreaming { get; set; }
+    private ElementReference MessagesContainer;
+    private ChatInput? ChatInputRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Messages = await Storage.LoadMessagesAsync();
+        SelectedModel = await Storage.GetSelectedModelAsync();
+        IsDarkTheme = await Storage.GetThemeAsync() == "dark";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("setTheme", IsDarkTheme);
+        }
+        await ScrollToBottom();
+        await JS.InvokeVoidAsync("highlightCode");
+    }
+
+    private async Task SendMessage(string prompt)
+    {
+        // Add user message
+        var userMsg = new ChatMessage(prompt, true, DateTime.Now);
+        Messages.Add(userMsg);
+        await Storage.SaveMessagesAsync(Messages);
+        StateHasChanged();
+        await ScrollToBottom();
+
+        // Add placeholder for assistant
+        var assistantMsg = new ChatMessage("", false, DateTime.Now);
+        Messages.Add(assistantMsg);
+        StateHasChanged();
+
+        IsStreaming = true;
+        var contentBuilder = new StringBuilder();
+        var needsRender = false;
+
+        // Batch UI updates at ~20fps instead of per-token
+        using var renderTimer = new Timer(_ =>
+        {
+            if (!needsRender) return;
+            needsRender = false;
+            InvokeAsync(() =>
+            {
+                Messages[^1] = assistantMsg with { Content = contentBuilder.ToString() };
+                StateHasChanged();
+                _ = ScrollToBottom();
+            });
+        }, null, 0, 50);
+
+        try
+        {
+            await foreach (var chunk in ChatService.StreamChatAsync(prompt, SelectedModel))
+            {
+                contentBuilder.Append(chunk);
+                needsRender = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            contentBuilder.Clear();
+            contentBuilder.Append($"❌ Error: {ex.Message}");
+        }
+        finally
+        {
+            IsStreaming = false;
+            Messages[^1] = assistantMsg with { Content = contentBuilder.ToString() };
+            await Storage.SaveMessagesAsync(Messages);
+            StateHasChanged();
+            await ScrollToBottom();
+        }
+    }
+
+    private async Task HandleSuggestion(string suggestion)
+    {
+        await SendMessage(suggestion);
+    }
+
+    private async Task OnModelChanged(string model)
+    {
+        SelectedModel = model;
+        await Storage.SetSelectedModelAsync(model);
+    }
+
+    private async Task ToggleTheme()
+    {
+        IsDarkTheme = !IsDarkTheme;
+        await Storage.SetThemeAsync(IsDarkTheme ? "dark" : "light");
+        await JS.InvokeVoidAsync("setTheme", IsDarkTheme);
+    }
+
+    private async Task ClearChat()
+    {
+        Messages.Clear();
+        await Storage.ClearMessagesAsync();
+    }
+
+    private async Task ScrollToBottom()
+    {
+        await JS.InvokeVoidAsync("scrollToBottom", MessagesContainer);
+    }
+}

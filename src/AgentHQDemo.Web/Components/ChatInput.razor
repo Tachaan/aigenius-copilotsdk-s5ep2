@@ -1,0 +1,66 @@
+@inject IJSRuntime JS
+
+<div class="chat-input-container">
+    <textarea @ref="InputRef"
+              @bind="InputText"
+              @bind:event="oninput"
+              @onkeydown="HandleKeyDown"
+              @onkeydown:preventDefault="@_shouldPreventDefault"
+              placeholder="Ask about customers, segments, or retail trends..."
+              disabled="@IsLoading"
+              rows="1"></textarea>
+    <button class="send-btn" 
+            @onclick="HandleSend" 
+            disabled="@(IsLoading || string.IsNullOrWhiteSpace(InputText))">
+        @if (IsLoading)
+        {
+            <span class="spinner"></span>
+        }
+        else
+        {
+            <span>➤</span>
+        }
+    </button>
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> OnSend { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+
+    private ElementReference InputRef;
+    private string InputText { get; set; } = "";
+    private bool _shouldPreventDefault;
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        _shouldPreventDefault = e.Key == "Enter" && !e.ShiftKey;
+        
+        if (_shouldPreventDefault && !string.IsNullOrWhiteSpace(InputText) && !IsLoading)
+        {
+            await HandleSend();
+        }
+    }
+
+    private async Task HandleSend()
+    {
+        if (string.IsNullOrWhiteSpace(InputText) || IsLoading) return;
+        
+        var message = InputText.Trim();
+        InputText = "";
+        await OnSend.InvokeAsync(message);
+    }
+
+    public void SetInput(string text)
+    {
+        InputText = text;
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("focusElement", InputRef);
+        }
+    }
+}

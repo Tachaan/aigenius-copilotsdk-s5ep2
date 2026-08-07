@@ -1,0 +1,119 @@
+name: Setup Demo Repository
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+      security-events: write
+      actions: write
+    steps:
+      - name: Check if setup already done
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          count=$(gh issue list --repo ${{ github.repository }} --state all --limit 1 --json number --jq 'length')
+          echo "issue_count=$count" >> $GITHUB_OUTPUT
+
+      - name: Enable security features
+        if: steps.check.outputs.issue_count == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Enable vulnerability alerts (Dependabot)
+          gh api -X PUT "repos/${{ github.repository }}/vulnerability-alerts" --silent 2>/dev/null || true
+
+          # Enable automated security fixes (Dependabot PRs)
+          gh api -X PUT "repos/${{ github.repository }}/automated-security-fixes" --silent 2>/dev/null || true
+
+          # Enable secret scanning + push protection
+          gh api -X PATCH "repos/${{ github.repository }}" \
+            -f security_and_analysis[secret_scanning][status]=enabled \
+            -f security_and_analysis[secret_scanning_push_protection][status]=enabled \
+            --silent 2>/dev/null || true
+
+          # Disable CodeQL default setup so our advanced codeql.yml workflow works
+          gh api -X PATCH "repos/${{ github.repository }}/code-scanning/default-setup" \
+            -f state=not-configured \
+            --silent 2>/dev/null || true
+
+          echo "✅ Security features enabled (CodeQL set to advanced)"
+
+      - name: Create labels
+        if: steps.check.outputs.issue_count == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create "bug" --description "Something isn't working" --color "d73a4a" --repo ${{ github.repository }} 2>/dev/null || true
+          gh label create "enhancement" --description "New feature or request" --color "a2eeef" --repo ${{ github.repository }} 2>/dev/null || true
+          echo "✅ Labels created"
+
+      - name: Create demo issues
+        if: steps.check.outputs.issue_count == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create --repo ${{ github.repository }} \
+            --title "Fix hardcoded prediction threshold — make it configurable" \
+            --label "bug" \
+            --body '## Description
+          `PredictSegmentAsync` in `RetailAnalyticsService.cs` uses a hardcoded magic number (`1000`) to determine customer segments. This threshold should be configurable.
+
+          ## Current Behaviour
+          ```csharp
+          if (totalSpend > 1000)  // Magic number — why 1000?
+              return new SegmentPrediction { PredictedSegment = "High Value", ... };
+          ```
+
+          ## Expected Behaviour
+          - Threshold should be read from `appsettings.json` or injected via DI
+          - Default value of `1000` preserved for backward compatibility
+          - Easy to adjust per environment (dev vs prod)
+
+          ## Acceptance Criteria
+          - [ ] Extract threshold to configuration (`HighValueSpendThreshold`)
+          - [ ] Update `PredictSegmentAsync` to use config value
+          - [ ] Add unit tests with different threshold values (500, 1000, 2000)
+          - [ ] Document the setting in README
+
+          ## Technical Notes
+          - See `src/AgentHQDemo.Api/Services/RetailAnalyticsService.cs` line ~101
+          - This is one of 4 intentional code quality issues in the codebase
+          - Related bugs: N+1 query, missing null check, no service-layer validation'
+
+          gh issue create --repo ${{ github.repository }} \
+            --title "Add input validation to transaction endpoints" \
+            --label "bug" \
+            --body '## Description
+          `AddTransactionAsync` in `RetailAnalyticsService.cs` has no service-layer validation. Negative amounts, empty customer IDs, and blank categories are silently accepted.
+
+          ## Current Behaviour
+          The controller has model validation via data annotations, but the service layer has none. Any caller that bypasses the controller (background jobs, tests, other services) can insert invalid data.
+
+          ## Acceptance Criteria
+          - [ ] Add validation in `AddTransactionAsync` (positive amount, non-empty fields)
+          - [ ] Throw `ArgumentException` for invalid input
+          - [ ] Add unit tests for edge cases
+          - [ ] Ensure controller validation is not the only safeguard'
+
+          gh issue create --repo ${{ github.repository }} \
+            --title "Fix N+1 query in GetTransactionsWithSegmentsAsync" \
+            --label "bug" \
+            --body '## Description
+          `GetTransactionsWithSegmentsAsync` loops through every transaction and calls `PredictSegmentAsync` individually — classic N+1 query pattern.
+
+          ## Impact
+          With 10 seed records this is fine, but with production-scale data (millions of transactions) this will be extremely slow.
+
+          ## Acceptance Criteria
+          - [ ] Batch the segment prediction or use a join
+          - [ ] Add performance benchmark test
+          - [ ] Maintain same API response shape'
+
+          echo "✅ Demo issues created"

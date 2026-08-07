@@ -1,0 +1,28 @@
+@using AgentHQDemo.Web.Services
+
+<div class="suggestions">
+    @foreach (var suggestion in Suggestions)
+    {
+        <button class="suggestion-chip" @onclick="() => OnSelect(suggestion)">
+            💡 @suggestion
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> OnSuggestionSelected { get; set; }
+
+    private static readonly string[] Suggestions =
+    [
+        "Who are our highest spending customers?",
+        "Which customer segments are at risk?",
+        "What are the top product categories by revenue?",
+        "Predict which segment customer C002 belongs to",
+        "How can we improve retention for at-risk customers?"
+    ];
+
+    private async Task OnSelect(string suggestion)
+    {
+        await OnSuggestionSelected.InvokeAsync(suggestion);
+    }
+}

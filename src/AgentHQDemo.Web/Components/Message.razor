@@ -1,0 +1,38 @@
+@using Markdig
+
+<div class="message @(IsUser ? "user" : "assistant")">
+    <div class="avatar">@(IsUser ? "👤" : "🤖")</div>
+    <div class="message-content">
+        @if (string.IsNullOrEmpty(Content))
+        {
+            <div class="typing-indicator">
+                <span></span><span></span><span></span>
+            </div>
+        }
+        else
+        {
+            @((MarkupString)RenderMarkdown(Content))
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Content { get; set; } = "";
+    [Parameter] public bool IsUser { get; set; }
+
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
+        .UseAdvancedExtensions()
+        .Build();
+
+    private static string RenderMarkdown(string markdown)
+    {
+        if (string.IsNullOrEmpty(markdown)) return "";
+        
+        var html = Markdown.ToHtml(markdown, Pipeline);
+        
+        // Add copy button to code blocks (handled by JS interop)
+        html = html.Replace("<pre><code", "<pre class=\"code-block\"><code");
+        
+        return html;
+    }
+}

@@ -1,0 +1,46 @@
+@using AgentHQDemo.Web.Services
+
+<header class="header">
+    <div class="header-left">
+        <h1>📊 Retail Analytics Assistant</h1>
+        <span class="badge">Copilot SDK Demo</span>
+    </div>
+    <div class="header-right">
+        <label for="model-select">Model:</label>
+        <select id="model-select" @bind="SelectedModel" @bind:after="OnModelChanged">
+            @foreach (var model in ChatService.AvailableModels)
+            {
+                <option value="@model.Key">@model.Value</option>
+            }
+        </select>
+        <button class="btn-clear" @onclick="OnClearClicked" title="Clear conversation">
+            🗑️ Clear
+        </button>
+        <button class="btn-theme" @onclick="OnThemeToggled" title="Toggle theme">
+            @(IsDarkTheme ? "🌙" : "☀️")
+        </button>
+    </div>
+</header>
+
+@code {
+    [Parameter] public string SelectedModel { get; set; } = "claude-haiku-4.5";
+    [Parameter] public EventCallback<string> SelectedModelChanged { get; set; }
+    [Parameter] public bool IsDarkTheme { get; set; } = true;
+    [Parameter] public EventCallback OnThemeToggle { get; set; }
+    [Parameter] public EventCallback OnClear { get; set; }
+
+    private async Task OnModelChanged()
+    {
+        await SelectedModelChanged.InvokeAsync(SelectedModel);
+    }
+
+    private async Task OnThemeToggled()
+    {
+        await OnThemeToggle.InvokeAsync();
+    }
+
+    private async Task OnClearClicked()
+    {
+        await OnClear.InvokeAsync();
+    }
+}

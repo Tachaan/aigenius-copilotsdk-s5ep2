@@ -1,0 +1,19 @@
+# Code Owners
+# These owners will be automatically requested for review on PRs
+
+# Default owners for everything
+* @vicperdana
+
+# API Controllers
+/src/AgentHQDemo.Api/Controllers/ @vicperdana
+
+# Services and business logic
+/src/AgentHQDemo.Api/Services/ @vicperdana
+
+# Infrastructure and configuration
+/.github/ @vicperdana
+/.devcontainer/ @vicperdana
+
+# Documentation
+*.md @vicperdana
+/docs/ @vicperdana

@@ -1,0 +1,42 @@
+{
+  "name": "Agent HQ Demo",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "eamodio.gitlens",
+        "streetsidesoftware.code-spell-checker"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-dotnettools.csharp",
+        "dotnet.defaultSolution": "AgentHQDemo.sln",
+        "omnisharp.enableRoslynAnalyzers": true,
+        "omnisharp.enableEditorConfigSupport": true
+      }
+    }
+  },
+  "postCreateCommand": "dotnet restore && dotnet build",
+  "remoteUser": "vscode",
+  "portsAttributes": {
+    "5050": {
+      "label": "API",
+      "onAutoForward": "notify"
+    },
+    "5051": {
+      "label": "Blazor UI",
+      "onAutoForward": "notify"
+    }
+  }
+}
