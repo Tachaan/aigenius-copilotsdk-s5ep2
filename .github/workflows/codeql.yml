@@ -12,6 +12,12 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    # Uploading results requires code scanning, which on private repositories
+    # needs GitHub Advanced Security. Skip rather than fail when it is not
+    # available; this runs automatically once the repo is public. To force it
+    # on (e.g. after moving to a GHAS-enabled org) set repository variable
+    # ENABLE_CODEQL=true.
+    if: github.event.repository.visibility == 'public' || vars.ENABLE_CODEQL == 'true'
     permissions:
       actions: read
       contents: read
@@ -25,15 +31,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           queries: security-extended,security-and-quality
@@ -42,6 +48,6 @@ jobs:
         run: dotnet build --configuration Release
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{matrix.language}}"

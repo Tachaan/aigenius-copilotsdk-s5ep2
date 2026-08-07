@@ -182,8 +182,7 @@ agenthq-demo/
 ├── tests/
 │   └── AgentHQDemo.Tests/  # 5 xUnit tests (in-memory SQLite)
 └── docs/
-    ├── DEMO-PLAN.md        # Three Mondays demo plan
-    ├── demo-script.md      # Generic demo talk track
+    └── demo-script.md      # Demo talk track
 ```
 
 ## 🗄️ Seed Data
@@ -216,7 +215,6 @@ The SQLite database is auto-created on first startup with:
 
 ## 📋 Demo Materials
 
-- **[Demo Plan](docs/DEMO-PLAN.md)** — Three Mondays framework
 - **[Demo Script](docs/demo-script.md)** — Capability-focused talk track
 
 ## 🔐 Security Notes

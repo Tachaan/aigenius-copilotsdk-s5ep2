@@ -17,3 +17,8 @@ logs/*.log
 
 # macOS Finder metadata
 .DS_Store
+
+# Local environment / secrets — never commit
+.env
+.env.*
+!.env.example
