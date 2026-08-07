@@ -1,4 +1,4 @@
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 
 namespace AgentHQDemo.Api.Services;
 
@@ -35,6 +35,23 @@ public class CopilotChatService : IAsyncDisposable
         await _client.StartAsync();
         _isStarted = true;
         _logger.LogInformation("Copilot client started");
+    }
+
+    /// <summary>
+    /// Lists the models the connected Copilot CLI actually offers.
+    /// </summary>
+    public async Task<IReadOnlyList<(string Id, string Name)>> ListModelsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureStartedAsync();
+
+        if (_client == null) return [];
+
+        var models = await _client.ListModelsAsync(cancellationToken);
+        return models?
+            .Where(m => !string.IsNullOrWhiteSpace(m.Id))
+            .Select(m => (m.Id!, string.IsNullOrWhiteSpace(m.Name) ? m.Id! : m.Name!))
+            .ToList() ?? [];
     }
 
     /// <summary>
@@ -77,7 +94,7 @@ public class CopilotChatService : IAsyncDisposable
                 await using var session = await _client.CreateSessionAsync(config);
                 var done = new TaskCompletionSource();
 
-                session.On(evt =>
+                session.On<SessionEvent>(evt =>
                 {
                     switch (evt)
                     {

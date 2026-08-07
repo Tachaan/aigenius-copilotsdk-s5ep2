@@ -18,6 +18,32 @@ public class ChatService(HttpClient http)
         ["gemini-2.5-pro"] = "Gemini 2.5 Pro"
     };
 
+    /// <summary>
+    /// Loads the models the API reports as available. Falls back to the static
+    /// list if the API cannot be reached.
+    /// </summary>
+    public async Task<Dictionary<string, string>> GetModelsAsync()
+    {
+        try
+        {
+            var models = await _http.GetFromJsonAsync<List<ApiModel>>("/api/chat/models");
+            if (models is { Count: > 0 })
+            {
+                return models
+                    .Where(m => !string.IsNullOrWhiteSpace(m.Id))
+                    .ToDictionary(m => m.Id!, m => string.IsNullOrWhiteSpace(m.Name) ? m.Id! : m.Name!);
+            }
+        }
+        catch
+        {
+            // Fall through to the static catalog below.
+        }
+
+        return AvailableModels;
+    }
+
+    private sealed record ApiModel(string? Id, string? Name, string? Description);
+
     public async IAsyncEnumerable<string> StreamChatAsync(
         string prompt,
         string model = "claude-haiku-4.5",

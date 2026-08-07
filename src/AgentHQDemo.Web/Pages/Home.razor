@@ -11,6 +11,7 @@
 <div class="chat-app @(IsDarkTheme ? "dark" : "light")">
     <Header SelectedModel="@SelectedModel" 
             SelectedModelChanged="OnModelChanged"
+            Models="@Models"
             IsDarkTheme="@IsDarkTheme"
             OnThemeToggle="ToggleTheme"
             OnClear="ClearChat" />
@@ -41,6 +42,7 @@
 @code {
     private List<ChatMessage> Messages { get; set; } = [];
     private string SelectedModel { get; set; } = "claude-haiku-4.5";
+    private Dictionary<string, string> Models { get; set; } = ChatService.AvailableModels;
     private bool IsDarkTheme { get; set; } = true;
     private bool IsStreaming { get; set; }
     private ElementReference MessagesContainer;
@@ -51,6 +53,15 @@
         Messages = await Storage.LoadMessagesAsync();
         SelectedModel = await Storage.GetSelectedModelAsync();
         IsDarkTheme = await Storage.GetThemeAsync() == "dark";
+
+        Models = await ChatService.GetModelsAsync();
+
+        // The stored model may no longer be offered by the account — fall back.
+        if (!Models.ContainsKey(SelectedModel))
+        {
+            SelectedModel = Models.ContainsKey("claude-haiku-4.5") ? "claude-haiku-4.5" : Models.Keys.First();
+            await Storage.SetSelectedModelAsync(SelectedModel);
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

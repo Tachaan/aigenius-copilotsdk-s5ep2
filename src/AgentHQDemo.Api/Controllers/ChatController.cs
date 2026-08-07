@@ -37,9 +37,28 @@ public class ChatController : ControllerBase
     /// <summary>
     /// Gets the list of available models.
     /// </summary>
+    /// <remarks>
+    /// Queries the Copilot CLI so the picker reflects the models the signed-in
+    /// account can actually use. Falls back to the static catalog if unavailable.
+    /// </remarks>
     [HttpGet("models")]
-    public ActionResult<IEnumerable<ModelInfo>> GetModels()
+    public async Task<ActionResult<IEnumerable<ModelInfo>>> GetModels(CancellationToken cancellationToken)
     {
+        try
+        {
+            var live = await _chatService.ListModelsAsync(cancellationToken);
+            if (live.Count > 0)
+            {
+                return Ok(live.Select(m => AvailableModels.TryGetValue(m.Id, out var known)
+                    ? known
+                    : new ModelInfo(m.Id, m.Name, "Available via GitHub Copilot")));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not list models from Copilot CLI; using static catalog");
+        }
+
         return Ok(AvailableModels.Values);
     }
 

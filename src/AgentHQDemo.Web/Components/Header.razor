@@ -8,7 +8,7 @@
     <div class="header-right">
         <label for="model-select">Model:</label>
         <select id="model-select" @bind="SelectedModel" @bind:after="OnModelChanged">
-            @foreach (var model in ChatService.AvailableModels)
+            @foreach (var model in Models)
             {
                 <option value="@model.Key">@model.Value</option>
             }
@@ -25,6 +25,7 @@
 @code {
     [Parameter] public string SelectedModel { get; set; } = "claude-haiku-4.5";
     [Parameter] public EventCallback<string> SelectedModelChanged { get; set; }
+    [Parameter] public Dictionary<string, string> Models { get; set; } = ChatService.AvailableModels;
     [Parameter] public bool IsDarkTheme { get; set; } = true;
     [Parameter] public EventCallback OnThemeToggle { get; set; }
     [Parameter] public EventCallback OnClear { get; set; }

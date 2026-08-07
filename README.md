@@ -29,7 +29,7 @@ Modern AI development isn't just autocomplete—it's about AI that **understands
 | Component | Technology |
 |-----------|------------|
 | Runtime | .NET 10 LTS |
-| AI SDK | GitHub Copilot SDK v0.1.20 |
+| AI SDK | GitHub Copilot SDK v1.0.9 |
 | Backend | ASP.NET Core Web API |
 | Frontend | Blazor WebAssembly |
 | Database | SQLite + EF Core |
@@ -62,6 +62,24 @@ dotnet run --project src/AgentHQDemo.Web --urls "http://localhost:5051"
 ```
 
 Then open http://localhost:5051 for the Blazor UI (API runs on 5050).
+
+### Copilot CLI binary
+
+The Copilot SDK downloads a matching Copilot CLI binary from `registry.npmjs.org` during
+build. If that registry is unreachable (corporate proxy, offline machine) the build fails
+with `MSB3923`. `Directory.Build.props` works around this by reusing a globally installed
+Copilot CLI when one is present:
+
+```bash
+npm install -g @github/copilot   # or: brew install copilot
+```
+
+Override or disable the detection if needed:
+
+```bash
+dotnet build -p:CopilotCliBinaryPath=/path/to/copilot   # use a specific binary
+dotnet build -p:CopilotUseLocalCli=false                # always download
+```
 
 ## 📡 API Endpoints
 
@@ -97,14 +115,21 @@ curl http://localhost:5050/api/segments
 
 ## 🎯 Available Models
 
+The model picker is populated at runtime from `GET /api/chat/models`, which asks the
+Copilot CLI which models the signed-in account can actually use. The exact list varies
+by account and changes over time — examples include:
+
 | Model | Provider | Best For |
 |-------|----------|----------|
 | `claude-haiku-4.5` ⚡ | Anthropic | Fast responses (default) |
-| `gpt-4.1` | OpenAI | Everyday tasks |
-| `gpt-5` | OpenAI | Complex reasoning |
-| `claude-sonnet-4.5` | Anthropic | Balanced analysis |
-| `claude-opus-4.5` | Anthropic | Deep reasoning |
-| `gemini-2.5-pro` | Google | Large context |
+| `auto` | GitHub | Let Copilot pick automatically |
+| `claude-sonnet-*` | Anthropic | Balanced analysis |
+| `claude-opus-*` | Anthropic | Deep reasoning |
+| `gpt-5.*` | OpenAI | Complex reasoning |
+| `gemini-*` | Google | Large context |
+
+> If the API can't reach the Copilot CLI, both the API and the UI fall back to a small
+> static catalog so the demo still renders.
 
 ## 🏗️ Architecture
 

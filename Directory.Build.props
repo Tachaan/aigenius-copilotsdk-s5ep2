@@ -1,0 +1,53 @@
+<Project>
+
+  <!--
+    GitHub.Copilot.SDK downloads a matching Copilot CLI binary from registry.npmjs.org at build
+    time. On machines where that registry is unreachable (corporate proxies, offline dev boxes)
+    the build fails with MSB3923.
+
+    If the Copilot CLI is already installed globally via npm, reuse that binary instead of
+    downloading it. When nothing is found locally these properties stay empty and the SDK falls
+    back to its normal download behaviour (Codespaces, CI, etc.).
+
+    Override explicitly with: dotnet build -p:CopilotCliBinaryPath=/path/to/copilot
+    Opt out entirely with:    dotnet build -p:CopilotUseLocalCli=false
+  -->
+  <PropertyGroup>
+    <CopilotUseLocalCli Condition="'$(CopilotUseLocalCli)' == ''">true</CopilotUseLocalCli>
+
+    <_CopilotNpmOs Condition="$([MSBuild]::IsOSPlatform('Windows'))">win32</_CopilotNpmOs>
+    <_CopilotNpmOs Condition="'$(_CopilotNpmOs)' == '' And $([MSBuild]::IsOSPlatform('OSX'))">darwin</_CopilotNpmOs>
+    <_CopilotNpmOs Condition="'$(_CopilotNpmOs)' == ''">linux</_CopilotNpmOs>
+
+    <_CopilotNpmBinary Condition="$([MSBuild]::IsOSPlatform('Windows'))">copilot.exe</_CopilotNpmBinary>
+    <_CopilotNpmBinary Condition="'$(_CopilotNpmBinary)' == ''">copilot</_CopilotNpmBinary>
+
+    <!--
+      The RuntimeIdentifier is not resolved this early in evaluation, so probe both
+      architectures — only the installed one exists on disk.
+    -->
+    <_CopilotCliArm64>@github/copilot/node_modules/@github/copilot-$(_CopilotNpmOs)-arm64/$(_CopilotNpmBinary)</_CopilotCliArm64>
+    <_CopilotCliX64>@github/copilot/node_modules/@github/copilot-$(_CopilotNpmOs)-x64/$(_CopilotNpmBinary)</_CopilotCliX64>
+  </PropertyGroup>
+
+  <!-- Well-known npm global "node_modules" roots, most specific first. -->
+  <PropertyGroup Condition="'$(CopilotUseLocalCli)' == 'true' And '$(CopilotCliBinaryPath)' == ''">
+    <_CopilotNpmRoot1>/opt/homebrew/lib/node_modules/</_CopilotNpmRoot1>
+    <_CopilotNpmRoot2>/usr/local/lib/node_modules/</_CopilotNpmRoot2>
+    <_CopilotNpmRoot3>/usr/lib/node_modules/</_CopilotNpmRoot3>
+    <_CopilotNpmRoot4 Condition="'$(HOME)' != ''">$(HOME)/.npm-global/lib/node_modules/</_CopilotNpmRoot4>
+    <_CopilotNpmRoot5 Condition="'$(APPDATA)' != ''">$(APPDATA)\npm\node_modules\</_CopilotNpmRoot5>
+
+    <CopilotCliBinaryPath Condition="'$(CopilotCliBinaryPath)' == '' And Exists('$(_CopilotNpmRoot1)$(_CopilotCliArm64)')">$(_CopilotNpmRoot1)$(_CopilotCliArm64)</CopilotCliBinaryPath>
+    <CopilotCliBinaryPath Condition="'$(CopilotCliBinaryPath)' == '' And Exists('$(_CopilotNpmRoot1)$(_CopilotCliX64)')">$(_CopilotNpmRoot1)$(_CopilotCliX64)</CopilotCliBinaryPath>
+    <CopilotCliBinaryPath Condition="'$(CopilotCliBinaryPath)' == '' And Exists('$(_CopilotNpmRoot2)$(_CopilotCliArm64)')">$(_CopilotNpmRoot2)$(_CopilotCliArm64)</CopilotCliBinaryPath>
+    <CopilotCliBinaryPath Condition="'$(CopilotCliBinaryPath)' == '' And Exists('$(_CopilotNpmRoot2)$(_CopilotCliX64)')">$(_CopilotNpmRoot2)$(_CopilotCliX64)</CopilotCliBinaryPath>
+    <CopilotCliBinaryPath Condition="'$(CopilotCliBinaryPath)' == '' And Exists('$(_CopilotNpmRoot3)$(_CopilotCliArm64)')">$(_CopilotNpmRoot3)$(_CopilotCliArm64)</CopilotCliBinaryPath>
+    <CopilotCliBinaryPath Condition="'$(CopilotCliBinaryPath)' == '' And Exists('$(_CopilotNpmRoot3)$(_CopilotCliX64)')">$(_CopilotNpmRoot3)$(_CopilotCliX64)</CopilotCliBinaryPath>
+    <CopilotCliBinaryPath Condition="'$(CopilotCliBinaryPath)' == '' And '$(_CopilotNpmRoot4)' != '' And Exists('$(_CopilotNpmRoot4)$(_CopilotCliArm64)')">$(_CopilotNpmRoot4)$(_CopilotCliArm64)</CopilotCliBinaryPath>
+    <CopilotCliBinaryPath Condition="'$(CopilotCliBinaryPath)' == '' And '$(_CopilotNpmRoot4)' != '' And Exists('$(_CopilotNpmRoot4)$(_CopilotCliX64)')">$(_CopilotNpmRoot4)$(_CopilotCliX64)</CopilotCliBinaryPath>
+    <CopilotCliBinaryPath Condition="'$(CopilotCliBinaryPath)' == '' And '$(_CopilotNpmRoot5)' != '' And Exists('$(_CopilotNpmRoot5)$(_CopilotCliArm64)')">$(_CopilotNpmRoot5)$(_CopilotCliArm64)</CopilotCliBinaryPath>
+    <CopilotCliBinaryPath Condition="'$(CopilotCliBinaryPath)' == '' And '$(_CopilotNpmRoot5)' != '' And Exists('$(_CopilotNpmRoot5)$(_CopilotCliX64)')">$(_CopilotNpmRoot5)$(_CopilotCliX64)</CopilotCliBinaryPath>
+  </PropertyGroup>
+
+</Project>
