@@ -21,4 +21,3 @@ logs/*.log
 # Local environment / secrets — never commit
 .env
 .env.*
-!.env.example

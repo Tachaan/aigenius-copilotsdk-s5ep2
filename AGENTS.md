@@ -18,8 +18,9 @@ repository — GitHub Copilot, Claude, Codex, and any custom agents.
 - Environment-specific configuration values
 - Customer names, competitive analysis, or any internal-only material
 
-`.env` is gitignored and must stay that way. If a demo needs an environment
-file, add `.env.example` with obviously fake placeholder values.
+`.env` is gitignored and must stay that way. No environment file is committed
+to this repository — document required variables in the README instead of
+checking in a sample file.
 
 **For MCP configuration files (`mcp.json`):**
 

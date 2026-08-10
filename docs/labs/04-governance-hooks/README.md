@@ -164,20 +164,32 @@ Each refusal is appended with a UTC timestamp, the tool, and the reason:
 This is the artefact a compliance reviewer asks for: evidence that the control
 exists *and* evidence of it firing.
 
-## Step 7 — Try it against a real secrets file
+## Step 7 — The gate doesn't need the file to exist
 
-The repo ships [`.env.example`](../../../.env.example) — placeholders only, no
-real credentials. `.env` itself is gitignored and must never be committed.
+No secrets file is committed to this repository — `.env` is gitignored and must
+never be checked in. That doesn't weaken the gate, because it matches on the
+**command text**, not on what's present on disk.
+
+Confirm there is no `.env`, then try to read it anyway:
 
 ```bash
-cp .env.example .env
+ls .env 2>/dev/null || echo "no .env present"
 echo '{"toolName":"bash","toolArgs":{"command":"cat .env"}}' \
   | ./.github/hooks/scripts/security-gate.sh
-rm .env
 ```
 
-Still denied — the gate matches on the command text, so it refuses regardless
-of whether the file happens to exist.
+Still denied. The same holds for the other secret patterns:
+
+```bash
+echo '{"toolName":"bash","toolArgs":{"command":"cat ~/.ssh/id_rsa.key"}}' \
+  | ./.github/hooks/scripts/security-gate.sh
+```
+
+💡 This cuts both ways. Matching on text means the gate can't be side-stepped
+by a file that doesn't exist yet — but it also means it can be evaded by a
+command that avoids the trigger words (`cat .en''v`, or reading the file via a
+script). Treat it as a guardrail against mistakes, not a defence against a
+determined attacker.
 
 ## Step 8 — Run a session with hooks active
 
