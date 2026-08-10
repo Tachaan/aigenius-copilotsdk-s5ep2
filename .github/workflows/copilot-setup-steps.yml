@@ -1,0 +1,36 @@
+name: "Copilot Setup Steps"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # The job MUST be called 'copilot-setup-steps' to be recognized by GitHub Copilot Agent
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install GitHub Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Restore dependencies
+        run: dotnet restore src/AgentOrchestrator/AgentHQDemo.slnx
+
+      - name: Build
+        run: dotnet build src/AgentOrchestrator/AgentHQDemo.slnx --no-restore --configuration Release

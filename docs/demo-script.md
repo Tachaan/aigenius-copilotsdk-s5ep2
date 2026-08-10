@@ -58,8 +58,8 @@ flowchart LR
 
 - [ ] Repo ready: `agenthq-demo` with seed issues + CI passing
 - [ ] .NET 10 SDK installed, `dotnet build` succeeds
-- [ ] Run API: `dotnet run --project src/AgentHQDemo.Api --urls "http://localhost:5050"`
-- [ ] Run Blazor UI: `dotnet run --project src/AgentHQDemo.Web --urls "http://localhost:5051"`
+- [ ] Run API: `dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api --urls "http://localhost:5050"`
+- [ ] Run Blazor UI: `dotnet run --project src/AgentOrchestrator/AgentHQDemo.Web --urls "http://localhost:5051"`
 - [ ] Verify: `curl http://localhost:5050/api/transactions` returns 10 records
 - [ ] Verify: `curl http://localhost:5050/api/segments` returns 4 segments
 - [ ] Open Blazor UI at http://localhost:5051 — confirm chat responds
@@ -358,8 +358,8 @@ Talk:   "Skills go further — structured, reusable knowledge packages. A skill 
 ```bash
 # ─── Build and run ───
 dotnet build
-dotnet run --project src/AgentHQDemo.Api --urls "http://localhost:5050"
-dotnet run --project src/AgentHQDemo.Web --urls "http://localhost:5051"
+dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api --urls "http://localhost:5050"
+dotnet run --project src/AgentOrchestrator/AgentHQDemo.Web --urls "http://localhost:5051"
 
 # ─── Verify seed data ───
 curl http://localhost:5050/api/transactions | jq       # Expect 10 records

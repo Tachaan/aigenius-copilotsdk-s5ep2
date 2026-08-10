@@ -21,13 +21,13 @@
       "settings": {
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "ms-dotnettools.csharp",
-        "dotnet.defaultSolution": "AgentHQDemo.sln",
+        "dotnet.defaultSolution": "src/AgentOrchestrator/AgentHQDemo.slnx",
         "omnisharp.enableRoslynAnalyzers": true,
         "omnisharp.enableEditorConfigSupport": true
       }
     }
   },
-  "postCreateCommand": "dotnet restore && dotnet build",
+  "postCreateCommand": "dotnet restore src/AgentOrchestrator/AgentHQDemo.slnx && dotnet build src/AgentOrchestrator/AgentHQDemo.slnx",
   "remoteUser": "vscode",
   "portsAttributes": {
     "5050": {

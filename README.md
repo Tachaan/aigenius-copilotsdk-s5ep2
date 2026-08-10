@@ -1,28 +1,92 @@
-# Agent HQ Demo — Retail Analytics Assistant
+<a name="start-building"></a>
+<!--
+  Drop a banner image at img/banner.png and uncomment this block to enable it.
+  <p align="center">
+    <img src="img/banner.png" alt="AI Genius" width="1200"/>
+  </p>
+-->
 
-A full-stack .NET 10 demo application showcasing **modern AI-assisted development** with GitHub Copilot SDK, multi-agent workflows, and enterprise governance patterns. Built around a **retail transaction analytics** domain relevant to enterprise data teams.
+# AI Genius — Season 5, Episode 2
 
-![Retail Analytics Assistant](docs/screenshots/chat-ui.png)
+## 🔥 Agent HQ: Building a Retail Analytics Assistant with the GitHub Copilot SDK
 
-## 🎯 What This Demo Shows
+### Session Description
 
-Modern AI development isn't just autocomplete—it's about AI that **understands your entire codebase**, **works autonomously**, and **integrates with enterprise workflows**.
+Agents are impressive in a chat window, but the real value shows up when they
+are embedded in an application your team already runs. This session builds a
+retail transaction analytics assistant on the **GitHub Copilot SDK** — a .NET
+10 API that streams model responses over SSE, a Blazor front end that renders
+them live, and the governance scaffolding (custom agents, hooks, audit trails,
+code scanning) that makes it safe to ship.
+
+### Session Slides
+
+See [`docs/`](docs/) — the "Three Mondays" narrative is captured in
+`Slide1.png` – `Slide3.png`.
+
+### 🧠 Learning Outcomes
+
+By the end of this session, you will be able to:
+
+- Embed the GitHub Copilot SDK runtime into an ASP.NET Core application
+- Stream model responses to a browser token-by-token over Server-Sent Events
+- Discover available models at runtime instead of hardcoding a stale list
+- Apply enterprise governance — custom agents, hooks, audit logging, and
+  code scanning — to AI-assisted development
+
+### 💬 Keep Learning with Copilot
+
+Try these prompts with GitHub Copilot to explore the topics from this session.
+Open Copilot Chat in VS Code (`Ctrl+Alt+I` on Windows/Linux, `Cmd+Shift+I` on
+Mac), paste a prompt, and see what you learn. Try connecting the
+[Microsoft Learn MCP Server](#-microsoft-learn-mcp-server) for the latest
+official documentation.
+
+Use these as a starting point — or write your own!
+
+- *What can I build with the GitHub Copilot SDK?*
+- *How do I stream Copilot SDK responses over Server-Sent Events in ASP.NET Core?*
+- *How do I list the models available to the signed-in Copilot account?*
+- *How do I set up authentication for the Copilot SDK?*
+- *What are Copilot hooks and how do I use them to enforce a security gate?*
+
+### 📚 Resources and Next Steps
+
+| Resource | Description |
+|:---------|:------------|
+| [GitHub Copilot SDK Repo](https://github.com/github/copilot-sdk) | The SDK across all supported languages |
+| [Copilot SDK Getting Started](https://github.com/github/copilot-sdk/blob/main/docs/getting-started.md) | Build your first Copilot-powered app |
+| [Awesome Copilot](https://github.com/github/awesome-copilot) | Custom agents, instructions, skills, hooks, workflows, and plugins |
+| [GitHub Copilot Docs](https://docs.github.com/copilot) | Official product documentation |
+
+### 🌟 Microsoft Learn MCP Server
+
+The Microsoft Learn MCP Server gives your AI agent direct access to
+Microsoft's official documentation — grounded, up-to-date answers about the
+products and services covered in this session.
+
+**VS Code** — this repo already ships [`.vscode/mcp.json`](.vscode/mcp.json),
+so the server is configured when you open the folder.
+
+**GitHub Copilot CLI** — run this to install the Learn MCP Server as a plugin:
+
+```
+/plugin install microsoftdocs/mcp
+```
+
+For more info, other clients, and to post questions, visit the
+[Learn MCP Server repo](https://aka.ms/learnmcp).
+
+---
+
+## ✨ What This Demo Shows
 
 | Capability | What You'll See |
 |------------|-----------------|
-| **Multi-Model AI Chat** | Switch between GPT-5, Claude Haiku/Sonnet/Opus, Gemini—all in one UI |
+| **Multi-Model AI Chat** | Model list fetched live from the Copilot CLI — always current |
 | **Retail Analytics Domain** | Transaction data, customer segments, segment prediction |
 | **Real-Time Streaming** | Token-by-token SSE responses with batched rendering |
-| **Enterprise Governance** | Audit trails, policy controls, security gates on AI-generated code |
-
-## ✨ Features
-
-- **📊 Retail Analytics Assistant** — Business-focused AI chat for retail insights
-- **🎯 Multi-Model Support** — Claude Haiku 4.5 (default), GPT-5, GPT-4.1, Claude Sonnet/Opus 4.5, Gemini 2.5 Pro
-- **⚡ Optimized Streaming** — Batched UI rendering at 20fps, `ResponseHeadersRead`, connection recovery
-- **🗄️ SQLite Database** — 10 seed transactions, 4 customer segments, auto-created on startup
-- **🔒 Enterprise Security** — CodeQL scanning, dependency review, custom security agents
-- **🚀 Codespaces Ready** — One-click development environment with all AI tools pre-configured
+| **Enterprise Governance** | Audit trails, policy hooks, security gates, code scanning |
 
 ## 🛠️ Tech Stack
 
@@ -33,45 +97,48 @@ Modern AI development isn't just autocomplete—it's about AI that **understands
 | Backend | ASP.NET Core Web API |
 | Frontend | Blazor WebAssembly |
 | Database | SQLite + EF Core |
-| Default Model | Claude Haiku 4.5 (fastest) |
 | CI/CD | GitHub Actions |
-| Security | CodeQL, Custom Agents |
+| Security | CodeQL, custom agents |
 
 ## 🚀 Quick Start
 
-### Option 1: GitHub Codespaces (Recommended)
-1. Click **Code** → **Open with Codespaces**
-2. Wait for environment setup (~2 minutes)
-3. Run: `dotnet run --project src/AgentHQDemo.Api --urls "http://localhost:5050"`
-4. In a second terminal: `dotnet run --project src/AgentHQDemo.Web --urls "http://localhost:5051"`
-5. Open http://localhost:5051
+### Prerequisites
 
-### Option 2: Local Development
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [GitHub Copilot CLI](https://docs.github.com/copilot) — signed in with an
+  account that has Copilot access
+
+### Run it
+
 ```bash
-# Prerequisites: .NET 10 SDK
-git clone https://github.com/viperdanorg/agenthq-demo.git
-cd agenthq-demo
-dotnet restore
-dotnet build
+dotnet restore src/AgentOrchestrator/AgentHQDemo.slnx
+dotnet build   src/AgentOrchestrator/AgentHQDemo.slnx
 
-# Terminal 1: Start API (SQLite DB auto-created on first run)
-dotnet run --project src/AgentHQDemo.Api --urls "http://localhost:5050"
+# Terminal 1 — API (SQLite DB auto-created and seeded on first run)
+dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api --urls "http://localhost:5050"
 
-# Terminal 2: Start Blazor UI
-dotnet run --project src/AgentHQDemo.Web --urls "http://localhost:5051"
+# Terminal 2 — Blazor UI
+dotnet run --project src/AgentOrchestrator/AgentHQDemo.Web --urls "http://localhost:5051"
 ```
 
-Then open http://localhost:5051 for the Blazor UI (API runs on 5050).
+Then open <http://localhost:5051>. The API runs on 5050.
+
+### GitHub Codespaces
+
+1. Click **Code** → **Create codespace on main**
+2. Wait for setup (~2 minutes)
+3. Run the two `dotnet run` commands above
 
 ### Copilot CLI binary
 
-The Copilot SDK downloads a matching Copilot CLI binary from `registry.npmjs.org` during
-build. If that registry is unreachable (corporate proxy, offline machine) the build fails
-with `MSB3923`. `Directory.Build.props` works around this by reusing a globally installed
-Copilot CLI when one is present:
+The Copilot SDK downloads a matching CLI binary from `registry.npmjs.org`
+during build. If that registry is unreachable (corporate proxy, offline
+machine) the build fails with `MSB3923`.
+[`Directory.Build.props`](Directory.Build.props) works around this by reusing
+a globally installed Copilot CLI when one is present:
 
 ```bash
-npm install -g @github/copilot   # or: brew install copilot
+npm install -g @github/copilot
 ```
 
 Override or disable the detection if needed:
@@ -86,7 +153,7 @@ dotnet build -p:CopilotUseLocalCli=false                # always download
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/chat/stream` | POST | Streaming chat (SSE) |
-| `/api/chat/models` | GET | Available AI models |
+| `/api/chat/models` | GET | Available AI models (live from the Copilot CLI) |
 | `/api/chat/health` | GET | Health check |
 | `/api/transactions` | GET/POST | List or add transactions |
 | `/api/transactions/{id}` | GET/DELETE | Transaction by ID |
@@ -94,13 +161,13 @@ dotnet build -p:CopilotUseLocalCli=false                # always download
 | `/api/segments/{id}` | GET | Segment details |
 | `/api/segments/predict/{customerId}` | GET | Predict customer segment |
 
-### Example API Calls
+### Example calls
 
 ```bash
 # Stream a chat response
-curl -X POST http://localhost:5050/api/chat/stream \
+curl -N -X POST http://localhost:5050/api/chat/stream \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "Who are our highest spending customers?", "model": "claude-haiku-4.5"}'
+  -d '{"prompt": "Which segment has the lowest retention?", "model": "claude-haiku-4.5"}'
 
 # List transactions (10 seed records)
 curl http://localhost:5050/api/transactions
@@ -108,37 +175,27 @@ curl http://localhost:5050/api/transactions
 # Predict customer segment
 curl http://localhost:5050/api/segments/predict/C003
 # → {"customerId":"C003","predictedSegment":"High Value","confidence":0.89,...}
-
-# List customer segments
-curl http://localhost:5050/api/segments
 ```
 
 ## 🎯 Available Models
 
-The model picker is populated at runtime from `GET /api/chat/models`, which asks the
-Copilot CLI which models the signed-in account can actually use. The exact list varies
-by account and changes over time — examples include:
+The model picker is populated at runtime from `GET /api/chat/models`, which
+asks the Copilot CLI which models the signed-in account can actually use. The
+exact list varies by account and changes over time — examples include
+`claude-haiku-4.5` (default), `auto`, `claude-sonnet-*`, `claude-opus-*`,
+`gpt-5.*`, and `gemini-*`.
 
-| Model | Provider | Best For |
-|-------|----------|----------|
-| `claude-haiku-4.5` ⚡ | Anthropic | Fast responses (default) |
-| `auto` | GitHub | Let Copilot pick automatically |
-| `claude-sonnet-*` | Anthropic | Balanced analysis |
-| `claude-opus-*` | Anthropic | Deep reasoning |
-| `gpt-5.*` | OpenAI | Complex reasoning |
-| `gemini-*` | Google | Large context |
-
-> If the API can't reach the Copilot CLI, both the API and the UI fall back to a small
-> static catalog so the demo still renders.
+> If the API can't reach the Copilot CLI, both the API and the UI fall back to
+> a small static catalog so the demo still renders.
 
 ## 🏗️ Architecture
 
 ```mermaid
 graph TB
     subgraph "Frontend — Port 5051"
-        UI[Blazor WebAssembly<br/>Batched Rendering @ 20fps]
+        UI[Blazor WebAssembly<br/>Batched Rendering]
     end
-    
+
     subgraph "Backend — Port 5050"
         API[ASP.NET Core API]
         Chat[ChatController<br/>SSE Streaming]
@@ -148,7 +205,7 @@ graph TB
         SVC[RetailAnalyticsService]
         DB[(SQLite<br/>Auto-seeded)]
     end
-    
+
     UI -->|SSE Stream| Chat
     UI -->|REST| Txn
     UI -->|REST| Seg
@@ -156,48 +213,39 @@ graph TB
     Txn --> SVC
     Seg --> SVC
     SVC --> DB
-    SDK --> Models[Claude Haiku / GPT-5 / Gemini]
+    SDK --> Models[Claude / GPT / Gemini]
 ```
 
 ## 📂 Project Structure
 
 ```
-agenthq-demo/
-├── .devcontainer/          # Codespaces configuration
+.
+├── .devcontainer/              # Codespaces configuration
 ├── .github/
-│   ├── agents/             # Custom Copilot agents
-│   ├── workflows/          # CI/CD pipelines (build, CodeQL)
-│   └── copilot-instructions.md
-├── src/
-│   ├── AgentHQDemo.Api/    # .NET Web API (Backend)
-│   │   ├── Controllers/    # Chat, Transactions, Segments
-│   │   ├── Data/           # RetailDbContext (SQLite)
-│   │   ├── Models/         # Transaction, CustomerSegment, SegmentPrediction
-│   │   └── Services/       # RetailAnalyticsService, CopilotChatService
-│   └── AgentHQDemo.Web/    # Blazor WebAssembly (Frontend)
-│       ├── Components/     # Header, Message, ChatInput, SuggestionChips
-│       ├── Pages/          # Home (main chat page)
-│       ├── Services/       # ChatService (SSE), StorageService
-│       └── wwwroot/        # Static assets, CSS themes
-├── tests/
-│   └── AgentHQDemo.Tests/  # 5 xUnit tests (in-memory SQLite)
-└── docs/
-    └── demo-script.md      # Demo talk track
+│   ├── agents/                 # Custom Copilot agents
+│   ├── hooks/                  # Governance + audit hooks
+│   ├── prompts/                # Reusable prompts
+│   ├── skills/                 # Copilot skills
+│   ├── workflows/              # CI, CodeQL, setup
+│   ├── copilot-instructions.md # Coding standards for all agents
+│   └── copilot-review-instructions.md
+├── .vscode/mcp.json            # MS Learn MCP server
+├── docs/                       # Demo script, slides, screenshots
+├── img/                        # Session branding
+├── src/AgentOrchestrator/      # .NET implementation
+│   ├── AgentHQDemo.Api/        # Web API — chat, transactions, segments
+│   ├── AgentHQDemo.Web/        # Blazor WebAssembly UI
+│   ├── tests/                  # xUnit tests (14)
+│   └── AgentHQDemo.slnx        # Solution
+├── AGENTS.md                   # Guidelines for AI agents
+└── Directory.Build.props       # Copilot CLI resolution
 ```
 
 ## 🗄️ Seed Data
 
-The SQLite database is auto-created on first startup with:
+The SQLite database is auto-created on first startup with **10 transactions**
+across 5 customers (C001–C005), 4 categories, and 4 stores, plus:
 
-**10 Transactions** across 5 customers (C001-C005), 4 categories, 4 stores:
-| Customer | Amount | Category | Store |
-|----------|--------|----------|-------|
-| C001 | $245.50 | Grocery | S001 |
-| C003 | $1,250.00 | Electronics | S002 |
-| C005 | $675.00 | Electronics | S002 |
-| ... | ... | ... | ... |
-
-**4 Customer Segments:**
 | Segment | Customers | Avg Spend | Retention |
 |---------|-----------|-----------|-----------|
 | High Value | 150 | $850 | 92% |
@@ -215,22 +263,37 @@ The SQLite database is auto-created on first startup with:
 
 ## 📋 Demo Materials
 
-- **[Demo Script](docs/demo-script.md)** — Capability-focused talk track
+- **[Demo Script](docs/demo-script.md)** — capability-focused talk track
+- **[docs/](docs/)** — what belongs in the docs folder
 
 ## 🔐 Security Notes
 
-This demo intentionally includes code patterns for code review demonstrations:
+This demo **intentionally** includes flawed code patterns so they can be found
+live during code review and static analysis demonstrations:
+
 - N+1 query in `GetTransactionsWithSegmentsAsync` (performance review)
 - Missing null check in `GetTransactionAsync` (static analysis)
 - No input validation in `AddTransactionAsync` (security review)
 - Hardcoded threshold in `PredictSegmentAsync` (code smell)
 
-**Do not use in production without addressing these.**
+**Do not use in production without addressing these.** See
+[`SECURITY.md`](SECURITY.md).
+
+> **CodeQL note:** analysis is skipped while this repository is private, since
+> code scanning requires GitHub Advanced Security. It runs automatically if the
+> repo becomes public, or set the repository variable `ENABLE_CODEQL=true`.
+
+## 🤝 Contributing
+
+See [`AGENTS.md`](AGENTS.md) for repository guidelines,
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community standards, and
+[`SUPPORT.md`](SUPPORT.md) for how to get help.
 
 ## 📄 License
 
-MIT License — See [LICENSE](LICENSE) for details.
+- **Code** — [MIT License](LICENSE)
+- **Documentation and content** — [CC BY 4.0](LICENSE-DOCS)
 
 ---
 
-Built with ❤️ using [GitHub Copilot SDK](https://docs.github.com/en/copilot/building-copilot-extensions/building-a-copilot-agent-for-your-copilot-extension/using-the-copilot-platform-api)
+Built with ❤️ using the [GitHub Copilot SDK](https://github.com/github/copilot-sdk)

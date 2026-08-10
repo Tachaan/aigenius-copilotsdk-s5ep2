@@ -5,10 +5,10 @@
 * @vicperdana
 
 # API Controllers
-/src/AgentHQDemo.Api/Controllers/ @vicperdana
+/src/AgentOrchestrator/AgentHQDemo.Api/Controllers/ @vicperdana
 
 # Services and business logic
-/src/AgentHQDemo.Api/Services/ @vicperdana
+/src/AgentOrchestrator/AgentHQDemo.Api/Services/ @vicperdana
 
 # Infrastructure and configuration
 /.github/ @vicperdana

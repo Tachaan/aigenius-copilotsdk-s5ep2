@@ -22,13 +22,13 @@ jobs:
           dotnet-version: '10.0.x'
       
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore src/AgentOrchestrator/AgentHQDemo.slnx
       
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build src/AgentOrchestrator/AgentHQDemo.slnx --no-restore --configuration Release
       
       - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal --logger trx --results-directory "TestResults"
+        run: dotnet test src/AgentOrchestrator/AgentHQDemo.slnx --no-build --configuration Release --verbosity normal --logger trx --results-directory "TestResults"
       
       - name: Upload test results
         uses: actions/upload-artifact@v7
@@ -53,8 +53,8 @@ jobs:
           dotnet-version: '10.0.x'
       
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore src/AgentOrchestrator/AgentHQDemo.slnx
       
       - name: Check formatting
-        run: dotnet format --verify-no-changes --verbosity diagnostic
+        run: dotnet format src/AgentOrchestrator/AgentHQDemo.slnx --verify-no-changes --verbosity diagnostic
         continue-on-error: true

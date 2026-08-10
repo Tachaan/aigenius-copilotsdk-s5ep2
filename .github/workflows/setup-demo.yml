@@ -83,7 +83,7 @@ jobs:
           - [ ] Document the setting in README
 
           ## Technical Notes
-          - See `src/AgentHQDemo.Api/Services/RetailAnalyticsService.cs` line ~101
+          - See `src/AgentOrchestrator/AgentHQDemo.Api/Services/RetailAnalyticsService.cs` line ~101
           - This is one of 4 intentional code quality issues in the codebase
           - Related bugs: N+1 query, missing null check, no service-layer validation'
 

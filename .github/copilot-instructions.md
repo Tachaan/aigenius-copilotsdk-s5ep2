@@ -118,16 +118,16 @@ var session = await client.CreateSessionAsync(new SessionConfig
 
 ```bash
 # Build the solution
-dotnet build
+dotnet build src/AgentOrchestrator/AgentHQDemo.slnx
 
 # Run tests
-dotnet test
+dotnet test src/AgentOrchestrator/AgentHQDemo.slnx
 
 # Run the API locally
-dotnet run --project src/AgentHQDemo.Api
+dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api
 
 # Watch mode for development
-dotnet watch --project src/AgentHQDemo.Api
+dotnet watch --project src/AgentOrchestrator/AgentHQDemo.Api
 ```
 
 ## When Asked About This Project
