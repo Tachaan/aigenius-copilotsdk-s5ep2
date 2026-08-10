@@ -1,6 +1,6 @@
 ---
 name: demo-verifier
-description: "**CRITICAL: Use this skill to verify demo capabilities.** Reads all demo scripts (docs/demo-script*.md) and cross-references every claimed capability against current GitHub documentation. Reports what is confirmed, in preview, or deprecated. MUST be invoked when reviewing demo accuracy, checking feature availability, or preparing for a live demo."
+description: "**CRITICAL: Use this skill to verify demo capabilities.** Reads all demo scripts (docs/demos/demo-script*.md) and cross-references every claimed capability against current GitHub documentation. Reports what is confirmed, in preview, or deprecated. MUST be invoked when reviewing demo accuracy, checking feature availability, or preparing for a live demo."
 license: MIT
 ---
 
@@ -69,7 +69,7 @@ Verify that every capability demonstrated in the Agent HQ demo is currently avai
 
 ### Step 1: Read Demo Scripts
 Read all files in `docs/` that contain demo steps:
-- `docs/demo-script.md` (generic demo)
+- `docs/demos/demo-script.md` (generic demo)
 
 ### Step 2: Extract Capabilities
 For each demo step, identify:

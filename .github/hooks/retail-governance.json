@@ -12,7 +12,7 @@
     "preToolUse": [
       {
         "type": "command",
-        "bash": "./.github/hooks/scripts/security-gate-notworking.sh",
+        "bash": "./.github/hooks/scripts/security-gate.sh",
         "cwd": ".",
         "timeoutSec": 15
       }
