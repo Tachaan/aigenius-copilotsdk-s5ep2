@@ -73,8 +73,9 @@ terms:
 - `.key`
 - `password`
 
-For `edit` and `create`, it extracts `.toolArgs.path` and only allows paths
-under `src/`, `tests/`, `docs/`, or `.github/`. Other edit targets are denied.
+For `edit` and `create`, it extracts `.toolArgs.path`. Paths that do not match
+the hook's allow-list expression — `src/`, `tests/`, `docs/`, or `.github/` —
+are denied.
 
 Allowed operations emit:
 
@@ -82,13 +83,11 @@ Allowed operations emit:
 {"permissionDecision":"allow"}
 ```
 
-Denied operations append a line to `logs/security-denials.log` and emit:
+Denied operations append a line to `logs/security-denials.log` and emit this
+shape:
 
 ```json
-{
-  "permissionDecision": "deny",
-  "permissionDecisionReason": "Access to credential/secret files blocked by security policy"
-}
+{"permissionDecision":"deny","permissionDecisionReason":"Access to credential/secret files blocked by security policy"}
 ```
 
 ### `audit-logger.sh`

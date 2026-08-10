@@ -8,8 +8,21 @@ picker aligned with the live model list.
 ## App shape and ports
 
 The front end is a Blazor WebAssembly app under
-[`AgentHQDemo.Web`](../../src/AgentOrchestrator/AgentHQDemo.Web). For the demo it
-is run on port 5051 and talks to the API on port 5050.
+[`AgentHQDemo.Web`](../../src/AgentOrchestrator/AgentHQDemo.Web).
+
+Throughout this repository the two services are started with an explicit
+`--urls`, which overrides the launch profile:
+
+```bash
+dotnet run --project src/AgentOrchestrator/AgentHQDemo.Web --urls "http://localhost:5051"
+```
+
+That is why the docs, diagrams, and labs all refer to **5051** for the UI and
+**5050** for the API. ⚠️ The checked-in launch profiles default to *different*
+ports — 5240 for the Web project and 5167 for the API — so running without
+`--urls` (or pressing F5 in an IDE) will serve on those instead, and the UI's
+default API base address of `http://localhost:5050` will no longer match.
+Either pass `--urls` as documented, or set `ApiBaseUrl` to match.
 
 [`AgentHQDemo.Web/Program.cs`](../../src/AgentOrchestrator/AgentHQDemo.Web/Program.cs)
 configures the API base address:
@@ -22,8 +35,8 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBase)
 The API enables CORS in
 [`AgentHQDemo.Api/Program.cs`](../../src/AgentOrchestrator/AgentHQDemo.Api/Program.cs)
 with a default policy that allows any origin, method, and header. That lets the
-WebAssembly app served from `http://localhost:5051` call the API at
-`http://localhost:5050` during the demo.
+WebAssembly app served from its local development URL call the configured API
+base address during the demo.
 
 ## `Home.razor`
 
@@ -121,7 +134,7 @@ after first render.
 [`Message`](../../src/AgentOrchestrator/AgentHQDemo.Web/Components/Message.razor)
 renders user and assistant messages. Empty assistant content displays a typing
 indicator; non-empty content is rendered from markdown using Markdig, with code
-blocks marked for JavaScript copy/highlighting behaviour.
+blocks marked for JavaScript highlighting behaviour.
 
 [`SuggestionChips`](../../src/AgentOrchestrator/AgentHQDemo.Web/Components/SuggestionChips.razor)
 shows predefined retail analytics prompts. Selecting a chip sends that prompt

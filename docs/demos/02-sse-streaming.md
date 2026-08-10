@@ -106,8 +106,9 @@ request reaches the API.
 
 ## Try it with curl
 
-Run the API on port 5050, then send a streaming request with `curl -N` so curl
-does not buffer the response:
+Point the request at the port your local API uses. For example, if the API is
+listening on the Web client's default API base address, send a streaming request
+with `curl -N` so curl does not buffer the response:
 
 ```bash
 curl -N -X POST http://localhost:5050/api/chat/stream \

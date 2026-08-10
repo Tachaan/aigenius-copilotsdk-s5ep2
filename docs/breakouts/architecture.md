@@ -69,14 +69,14 @@ sequenceDiagram
     participant Controller as ChatController.StreamChat
     participant Service as CopilotChatService.ChatStreamAsync
     participant Client as CopilotClient session
-    participant Channel as Channel<string>
+    participant Channel as "Channel&lt;string&gt;"
 
     Browser->>UI: Submit prompt
     UI->>WebChat: StreamChatAsync(prompt, model)
     WebChat->>Controller: POST /api/chat/stream
     Controller->>Service: ChatStreamAsync(prompt, model)
     Service->>Client: CreateSessionAsync(SessionConfig)
-    Service->>Client: session.On<SessionEvent>(...)
+    Service->>Client: session.On&lt;SessionEvent&gt;(...)
     Service->>Client: SendAsync(MessageOptions)
     Client-->>Service: AssistantMessageDeltaEvent
     Service-->>Channel: TryWrite(delta content)
@@ -119,7 +119,7 @@ classDiagram
         string CustomerId
         string PredictedSegment
         double Confidence
-        string TopFeatures[]
+        string[] TopFeatures
     }
 
     Transaction ..> SegmentPrediction : analysed for
@@ -162,8 +162,8 @@ src/AgentOrchestrator/
   and turns each item into an SSE frame.
 - **Runtime model discovery**:
   `CopilotChatService.ListModelsAsync` calls the Copilot SDK at runtime.
-  `ChatController.GetModels` falls back to a static catalogue only when the
-  CLI cannot be reached.
+  `ChatController.GetModels` falls back to a static catalogue when the CLI
+  cannot be reached or returns no models.
 - **SQLite for zero-config analytics**:
   `Program.cs` uses `UseSqlite("Data Source=retail.db")`, calls
   `EnsureCreatedAsync`, and seeds sample retail data on startup.

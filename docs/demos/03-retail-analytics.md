@@ -60,17 +60,17 @@ The seed contains 10 transactions across customers `C001` to `C005`:
 
 It also creates four customer segments:
 
-| Segment | Retention rate | Description |
-| --- | ---: | --- |
-| High Value | 92% | Top 10% spenders with strong loyalty indicators |
-| Regular | 78% | Consistent monthly shoppers across categories |
-| At Risk | 45% | Declining purchase frequency over the past 90 days |
-| New | 65% | Joined within the last 90 days |
+| Segment | Customer count | Average monthly spend | Retention rate | Description |
+| --- | ---: | ---: | ---: | --- |
+| High Value | 150 | $850 | 92% | Top 10% spenders with strong loyalty indicators |
+| Regular | 3,200 | $180 | 78% | Consistent monthly shoppers across categories |
+| At Risk | 890 | $95 | 45% | Declining purchase frequency over past 90 days |
+| New | 420 | $120 | 65% | Joined within the last 90 days |
 
 ## REST endpoints
 
 [`TransactionsController`](../../src/AgentOrchestrator/AgentHQDemo.Api/Controllers/TransactionsController.cs)
-exposes transaction CRUD endpoints:
+exposes transaction read, create, and delete endpoints:
 
 | Endpoint | Returns |
 | --- | --- |

@@ -11,7 +11,7 @@ Custom agents use Markdown files with frontmatter at the top:
 ```yaml
 ---
 name: dotnet-reviewer
-description: Senior .NET code reviewer specializing in C# best practices
+description: Senior .NET code reviewer specializing in C# best practices, security, and performance
 tools: ['agent', 'read', 'search']
 model: claude-sonnet-4.6
 ---
@@ -25,9 +25,9 @@ and any cross-validation instructions.
 ## `dotnet-reviewer`
 
 - **Path**: `.github/agents/dotnet-reviewer.agent.md`
-- **Description**: Senior .NET code reviewer specializing in C# best
-  practices, security, and performance.
-- **Tools**: `agent`, `read`, `search`
+- **Frontmatter name**: `dotnet-reviewer`
+- **Frontmatter description**: `Senior .NET code reviewer specializing in C# best practices, security, and performance`
+- **Tools**: `['agent', 'read', 'search']`
 - **Pinned model**: `claude-sonnet-4.6`
 - **Triggers**: Use when a change needs .NET-specific review, especially for
   security, performance, nullable reference types, async usage, disposal, or
@@ -44,10 +44,10 @@ its review, then report both sets of findings directly.
 ## `security-scanner`
 
 - **Path**: `.github/agents/security-scanner.agent.md`
-- **Description**: Security-focused code reviewer that identifies
-  vulnerabilities and compliance issues.
-- **Tools**: `agent`, `read`, `search`
-- **Pinned model**: `GPT-5.3-Codex ` as written in the file.
+- **Frontmatter name**: `security-scanner`
+- **Frontmatter description**: `Security-focused code reviewer that identifies vulnerabilities and compliance issues`
+- **Tools**: `['agent', 'read', 'search']`
+- **Pinned model**: `gpt-5.3-codex`
 - **Triggers**: Use when reviewing for OWASP Top 10 issues, input validation,
   authentication and authorisation, sensitive data exposure, unsafe parsing,
   or insufficient logging.
@@ -64,9 +64,9 @@ it instructs itself to run `accessibility-auditor` as a subagent.
 ## `pr-summary`
 
 - **Path**: `.github/agents/pr-summary.agent.md`
-- **Description**: Generates concise, informative PR summaries from code
-  changes.
-- **Tools**: `agent`, `read`, `search`
+- **Frontmatter name**: `pr-summary`
+- **Frontmatter description**: `Generates concise, informative PR summaries from code changes`
+- **Tools**: `['agent', 'read', 'search']`
 - **Pinned model**: none declared.
 - **Triggers**: Use when preparing a pull request description, summarising a
   diff, or grouping changes by features, fixes, tests, docs, and configuration.
@@ -84,9 +84,28 @@ findings in a final code quality section.
 ## `accessibility-auditor`
 
 - **Path**: `.github/agents/accessibility-auditor.agent.md`
-- **Description**: Use this agent when the user asks to review code for
-  accessibility issues or compliance.
-- **Tools**: `read`, `search`
+- **Frontmatter name**: `accessibility-auditor`
+- **Frontmatter description**:
+  "Use this agent when the user asks to review code for accessibility issues or
+  compliance.
+
+  Trigger phrases include:
+  - 'check this code for accessibility issues'
+  - 'review for WCAG compliance'
+  - 'audit for accessibility problems'
+  - 'find accessibility violations'
+  - 'is this accessible?'
+
+  Examples:
+  - User says 'can you review this component for accessibility?' → invoke this
+  agent to audit the code
+  - User asks 'does this form meet WCAG standards?' → invoke this agent to
+  check compliance
+  - User says 'what accessibility issues might this have?' → invoke this agent
+  to identify problems
+  - After writing UI code, proactively invoke if accessibility concerns might
+  exist"
+- **Tools**: `['read', 'search']`
 - **Pinned model**: none declared.
 - **Triggers**: The description explicitly lists phrases such as "check this
   code for accessibility issues", "review for WCAG compliance", "audit for
@@ -113,12 +132,12 @@ context, including the GitHub Copilot SDK v1.0.9 namespace
 model discovery expectations, and intentional demo code smells that reviewers
 should not flag unless explicitly asked.
 
-## Known issues
+## Model pin lesson
 
-`security-scanner.agent.md` pins `model: GPT-5.3-Codex ` with non-standard
-casing and a trailing space. Verify the accepted model identifier before
-depending on that agent, because an invalid model id could cause it to fail to
-start.
+`security-scanner.agent.md` now pins `model: gpt-5.3-codex`. The original
+value used the wrong casing and had a trailing space; only `gpt-5.3-codex`
+exists in the live model list. Invalid model pins can stop an agent starting,
+so keep frontmatter model ids exact.
 
 ## Related
 

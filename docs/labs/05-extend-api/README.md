@@ -54,7 +54,7 @@ Note the patterns to mirror:
 cat src/AgentOrchestrator/tests/AgentHQDemo.Tests/RetailAnalyticsServiceTests.cs
 ```
 
-Each test class builds an **in-memory SQLite** context:
+This test class builds an **in-memory SQLite** context:
 
 ```csharp
 var options = new DbContextOptionsBuilder<RetailDbContext>()
@@ -96,16 +96,18 @@ Ask Copilot, giving it the constraints up front:
 ```
 Add a GetSegmentSummaryAsync method to RetailAnalyticsService that returns a
 SegmentSummary. Weight the average retention by CustomerCount, not a plain
-mean. Handle the empty-segment case without throwing. Use async EF Core and
-follow the existing conventions in this file. Do not modify any other method.
+mean. Handle the empty-segment case without throwing. Accept an optional
+CancellationToken and pass it to async EF Core calls. Follow the existing
+conventions in this file. Do not modify any other method.
 ```
 
 The shape you're aiming for:
 
 ```csharp
-public async Task<SegmentSummary> GetSegmentSummaryAsync()
+public async Task<SegmentSummary> GetSegmentSummaryAsync(
+    CancellationToken cancellationToken = default)
 {
-    var segments = await _db.Segments.ToListAsync();
+    var segments = await _db.Segments.ToListAsync(cancellationToken);
 
     if (segments.Count == 0)
         return new SegmentSummary(0, 0, 0m, string.Empty, string.Empty);
@@ -133,9 +135,10 @@ In `SegmentsController`:
 
 ```csharp
 [HttpGet("summary")]
-public async Task<ActionResult<SegmentSummary>> GetSummary()
+public async Task<ActionResult<SegmentSummary>> GetSummary(
+    CancellationToken cancellationToken)
 {
-    return Ok(await service.GetSegmentSummaryAsync());
+    return Ok(await service.GetSegmentSummaryAsync(cancellationToken));
 }
 ```
 
@@ -150,7 +153,8 @@ fail. Ask Copilot about route precedence if you're unsure.
 Add xUnit tests to RetailAnalyticsServiceTests for GetSegmentSummaryAsync.
 Cover: the seeded four-segment case, correct weighted average (not a plain
 mean), and an empty database returning zeros without throwing. Follow the
-existing in-memory SQLite setup in this class.
+existing in-memory SQLite setup in this class. Remember that the constructor
+starts with an empty database, so seed the seeded-case tests explicitly.
 ```
 
 The weighted-average case is the one worth care. With the seed data:
@@ -172,17 +176,21 @@ weighted value and a naive implementation fails loudly.
 [Fact]
 public async Task GetSegmentSummaryAsync_WeightsRetentionByCustomerCount()
 {
+    await _service.SeedDataAsync();
+
     var summary = await _service.GetSegmentSummaryAsync();
 
     Assert.Equal(4, summary.TotalSegments);
+    Assert.Equal(4660, summary.TotalCustomers);
     Assert.Equal("High Value", summary.HighestRetention);
     Assert.Equal("At Risk", summary.LowestRetention);
+    Assert.Equal(0.71m, summary.WeightedAverageRetention);
     Assert.NotEqual(0.70m, summary.WeightedAverageRetention);
 }
 ```
 
-💡 If your in-memory database starts empty, seed it in the test or call the
-seeding routine first — check how the existing tests obtain their data.
+💡 The in-memory database starts empty. Seed it in tests that assert the four
+sample segments; leave it empty for the zero-segment case.
 
 ## Step 7 — Build and test
 

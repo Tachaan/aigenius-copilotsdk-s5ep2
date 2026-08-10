@@ -75,7 +75,8 @@ TOOL_ARGS=$(echo "$INPUT" | jq -r '.toolArgs')
 
 It denies in three situations:
 
-1. **Destructive bash** — `rm -rf /`, `DROP TABLE`, `mkfs.`, fork bombs
+1. **Destructive bash** — `rm -rf /`, `rm -rf .`, `DROP TABLE`,
+   `DROP DATABASE`, `format `, `mkfs.`, fork-bomb patterns
 2. **Secret access** — commands mentioning `.env`, `credentials`, `secrets`,
    `.pem`, `.key`, or `password`
 3. **Out-of-bounds writes** — `edit`/`create` outside `src/`, `tests/`,
