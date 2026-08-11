@@ -1,4 +1,9 @@
-# Lab 03 — Custom agents and code review
+# Extra — Custom agents and code review
+
+> **📎 Extra lab — not Copilot SDK.**
+> This covers `.agent.md` files, a **Copilot CLI** feature, not the Copilot
+> SDK. It's genuinely useful, but optional and independent of the numbered
+> SDK path. Start with [Lab 01](../01-setup/) if you're here for the SDK.
 
 **Goal:** use the repository's custom agents to discover the four deliberate
 code smells, and understand how agents, instructions, and skills combine to
@@ -59,10 +64,10 @@ head -40 .github/copilot-instructions.md
 head -30 .github/copilot-review-instructions.md
 ```
 
-- [`copilot-instructions.md`](../../../.github/copilot-instructions.md) —
+- [`copilot-instructions.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/copilot-instructions.md) —
   coding standards every agent follows (file-scoped namespaces, async
   conventions, `Result<T>` over exceptions, and so on)
-- [`copilot-review-instructions.md`](../../../.github/copilot-review-instructions.md) —
+- [`copilot-review-instructions.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/copilot-review-instructions.md) —
   review-specific context: the SDK namespace move, the SSE flush requirement,
   and an explicit list of the intentional smells so reviewers don't report them
   as new bugs
@@ -154,7 +159,7 @@ Ask it to propose (not write) tests for `PredictSegmentAsync`.
 
 ## Related
 
-- Next: [Lab 04 — Governance hooks](../04-governance-hooks/)
+- Next: [Extra — Governance hooks](../extra-governance-hooks/)
 - [Breakout: Custom agents](../../breakouts/custom-agents.md)
 - [Breakout: Skills](../../breakouts/skills.md)
 - [Demo: Retail analytics](../../demos/03-retail-analytics.md)

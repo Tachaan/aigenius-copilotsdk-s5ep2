@@ -1,11 +1,16 @@
-# Lab 05 — Extend the API
+# Extra — Extend the API
+
+> **📎 Extra lab — not Copilot SDK.**
+> This covers ASP.NET Core, EF Core and xUnit in the demo app. It exercises
+> Copilot as a *coding assistant*, but touches none of the Copilot SDK.
+> Optional and independent of the numbered SDK path.
 
 **Goal:** add a new endpoint and its tests using Copilot, keeping the existing
 14 tests green and the deliberate code smells intact.
 
 **Time:** ~30 minutes
 
-**Prerequisites:** [Lab 04](../04-governance-hooks/) complete, both services
+**Prerequisites:** [Extra — Governance hooks](../extra-governance-hooks/) complete, both services
 runnable.
 
 ## ⚠️ Ground rules
@@ -14,7 +19,7 @@ runnable.
    Copilot offers to clean up `GetTransactionsWithSegmentsAsync`, decline.
 2. **Keep all 14 existing tests passing.** New tests add to that number.
 3. Follow the conventions in
-   [`copilot-instructions.md`](../../../.github/copilot-instructions.md) —
+   [`copilot-instructions.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/copilot-instructions.md) —
    file-scoped namespaces, primary constructors, `async`/`Async` suffix,
    `CancellationToken`, `record` DTOs.
 
@@ -237,7 +242,7 @@ Close the loop with Lab 03's agent:
 copilot --agent dotnet-reviewer -p "Review my uncommitted changes for correctness, async usage, and adherence to .github/copilot-instructions.md. Report only." --allow-all-tools
 ```
 
-Then update the API table in the root [`README.md`](../../../README.md) to list
+Then update the API table in the root [`README.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/README.md) to list
 the new endpoint — docs drift is a review finding too.
 
 ## ✅ Checkpoint
@@ -256,6 +261,6 @@ creep in, and write it so it doesn't.
 
 ## Related
 
-- Next: [Lab 06 — Wrap-up](../06-wrap-up/)
+- Next: [Lab 07 — Wrap-up](../07-wrap-up/)
 - [Demo: Retail analytics](../../demos/03-retail-analytics.md)
 - [Breakout: Architecture](../../breakouts/architecture.md)

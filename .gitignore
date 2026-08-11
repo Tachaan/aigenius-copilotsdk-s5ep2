@@ -21,3 +21,13 @@ logs/*.log
 # Local environment / secrets — never commit
 .env
 .env.*
+
+# MkDocs build output
+site/
+
+# Generated site landing page
+docs/index.md
+
+# Python bytecode
+__pycache__/
+*.pyc
