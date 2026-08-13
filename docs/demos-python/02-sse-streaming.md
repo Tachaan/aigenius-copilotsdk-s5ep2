@@ -45,7 +45,7 @@ At that point it cannot reliably switch to an HTTP error status. The status code
 
 ## Deliberate .NET compatibility
 
-The wire shape is byte-for-byte identical to the .NET API: `data: {...}\n\n` frames terminated by `data: [DONE]\n\n`. That is deliberate, so the same browser client and the same `curl` commands can be used against either stack. The Python page changes the port to **5060**, because FastAPI serves both the API and UI from one process.
+The wire contract matches the .NET API: `data: {...}\n\n` frames terminated by `data: [DONE]\n\n`. JSON whitespace can differ between Python's `json.dumps` and .NET's `JsonSerializer`, but the `content`/`error` payload shape and sentinel are the same. The Python page changes the port to **5060**, because FastAPI serves both the API and UI from one process.
 
 ## Request body aliases
 

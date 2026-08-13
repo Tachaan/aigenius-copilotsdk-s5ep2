@@ -47,7 +47,7 @@ uv run uvicorn app.main:app --port 5060 --reload
 ## Tests and linting
 
 ```bash
-uv run pytest          # 14 tests
+uv run pytest          # 18 tests (14 domain + 4 contract)
 uv run ruff check .    # lint
 ```
 

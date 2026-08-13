@@ -17,6 +17,12 @@ cd src/AgentOrchestrator-python
 uv run python -m sdk_labs events
 ```
 
+Add `--model <id>` to override the model:
+
+```bash
+uv run python -m sdk_labs events --model gpt-5-mini
+```
+
 Expected output:
 
 ```text
@@ -119,12 +125,33 @@ Open
 and find the subscription:
 
 ```python
-def on_event(evt: SessionEvent) -> None:
-    counters["order"] += 1
-    print(f"{counters['order']:3d}. {evt.type.value}")
+            waiter = IdleWaiter()
+            counters = {"order": 0, "deltas": 0}
 
-session.on(on_event)
+            def on_event(evt: SessionEvent) -> None:
+                # Deltas arrive in a flood; count them instead of printing each one.
+                if evt.type is SessionEventType.ASSISTANT_MESSAGE_DELTA:
+                    counters["deltas"] += 1
+                    return
+
+                counters["order"] += 1
+                # Unlike C#, the event type is a value on the event rather than
+                # a subclass, so this prints evt.type instead of a class name.
+                print(f"{counters['order']:3d}. {evt.type.value}")
+
+                if evt.type is SessionEventType.ASSISTANT_MESSAGE:
+                    print(f"     content: {trim(evt.data.content)}")
+                    print(f"     (preceded by {counters['deltas']} delta events)")
+                elif evt.type is SessionEventType.SESSION_ERROR:
+                    print(f"     ERROR: {evt.data.message}")
+
+                waiter.handle(evt)
+
+            session.on(on_event)
 ```
+
+The lab project pins PyPI `github-copilot-sdk` **1.0.9**, imports it from
+`copilot`, and requires Python 3.11 or later.
 
 ⚠️ **This is the biggest structural difference from the .NET SDK.** In C# every
 event is its own class and you pattern-match on the subclass:
@@ -135,32 +162,20 @@ session.On<SessionEvent>(evt => Console.WriteLine(evt.GetType().Name));
 ```
 
 In Python there is exactly **one** `SessionEvent` dataclass. The kind of event
-is a *value* on the object, not its type:
-
-```python
-from copilot import SessionEvent, SessionEventType
-
-if evt.type is SessionEventType.ASSISTANT_MESSAGE:
-    print(evt.data.content)
-```
+is a *value* on the object, not its type.
 
 That is why the transcript prints `assistant.message` (the enum's `.value`)
 where the .NET lab printed `AssistantMessageEvent` (the class name). Use `is`
 for the comparison — `SessionEventType` members are singletons.
 
-`SessionEvent` also carries `data`, `id`, `timestamp`, `agent_id`, `ephemeral`,
-`parent_id`, and `raw_type`. The shape of `evt.data` depends on `evt.type`,
-which is why the sample only reads `evt.data.content` inside the
+`SessionEvent` carries `data`, `id`, `timestamp`, `type`, `agent_id`,
+`ephemeral`, `parent_id`, and `raw_type`. The shape of `evt.data` depends on
+`evt.type`, which is why the sample only reads `evt.data.content` inside the
 `ASSISTANT_MESSAGE` branch.
 
 💡 `session.on(handler)` **returns an unsubscribe callable**. Keep it if you
-need to stop listening before the session ends:
-
-```python
-unsubscribe = session.on(on_event)
-...
-unsubscribe()
-```
+need to stop listening before the session ends; for example, store the result
+of `session.on(on_event)` and call it later.
 
 ## Step 4 — Compare with what the app handles
 
@@ -172,20 +187,20 @@ Open
 and look at its handler. It reacts to only four event types:
 
 ```python
-if evt.type is SessionEventType.ASSISTANT_MESSAGE_DELTA:
-    queue.put_nowait(evt.data.delta_content or "")
-elif evt.type is SessionEventType.ASSISTANT_MESSAGE:
-    logger.info(
-        "Assistant response complete: %d chars",
-        len(evt.data.content or ""),
-    )
-elif evt.type is SessionEventType.SESSION_IDLE:
-    if not done.done():
-        done.set_result(None)
-elif evt.type is SessionEventType.SESSION_ERROR:
-    logger.error("Session error: %s", evt.data.message)
-    if not done.done():
-        done.set_exception(RuntimeError(evt.data.message))
+                        if evt.type is SessionEventType.ASSISTANT_MESSAGE_DELTA:
+                            queue.put_nowait(evt.data.delta_content or "")
+                        elif evt.type is SessionEventType.ASSISTANT_MESSAGE:
+                            logger.info(
+                                "Assistant response complete: %d chars",
+                                len(evt.data.content or ""),
+                            )
+                        elif evt.type is SessionEventType.SESSION_IDLE:
+                            if not done.done():
+                                done.set_result(None)
+                        elif evt.type is SessionEventType.SESSION_ERROR:
+                            logger.error("Session error: %s", evt.data.message)
+                            if not done.done():
+                                done.set_exception(RuntimeError(evt.data.message))
 ```
 
 That is a reasonable production choice. For browser streaming, the app needs
@@ -214,6 +229,8 @@ Because events are **push-only callbacks** — there is no async iterator to
 
 ```python
 class IdleWaiter:
+    """Resolves when the session reports idle, or raises on session error."""
+
     def __init__(self) -> None:
         self._future: asyncio.Future[None] = asyncio.get_event_loop().create_future()
 
@@ -233,15 +250,9 @@ class IdleWaiter:
         await asyncio.wait_for(self._future, timeout=TIMEOUT_SECONDS)
 ```
 
-Used like this:
-
-```python
-waiter = IdleWaiter()
-session.on(waiter.handle)
-
-await session.send(prompt)
-await waiter.wait()
-```
+In the event sample, the callback above calls `waiter.handle(evt)` for each
+event; after sending the prompt, the sample awaits `waiter.wait()` before
+printing the summary.
 
 This is the Python analogue of C#'s `TaskCompletionSource`.
 
@@ -255,10 +266,7 @@ error may never arrive, and without the timeout your coroutine hangs forever.
 
 💡 If you only want the reply and do not care about the lifecycle, the SDK has
 a shortcut that does this waiting for you:
-
-```python
-await session.send_and_wait(prompt, timeout=180)
-```
+`await session.send_and_wait(prompt, timeout=180)`.
 
 ## ⚠️ Traps
 
@@ -300,5 +308,6 @@ You can now explain:
 - Previous: [Lab 03 — Tools](../03-tools/)
 - Next: [Lab 05 — Sessions](../05-sessions/)
 - [Demo: Copilot SDK integration](../../demos-python/01-copilot-sdk-integration.md)
+- [Extra — Governance hooks](../../labs/extra-governance-hooks/)
 - [Hooks and governance](../../breakouts/hooks-and-governance.md)
 - [Troubleshooting](../../breakouts/troubleshooting.md)

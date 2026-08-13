@@ -29,7 +29,7 @@ Core Python commands, run from the app directory:
 cd src/AgentOrchestrator-python
 uv sync
 uv run uvicorn app.main:app --port 5060   # API + UI on one port
-uv run pytest                             # 14 tests
+uv run pytest                             # 18 tests
 uv run ruff check .
 ```
 
@@ -59,8 +59,9 @@ uv run python -m sdk_labs sessions
 uv run python -m sdk_labs mcp
 ```
 
-Every command in these labs was executed against the real Copilot CLI and the
-output pasted in as-is.
+The sample commands are backed by real modules in `sdk_labs`. Model text and
+diagnostic warnings can vary by account, SDK version, and local Copilot CLI
+settings.
 
 ## 📎 Extra labs — not the SDK
 

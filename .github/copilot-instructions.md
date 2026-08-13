@@ -14,8 +14,8 @@ This is a **Retail Transaction Analytics** app demonstrating modern AI-assisted 
 It is implemented **twice** — once in .NET 10 LTS and once in Python 3.11+ —
 so learners can follow whichever track they prefer. The two are behavioural
 mirrors: same endpoints, same camelCase JSON contract, same seed data, same
-14 tests, same four intentional code smells. Change behaviour in one and you
-must change it in the other.
+14 domain tests, same four intentional code smells. Change behaviour in one and
+you must change it in the other.
 
 ## Repository Structure
 
@@ -157,7 +157,9 @@ var session = await client.CreateSessionAsync(new SessionConfig
 - Unit tests required for all agent logic
 - Integration tests for full SDK flow (requires auth)
 - Test both success and failure paths
-- Keep the two suites at parity — 14 tests each
+- Keep the two suites at parity — 14 domain tests each. Python adds 4 contract
+  tests (`test_chat_contract.py`) guarding the static UI's request shape, which
+  .NET does not need because its Blazor client is strongly typed.
 
 **.NET** — mock `CopilotClient`; use `FluentAssertions` for readable assertions.
 

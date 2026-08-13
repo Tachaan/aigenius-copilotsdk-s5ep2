@@ -24,6 +24,12 @@ cd src/AgentOrchestrator-python
 uv run python -m sdk_labs sessions
 ```
 
+Add `--model <id>` to override the model:
+
+```bash
+uv run python -m sdk_labs sessions --model gpt-5-mini
+```
+
 Verified output:
 
 ```text
@@ -92,8 +98,8 @@ async with resumed:
 
 💡 **This is simpler than the .NET equivalent.** In C# you must construct a
 `ResumeSessionConfig` and pass it as a required second argument; omitting it is
-a compile error. Python takes the same settings as ordinary keyword arguments,
-and `session_id` is the only positional one:
+a compile error. Python has no `ResumeSessionConfig`; it takes the same settings
+as ordinary keyword arguments, and `session_id` is the only positional one:
 
 ```python
 await client.resume_session(session_id)                       # valid
@@ -172,6 +178,10 @@ the same server-side session.
 ⚠️ **A session id is not an access control.** Treat ids as identifiers, not
 secrets or capabilities. Your app still needs normal user authentication and
 authorisation before resuming a stored conversation.
+
+The Python track uses PyPI `github-copilot-sdk` **1.0.9**, imported as
+`copilot`, and requires Python 3.11 or later. You can see those requirements in
+[`pyproject.toml`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/pyproject.toml).
 
 ## ⚠️ Traps
 

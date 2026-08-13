@@ -33,18 +33,26 @@ model:
 
 ```python
 class GetCustomerTotalParams(BaseModel):
-    customer_id: Annotated[
-        str,
-        Field(description="Customer identifier, for example C003"),
-    ]
+    """Parameter schema sent to the model.
+
+    Where C# reads ``[Description]`` attributes off the method signature, Python
+    describes parameters with a Pydantic model — the field descriptions are what
+    the model sees.
+    """
+
+    customer_id: Annotated[str, Field(description="Customer identifier, for example C003")]
 
 
 @define_tool(description="Gets the total amount a given retail customer has spent.")
-def get_customer_total(
-    params: GetCustomerTotalParams,
-    _invocation: ToolInvocation,
-) -> str:
-    ...
+def get_customer_total(params: GetCustomerTotalParams, _invocation: ToolInvocation) -> str:
+    matches = [t for t in TRANSACTIONS if t[0].casefold() == params.customer_id.casefold()]
+
+    if not matches:
+        return f"No transactions found for {params.customer_id}."
+
+    total = sum(t[1] for t in matches)
+    print(f"  [tool] get_customer_total({params.customer_id}) -> ${total:,.2f}")
+    return f"{params.customer_id} has {len(matches)} transactions totalling ${total:,.2f}."
 ```
 
 The required signature is
@@ -67,11 +75,16 @@ creates the session:
 ```python
 async with CopilotClient() as client:
     model_id = await model_picker.pick(client, requested_model_id)
+    if model_id is None:
+        return 1
 
     session = await client.create_session(
         model=model_id,
         streaming=False,
         tools=[get_customer_total],
+        # Required in Python, unlike .NET: the runtime asks permission before
+        # invoking a custom tool, and with no handler the call is denied and
+        # the model reports a permission error instead of an answer.
         on_permission_request=PermissionHandler.approve_all,
     )
 ```
@@ -173,12 +186,30 @@ from `copilot.rpc`, for example:
 ```python
 from copilot.rpc import PermissionDecisionApproveOnce, PermissionDecisionReject
 
+# Not re-exported at the package root in SDK 1.0.9 — import it from the module.
+from copilot.session import PermissionInvocation
+```
 
-def on_permission_request(request, invocation):
-    if "delete" in getattr(request, "tool_name", "").casefold():
+The reference diagnostic implements:
+
+```python
+def on_permission_request(
+    request: PermissionRequest, invocation: PermissionInvocation
+) -> PermissionRequestResult:
+    # `kind` is a class attribute on each request type ("shell", "custom-tool",
+    # "write", …), where the C# version reads a `Kind` property off one type.
+    kind = getattr(request, "kind", "")
+    tool_name = getattr(request, "tool_name", "") or ""
+    print(f"  [permission] requested: kind={kind} tool={tool_name or '(n/a)'}")
+
+    # Policy: allow reads, refuse anything destructive.
+    if "delete" in f"{kind} {tool_name}".casefold():
+        print("  [permission] -> REJECTED by policy")
         return PermissionDecisionReject(
             feedback="Destructive operations are not permitted in this demo."
         )
+
+    print("  [permission] -> approved once")
     return PermissionDecisionApproveOnce()
 ```
 

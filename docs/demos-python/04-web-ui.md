@@ -92,9 +92,19 @@ If the API cannot be reached, the page falls back to a static catalogue of six m
 const res = await fetch('/api/chat/stream', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: prompt, model: selectedModel }),
+    body: JSON.stringify({ prompt, model: selectedModel }),
 });
 ```
+
+⚠️ **That field name is load-bearing.** An earlier revision sent
+`{ message: prompt, ... }`. `ChatRequest` declares `prompt`, and Pydantic
+ignores unknown keys rather than rejecting them — so the request returned 200,
+streamed a real response, and the typed prompt was silently discarded. Nothing
+errored; the model simply answered an empty question.
+
+That is the whole hazard of a permissive parser at a client/server boundary, and
+it is why `tests/test_chat_contract.py` asserts the field `app.js` posts is the
+field `ChatRequest` reads.
 
 The response body is read with `fetch()`, `res.body.getReader()`, and `TextDecoder`:
 
@@ -137,7 +147,7 @@ This is the direct analogue of the Blazor client's render timer. A fast model ca
 
 ## Input, suggestions, and theme
 
-The input sends on button click or Enter without Shift, disables while streaming, and restores focus after the response completes. Suggestion chips use the same send path as typed input, with prompts such as `Who are our highest spending customers?` and `Predict which segment customer C002 belongs to`. The theme button toggles dark/light mode and switches the active highlight.js stylesheet.
+The input sends on button click or Enter without Shift, disables while streaming, and restores focus after the response completes. Suggestion chips use the same send path as typed input, with strings such as `Who are our highest spending customers?` and `Predict which segment customer C002 belongs to`; because of the request-body mismatch above, those strings are not delivered as the API prompt until the field name is corrected. The theme button toggles dark/light mode and switches the active highlight.js stylesheet.
 
 ## Related
 

@@ -92,7 +92,7 @@ It also creates four customer segments: High Value, Regular, At Risk, and New.
 | `POST /api/transactions` | Creates a transaction and returns `201 Created` with the saved record. |
 | `DELETE /api/transactions/{id}` | `204 No Content` when deleted, or `404` when not found. |
 
-[`app/routers/segments.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/segments.py) exposes `GET /api/segments`, `GET /api/segments/{id}`, and `GET /api/segments/predict/{customerId}`.
+[`app/routers/segments.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/segments.py) exposes `GET /api/segments`, `GET /api/segments/{segment_id}`, and `GET /api/segments/predict/{customer_id}`.
 
 The chat endpoints are covered in [Streaming responses over SSE](./02-sse-streaming.md), because they belong to the Copilot streaming path rather than the retail data API.
 
@@ -120,18 +120,19 @@ $ curl http://localhost:5060/api/segments/predict/C999
 {"customerId":"C999","predictedSegment":"New","confidence":0.5,"topFeatures":["no_history"]}
 
 $ curl http://localhost:5060/api/transactions/1
-{"productCategory":"Grocery","amount":245.5,"customerId":"C001","isFlagged":false,"storeId":"S001","id":1,"timestamp":"2026-07-14T03:32:35.623603"}
+{"productCategory":"Grocery","customerId":"C001","amount":245.5,"isFlagged":false,"storeId":"S001","id":1,"timestamp":"2026-07-14T03:58:08.543810"}
 ```
 
 `GET /api/transactions` returns 10 rows. `GET /api/segments` returns 4 rows. `GET /api/transactions/999` returns HTTP 404.
 
 ## Tests
 
-The pytest suite mirrors the .NET xUnit tests. Real verified test result:
+The pytest suite mirrors the .NET xUnit tests, plus four Python-only contract
+tests guarding the browser/API request shape. Real verified test result:
 
 ```bash
 $ uv run pytest
-14 passed
+18 passed
 ```
 
 ## Four deliberate code smells

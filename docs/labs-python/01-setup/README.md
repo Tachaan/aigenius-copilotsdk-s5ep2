@@ -57,8 +57,9 @@ cd src/AgentOrchestrator-python
 uv sync
 ```
 
-`uv sync` creates the virtual environment and installs the application,
-development dependencies, FastAPI, SQLModel, pytest, ruff, and the Copilot SDK.
+`uv sync` creates the virtual environment and installs the application
+dependencies, development dependencies, FastAPI, SQLModel, pytest, ruff, and
+the Copilot SDK.
 
 ⚠️ Run later Python commands from `src/AgentOrchestrator-python` unless the
 command explicitly changes directory for you. There is no solution file and no
@@ -76,15 +77,18 @@ For the compact CI-style check:
 uv run pytest -q
 ```
 
-Expected:
+Expected: 18 tests pass. One verified run produced:
 
 ```text
-..............                                                           [100%]
-14 passed in 0.05s
+..................                                                       [100%]
+18 passed in 0.28s
 ```
 
+That is 14 domain tests — matching the .NET suite one-for-one — plus 4
+Python-only contract tests that guard the browser/API request shape.
+
 Remember that number. Later labs ask you to extend behaviour without breaking
-these 14 tests.
+these 18 tests.
 
 ## Step 4 — Run the linter
 
@@ -194,7 +198,7 @@ a blank line, and the stream ends with `data: [DONE]`.
 ignored, so a typo sends an empty prompt and you get a generic greeting back
 rather than an error.
 
-⚠️ If you see `data: {"error":"..."}` instead, the server reached the SDK but
+⚠️ If you see `data: {"error": "..."}` instead, the server reached the SDK but
 the SDK could not complete the request. Common causes are not being signed in to
 the Copilot CLI or choosing a model your account cannot use.
 
@@ -226,16 +230,20 @@ Later labs use `uv run python -m sdk_labs events`,
 
 ## Step 10 — Try the UI
 
-Back in the browser at <http://localhost:5060>, open the **Model** dropdown,
-ask *"Which customer segment has the lowest retention?"*, and watch the response
-stream in chunk by chunk.
+Back in the browser at <http://localhost:5060>, open the **Model** dropdown and
+send a message to watch the SSE rendering path.
+
+💡 The request body uses `prompt`, matching `ChatRequest`. An earlier revision
+posted `message` here; because Pydantic drops unknown keys, the UI streamed a
+reply to an empty prompt and nothing failed loudly. `tests/test_chat_contract.py`
+now asserts the field `app.js` sends is the field the API reads.
 
 ## ✅ Checkpoint
 
 You should now have:
 
 - [x] Python dependencies restored with `uv sync`
-- [x] 14/14 tests passing
+- [x] 18/18 tests passing
 - [x] Ruff passing
 - [x] API and UI running together on port 5060
 - [x] REST endpoints returning seeded camelCase data

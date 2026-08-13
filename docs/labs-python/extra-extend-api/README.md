@@ -6,7 +6,7 @@
 > Optional and independent of the numbered SDK path.
 
 **Goal:** add a new endpoint and its tests using Copilot, keeping the existing
-14 tests green and the deliberate code smells intact.
+18 tests green and the deliberate code smells intact.
 
 **Time:** ~30 minutes
 
@@ -245,7 +245,7 @@ $ curl -X POST http://localhost:5060/api/transactions \
 A valid create returns **HTTP 201**. One verified run returned:
 
 ```json
-{"productCategory":"Grocery","amount":42.5,"customerId":"C777","isFlagged":false,"storeId":"S001","id":11,"timestamp":"2026-08-13T03:41:09.142286"}
+{"productCategory":"Grocery","customerId":"C777","amount":42.5,"isFlagged":false,"storeId":"S001","id":11,"timestamp":"2026-08-13T04:59:38.478798"}
 ```
 
 Cleanup and not-found behaviour:
@@ -273,7 +273,7 @@ to list the new endpoint — docs drift is a review finding too.
 
 - [x] New response DTO, service method, and endpoint added
 - [x] Tests cover the weighted average and the empty case
-- [x] All original 14 tests still pass
+- [x] All original 18 tests still pass
 - [x] The four intentional smells are untouched
 - [x] Endpoint verified against the running API on port 5060
 - [x] Existing validation, create, delete, and 404 behaviour still match expectations

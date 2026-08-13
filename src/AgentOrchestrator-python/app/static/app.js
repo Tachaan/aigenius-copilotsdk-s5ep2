@@ -170,7 +170,7 @@ async function sendMessage(prompt) {
         const res = await fetch('/api/chat/stream', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: prompt, model: selectedModel }),
+            body: JSON.stringify({ prompt, model: selectedModel }),
         });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);

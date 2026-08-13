@@ -44,8 +44,8 @@ This repository is demo content for the **AI Genius S5E2** session. It should:
 
 The same retail analytics app exists twice — `src/AgentOrchestrator/` (.NET) and
 `src/AgentOrchestrator-python/` (Python). They deliberately mirror each other:
-same endpoints, same camelCase JSON contract, same seed data, same 14 tests, and
-the same four intentional code smells.
+same endpoints, same camelCase JSON contract, same seed data, the same 14 domain
+tests, and the same four intentional code smells.
 
 **When you change behaviour in one, change it in the other**, or the labs drift
 apart. Purely idiomatic changes (a C#-only refactor, a Python-only lint fix) do
@@ -106,7 +106,7 @@ Run the checks for whichever track you touched. If you touched both, run both.
 
 - `uv sync` resolves cleanly
 - `uv run ruff check .` reports no errors
-- `uv run pytest` passes (14 tests)
+- `uv run pytest` passes (18 tests: 14 domain + 4 contract)
 
 **Docs** — if you touched anything under `docs/` or `mkdocs.yml`
 

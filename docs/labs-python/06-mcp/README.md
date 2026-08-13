@@ -6,7 +6,8 @@ actually used.
 
 **Time:** ~20 minutes
 
-**Prerequisites:** [Lab 05](../05-sessions/) complete.
+**Prerequisites:** [Lab 05](../05-sessions/) complete, plus internet access for
+the HTTP MCP server.
 
 ## Step 1 — Why MCP
 
@@ -27,18 +28,18 @@ Open
 and find the session configuration:
 
 ```python
-session = await client.create_session(
-    model=model_id,
-    streaming=False,
-    mcp_servers={
-        "microsoft.docs.mcp": {
-            "type": "http",
-            "url": "https://learn.microsoft.com/api/mcp",
-            "tools": ["*"],
-        }
-    },
-    on_permission_request=PermissionHandler.approve_all,
-)
+        session = await client.create_session(
+            model=model_id,
+            streaming=False,
+            mcp_servers={
+                "microsoft.docs.mcp": {
+                    "type": "http",
+                    "url": "https://learn.microsoft.com/api/mcp",
+                    "tools": ["*"],
+                }
+            },
+            on_permission_request=PermissionHandler.approve_all,
+        )
 ```
 
 💡 **Plain dictionaries are the API here.** `MCPServerConfig` is a `TypedDict`
@@ -67,6 +68,12 @@ touching real data.
 ```bash
 cd src/AgentOrchestrator-python
 uv run python -m sdk_labs mcp
+```
+
+Add `--model <id>` to override the model:
+
+```bash
+uv run python -m sdk_labs mcp --model gpt-5-mini
 ```
 
 Verified output:
@@ -113,30 +120,39 @@ The sample subscribes to the events that constitute actual evidence:
 
 - `session.mcp_servers_loaded` — the configuration was accepted
 - `session.mcp_server_status_changed` — the server connection changed state
-- `mcp.tools_list_changed` — the server published its tool list
+- `mcp.tools.list_changed` — the server published its tool list
+- `external_tool.requested` — the assistant requested an external tool
 - `tool.execution_start` / `tool.execution_complete` — a tool actually ran
 
 The critical detail is how a tool is judged to be *MCP*. `tool.execution_start`
 carries an `mcp_server_name`, and only executions where that is set are counted:
 
-```python
-# Only a tool carrying an MCP server name came from MCP.
-# Built-ins such as web_fetch must not count, or an
-# unreachable server still reports success.
-if evt.data.mcp_server_name:
-    mcp_tools.add(tool_name)
+The generated `ToolExecutionStartData` carries `tool_call_id`, `tool_name`,
+`arguments`, `mcp_server_name`, and `mcp_tool_name` among its fields. Only the
+MCP-specific fields prove the tool came from a configured MCP server.
 
-invoked_tools.add(tool_name)
+```python
+                    # Only a tool carrying an MCP server name came from MCP.
+                    # Built-ins such as web_fetch must not count, or an
+                    # unreachable server still reports success.
+                    if evt.data.mcp_server_name:
+                        mcp_tools.add(tool_name)
+
+                    invoked_tools.add(tool_name)
 ```
 
 If nothing MCP ran, the sample says so and exits non-zero:
 
 ```python
-if not mcp_tools:
-    print("⚠️  No MCP tool was invoked.")
-    if invoked_tools:
-        print(f"    The model used non-MCP tool(s) instead: {', '.join(sorted(invoked_tools))}")
-    return 1
+    if not mcp_tools:
+        print()
+        print("⚠️  No MCP tool was invoked.")
+        if invoked_tools:
+            print(f"    The model used non-MCP tool(s) instead: {', '.join(sorted(invoked_tools))}")
+        print("    The answer may have come from the model's own knowledge or a built-in")
+        print("    tool rather than Microsoft Learn. Check the server is reachable and that")
+        print("    its tools were loaded — look for the [mcp] lines above.")
+        return 1
 ```
 
 ⚠️ **Counting the wrong thing is worse than not checking.** An earlier version
@@ -174,6 +190,10 @@ same protocol.
 That is the point of MCP: one protocol, many clients. The same tool server can
 serve an editor, a CLI, a test harness, or an application agent.
 
+Keep the two configurations separate in your mental model: editor MCP settings
+help your developer tools, while `mcp_servers=` changes what this SDK session
+can offer to the model.
+
 ## ⚠️ Traps
 
 - **`tools` is mandatory** in both config shapes; use `["*"]` for everything
@@ -197,6 +217,8 @@ serve an editor, a CLI, a test harness, or an application agent.
    "tools": ["*"]}` — against any local MCP server you have
 5. Explore `mcp_oauth_token_storage`, `github_mcp_tool_config`, and
    `enable_mcp_apps` for authenticated or richer MCP scenarios
+6. Replace `PermissionHandler.approve_all` with a handler that logs and rejects
+   tools you do not want the model to use
 
 ## ✅ Checkpoint
 

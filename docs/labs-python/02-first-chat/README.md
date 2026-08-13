@@ -1,8 +1,8 @@
 # Lab 02 — Your first streaming chat
 
-**Goal:** follow a single prompt all the way through the Python stack — browser
-→ FastAPI → Copilot SDK → model → back — and understand why model discovery is
-runtime data rather than a hardcoded list.
+**Goal:** follow a single prompt all the way through the Python stack — HTTP
+client → FastAPI → Copilot SDK → model → back — and understand why model
+discovery is runtime data rather than a hardcoded list.
 
 **Time:** ~20 minutes
 
@@ -82,7 +82,7 @@ The route then writes the `data: [DONE]` terminator.
 many SSE clients will keep buffering because they never see a complete event.
 
 Now look at the `except` block. Errors are written **into the stream** as
-`data: {"error":"..."}`. Once an SSE response has started, the status line and
+`data: {"error": "..."}`. Once an SSE response has started, the status line and
 headers are already gone, so an HTTP 500 is no longer useful to the client.
 
 ## Step 4 — Find the SDK integration
@@ -106,10 +106,23 @@ Then it subscribes to events:
 
 ```python
 def on_event(evt: SessionEvent) -> None:
+    # Unlike .NET, every event arrives as one SessionEvent
+    # carrying a `type` enum and a `data` payload, so this
+    # dispatches on `evt.type` rather than on subclasses.
     if evt.type is SessionEventType.ASSISTANT_MESSAGE_DELTA:
         queue.put_nowait(evt.data.delta_content or "")
+    elif evt.type is SessionEventType.ASSISTANT_MESSAGE:
+        logger.info(
+            "Assistant response complete: %d chars",
+            len(evt.data.content or ""),
+        )
     elif evt.type is SessionEventType.SESSION_IDLE:
-        done.set_result(None)
+        if not done.done():
+            done.set_result(None)
+    elif evt.type is SessionEventType.SESSION_ERROR:
+        logger.error("Session error: %s", evt.data.message)
+        if not done.done():
+            done.set_exception(RuntimeError(evt.data.message))
 ```
 
 The queue is the bridge between the SDK's callback style and FastAPI's async
@@ -224,7 +237,12 @@ arrives.
 
 Back in the browser at <http://localhost:5060>, choose a model, ask
 *"Name three retail KPIs. One line each."*, and watch the message render chunk
-by chunk. If the stream fails, inspect the `data: {"error":"..."}` frame.
+by chunk. If the stream fails, inspect the `data: {"error": "..."}` frame.
+
+⚠️ The committed static UI currently sends `{ message: prompt, ... }` from
+`app/static/app.js`. Because the API model expects `prompt`, the browser path
+streams a response to an empty prompt until that field is corrected. The `curl`
+examples above use the correct request body.
 
 ## ✅ Checkpoint
 
