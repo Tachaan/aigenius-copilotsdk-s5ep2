@@ -43,7 +43,7 @@
       "label": "Blazor UI",
       "onAutoForward": "notify"
     },
-    "5060": {
+    "5070": {
       "label": "Python API + UI",
       "onAutoForward": "notify"
     }

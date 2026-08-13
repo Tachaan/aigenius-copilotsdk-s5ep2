@@ -15,4 +15,4 @@ fi
 
 echo "==> Ready."
 echo "    .NET   : dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api --urls http://localhost:5050"
-echo "    Python : cd src/AgentOrchestrator-python && uv run uvicorn app.main:app --port 5060"
+echo "    Python : cd src/AgentOrchestrator-python && uv run uvicorn app.main:app --port 5070"

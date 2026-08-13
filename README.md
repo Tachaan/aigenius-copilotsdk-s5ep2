@@ -102,7 +102,7 @@ Both tracks teach identical SDK concepts and expose an identical HTTP contract.
 | Database | SQLite + EF Core | SQLite + SQLModel |
 | Tests | xUnit (14) | pytest (14) |
 | Lint | Roslyn analysers | Ruff |
-| Ports | 5050 API / 5051 UI | 5060 (API + UI) |
+| Ports | 5050 API / 5051 UI | 5070 (API + UI) |
 
 | Shared | Technology |
 |--------|------------|
@@ -141,10 +141,10 @@ cd src/AgentOrchestrator-python
 uv sync
 
 # One server for both the API and the UI
-uv run uvicorn app.main:app --port 5060
+uv run uvicorn app.main:app --port 5070
 ```
 
-Then open <http://localhost:5060>.
+Then open <http://localhost:5070>.
 
 The ports differ deliberately, so both stacks can run at the same time.
 

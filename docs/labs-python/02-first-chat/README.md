@@ -7,7 +7,7 @@ discovery is runtime data rather than a hardcoded list.
 **Time:** ~20 minutes
 
 **Prerequisites:** [Lab 01](../01-setup/) complete, with the FastAPI server
-running on port 5060.
+running on port 5070.
 
 ## Step 1 — Start or confirm the server
 
@@ -15,16 +15,16 @@ From the repository root:
 
 ```bash
 cd src/AgentOrchestrator-python
-uv run uvicorn app.main:app --port 5060
+uv run uvicorn app.main:app --port 5070
 ```
 
-Open <http://localhost:5060> if you want to watch the UI later. The same
+Open <http://localhost:5070> if you want to watch the UI later. The same
 process serves both the API and static UI.
 
 Confirm the API is healthy:
 
 ```bash
-curl http://localhost:5060/api/chat/health
+curl http://localhost:5070/api/chat/health
 ```
 
 Expected:
@@ -41,7 +41,7 @@ signed-in Copilot account what it can use.
 Send a prompt and observe the raw Server-Sent Events:
 
 ```bash
-curl -sN -X POST http://localhost:5060/api/chat/stream \
+curl -sN -X POST http://localhost:5070/api/chat/stream \
     -H 'Content-Type: application/json' \
     -d '{"prompt":"Reply with exactly: streaming works","model":"claude-haiku-4.5"}'
 ```
@@ -161,7 +161,7 @@ uses this pattern to wait until `SESSION_IDLE` or raise on `SESSION_ERROR`.
 ## Step 6 — Ask the API which models you have
 
 ```bash
-curl -s http://localhost:5060/api/chat/models | jq -r '.[].id'
+curl -s http://localhost:5070/api/chat/models | jq -r '.[].id'
 ```
 
 `/api/chat/models` returns a JSON **list** of objects shaped like:
@@ -184,10 +184,10 @@ static catalogue so the UI still has choices.
 Pick a model id from your live list:
 
 ```bash
-MODEL=$(curl -s http://localhost:5060/api/chat/models | jq -r '.[0].id')
+MODEL=$(curl -s http://localhost:5070/api/chat/models | jq -r '.[0].id')
 echo "Using $MODEL"
 
-curl -sN -X POST http://localhost:5060/api/chat/stream \
+curl -sN -X POST http://localhost:5070/api/chat/stream \
   -H 'Content-Type: application/json' \
   -d "{\"prompt\":\"In one sentence, what is customer churn?\",\"model\":\"$MODEL\"}"
 ```
@@ -206,7 +206,7 @@ so it supplements the session's built-in instructions rather than replacing
 them.
 
 ```bash
-curl -sN -X POST http://localhost:5060/api/chat/stream \
+curl -sN -X POST http://localhost:5070/api/chat/stream \
   -H 'Content-Type: application/json' \
   -d '{
     "prompt":"Which segment has the lowest retention?",
@@ -235,14 +235,26 @@ arrives.
 
 ## Step 10 — Try the UI path
 
-Back in the browser at <http://localhost:5060>, choose a model, ask
+Back in the browser at <http://localhost:5070>, choose a model, ask
 *"Name three retail KPIs. One line each."*, and watch the message render chunk
 by chunk. If the stream fails, inspect the `data: {"error": "..."}` frame.
 
-⚠️ The committed static UI currently sends `{ message: prompt, ... }` from
-`app/static/app.js`. Because the API model expects `prompt`, the browser path
-streams a response to an empty prompt until that field is corrected. The `curl`
-examples above use the correct request body.
+The finished exchange looks like this — the same SSE frames you read with `curl`
+above, parsed by `app.js` and rendered as Markdown:
+
+![The chat UI after asking "Name three retail KPIs. One line each." The
+assistant has replied with a numbered list: Conversion Rate, Average Order Value
+(AOV), and Customer Retention Rate, each with a one-line
+definition.](../../screenshots/python-chat-ui-response.png)
+
+💡 Mid-stream the assistant bubble shows an animated typing indicator; it is
+replaced by the rendered Markdown once the `[DONE]` sentinel arrives.
+
+⚠️ The static UI posts `{ prompt, model }` from `app/static/app.js`, matching
+`ChatRequest`. An earlier revision sent `message` instead; because Pydantic
+ignores unknown keys rather than rejecting them, the browser streamed a reply to
+an empty prompt and nothing failed loudly. `tests/test_chat_contract.py` now
+asserts the field `app.js` sends is the field the API reads.
 
 ## ✅ Checkpoint
 

@@ -8,7 +8,13 @@ The Python UI is static HTML and vanilla JavaScript under [`app/static/index.htm
 
 There is no build step and no WebAssembly runtime download. The trade-off is no component model, compile-time UI type safety, or generated client code.
 
-One server on port **5060** serves both the API and the UI. That differs from the .NET track, where the API runs on **5050** and the Blazor UI runs on **5051**. Same-origin browser requests mean there is no CORS hop for the normal UI path.
+One server on port **5070** serves both the API and the UI. That differs from the .NET track, where the API runs on **5050** and the Blazor UI runs on **5051**. Same-origin browser requests mean there is no CORS hop for the normal UI path.
+
+⚠️ Port choice is not arbitrary. Chrome, Edge, and Firefox block port **5060** (SIP) outright, so a UI served there fails with `ERR_UNSAFE_PORT` even though `curl` succeeds. Avoid 5060, 5061, and 6000 when picking a port for anything a browser must load.
+
+Empty, the page shows the welcome heading and five suggested retail questions:
+
+![The Retail Analytics Assistant UI in its empty state: header with the model dropdown, Clear button and theme toggle, a centred welcome heading, five suggestion chips, and the message input.](../screenshots/python-chat-ui-empty.png)
 
 ## FastAPI static mount
 
@@ -147,7 +153,11 @@ This is the direct analogue of the Blazor client's render timer. A fast model ca
 
 ## Input, suggestions, and theme
 
-The input sends on button click or Enter without Shift, disables while streaming, and restores focus after the response completes. Suggestion chips use the same send path as typed input, with strings such as `Who are our highest spending customers?` and `Predict which segment customer C002 belongs to`; because of the request-body mismatch above, those strings are not delivered as the API prompt until the field name is corrected. The theme button toggles dark/light mode and switches the active highlight.js stylesheet.
+The input sends on button click or Enter without Shift, disables while streaming, and restores focus after the response completes. Suggestion chips use the same send path as typed input, with strings such as `Who are our highest spending customers?` and `Predict which segment customer C002 belongs to`. The theme button toggles dark/light mode and switches the active highlight.js stylesheet.
+
+A completed exchange, rendered through the path described above:
+
+![The chat UI showing a completed exchange: the user asked "Name three retail KPIs. One line each." and the assistant replied with a numbered Markdown list of Conversion Rate, Average Order Value (AOV), and Customer Retention Rate.](../screenshots/python-chat-ui-response.png)
 
 ## Related
 

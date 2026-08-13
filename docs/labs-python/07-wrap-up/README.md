@@ -73,7 +73,7 @@ practice, but they are not required for the SDK sequence.
 Stop the service (`Ctrl+C` in the terminal), or if it was detached:
 
 ```bash
-lsof -ti:5060        # prints a PID if still listening
+lsof -ti:5070        # prints a PID if still listening
 kill <PID>
 ```
 

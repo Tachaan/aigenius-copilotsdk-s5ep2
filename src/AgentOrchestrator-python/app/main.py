@@ -1,7 +1,7 @@
 """FastAPI application entry point.
 
 Mirrors ``AgentHQDemo.Api/Program.cs``. One difference: this single app serves
-both the API and the chat UI on port 5060, where the .NET version splits them
+both the API and the chat UI on port 5070, where the .NET version splits them
 across the API (5050) and a Blazor WebAssembly host (5051).
 """
 

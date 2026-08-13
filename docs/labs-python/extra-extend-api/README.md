@@ -216,16 +216,29 @@ Only `app/models.py`, `app/services/retail_analytics.py`,
 ## Step 8 — Verify it live
 
 ```bash
-uv run uvicorn app.main:app --port 5060
+uv run uvicorn app.main:app --port 5070
 ```
 
 ```bash
-curl -s http://localhost:5060/api/segments/summary | jq
-curl -s http://localhost:5060/api/segments | jq 'length'          # 4
-curl -s http://localhost:5060/api/segments/predict/C003 | jq -r .predictedSegment
+curl -s http://localhost:5070/api/segments/summary | jq
+curl -s http://localhost:5070/api/segments | jq 'length'          # 4
+curl -s http://localhost:5070/api/segments/predict/C003 | jq -r .predictedSegment
 ```
 
 Confirm the summary numbers match the table above.
+
+Because FastAPI derives OpenAPI from your type hints, the new route also appears
+in the interactive docs at <http://localhost:5070/docs> with no extra work —
+the response model you declared becomes the documented schema:
+
+![FastAPI's Swagger UI for the AgentHQDemo API (Python), listing the chat
+endpoints (GET /api/chat/models, POST /api/chat/stream, POST /api/chat, GET
+/api/chat/health), the transactions endpoints, and the start of the segments
+group.](../../screenshots/python-swagger-ui.png)
+
+💡 The .NET track exposes the same idea through its OpenAPI document. The
+difference is that here the schema comes from Pydantic models and Python type
+hints rather than C# attributes.
 
 ## Step 9 — Re-check the HTTP contract
 
@@ -236,7 +249,7 @@ FastAPI validation differs in one visible way: invalid input returns **HTTP
 Real verified invalid-input output:
 
 ```bash
-$ curl -X POST http://localhost:5060/api/transactions \
+$ curl -X POST http://localhost:5070/api/transactions \
     -H 'Content-Type: application/json' \
     -d '{"customerId":"C777","amount":-5,"productCategory":"Grocery","storeId":"S001"}'
 {"detail":[{"type":"greater_than_equal","loc":["body","amount"],"msg":"Input should be greater than or equal to 0.01","input":-5,"ctx":{"ge":0.01}}]}
@@ -251,8 +264,8 @@ A valid create returns **HTTP 201**. One verified run returned:
 Cleanup and not-found behaviour:
 
 ```bash
-curl -X DELETE http://localhost:5060/api/transactions/11   # HTTP 204, no body
-curl -s http://localhost:5060/api/transactions/999
+curl -X DELETE http://localhost:5070/api/transactions/11   # HTTP 204, no body
+curl -s http://localhost:5070/api/transactions/999
 ```
 
 ```json
@@ -275,7 +288,7 @@ to list the new endpoint — docs drift is a review finding too.
 - [x] Tests cover the weighted average and the empty case
 - [x] All original 18 tests still pass
 - [x] The four intentional smells are untouched
-- [x] Endpoint verified against the running API on port 5060
+- [x] Endpoint verified against the running API on port 5070
 - [x] Existing validation, create, delete, and 404 behaviour still match expectations
 
 ## 💡 Extra credit

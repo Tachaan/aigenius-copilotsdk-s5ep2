@@ -3,7 +3,7 @@
 Hands-on exercises for the **AI Genius S5E2 — Agent HQ Demo**, focused on the
 **GitHub Copilot SDK**. This is the **Python track**: pick **one** track —
 Python or [.NET](../labs/) — and work through it in order. Both stacks can run
-at once because Python uses **5060** and .NET uses **5050/5051**.
+at once because Python uses **5070** and .NET uses **5050/5051**.
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ Core Python commands, run from the app directory:
 ```bash
 cd src/AgentOrchestrator-python
 uv sync
-uv run uvicorn app.main:app --port 5060   # API + UI on one port
+uv run uvicorn app.main:app --port 5070   # API + UI on one port
 uv run pytest                             # 18 tests
 uv run ruff check .
 ```

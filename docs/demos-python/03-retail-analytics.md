@@ -113,13 +113,13 @@ The returned `topFeatures` array explains the rule inputs, such as total spend, 
 Real verified outputs:
 
 ```bash
-$ curl http://localhost:5060/api/segments/predict/C003
+$ curl http://localhost:5070/api/segments/predict/C003
 {"customerId":"C003","predictedSegment":"High Value","confidence":0.89,"topFeatures":["high_total_spend","multi_category","total_1700"]}
 
-$ curl http://localhost:5060/api/segments/predict/C999
+$ curl http://localhost:5070/api/segments/predict/C999
 {"customerId":"C999","predictedSegment":"New","confidence":0.5,"topFeatures":["no_history"]}
 
-$ curl http://localhost:5060/api/transactions/1
+$ curl http://localhost:5070/api/transactions/1
 {"productCategory":"Grocery","customerId":"C001","amount":245.5,"isFlagged":false,"storeId":"S001","id":1,"timestamp":"2026-07-14T03:58:08.543810"}
 ```
 

@@ -45,7 +45,7 @@ At that point it cannot reliably switch to an HTTP error status. The status code
 
 ## Deliberate .NET compatibility
 
-The wire contract matches the .NET API: `data: {...}\n\n` frames terminated by `data: [DONE]\n\n`. JSON whitespace can differ between Python's `json.dumps` and .NET's `JsonSerializer`, but the `content`/`error` payload shape and sentinel are the same. The Python page changes the port to **5060**, because FastAPI serves both the API and UI from one process.
+The wire contract matches the .NET API: `data: {...}\n\n` frames terminated by `data: [DONE]\n\n`. JSON whitespace can differ between Python's `json.dumps` and .NET's `JsonSerializer`, but the `content`/`error` payload shape and sentinel are the same. The Python page changes the port to **5070**, because FastAPI serves both the API and UI from one process.
 
 ## Request body aliases
 
@@ -91,10 +91,10 @@ Real health output:
 
 ## Try it with curl
 
-Point the request at port 5060. Use `curl -sN` so curl does not buffer the response:
+Point the request at port 5070. Use `curl -sN` so curl does not buffer the response:
 
 ```bash
-$ curl -sN -X POST http://localhost:5060/api/chat/stream \
+$ curl -sN -X POST http://localhost:5070/api/chat/stream \
     -H 'Content-Type: application/json' \
     -d '{"prompt":"Reply with exactly: streaming works","model":"claude-haiku-4.5"}'
 

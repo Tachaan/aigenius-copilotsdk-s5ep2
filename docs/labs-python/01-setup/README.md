@@ -46,7 +46,7 @@ same deliberate code smells, and the same Copilot SDK learning path.
 
 ⚠️ **Pick one track.** You can work Python or .NET without installing both. They
 can also run simultaneously because the ports do not overlap: .NET uses 5050
-and 5051, while Python uses **5060** for both API and UI.
+and 5051, while Python uses **5070** for both API and UI.
 
 ## Step 2 — Restore dependencies
 
@@ -109,30 +109,40 @@ The linter configuration lives in `pyproject.toml`.
 In your first terminal:
 
 ```bash
-uv run uvicorn app.main:app --port 5060
+uv run uvicorn app.main:app --port 5070
 ```
 
-Open <http://localhost:5060>.
+Open <http://localhost:5070>. You should see the empty chat UI:
+
+![The Retail Analytics Assistant chat UI in its empty state: a dark header with
+the model dropdown set to Claude Haiku 4.5, a welcome heading, five suggested
+retail questions, and the message input at the
+bottom.](../../screenshots/python-chat-ui-empty.png)
 
 ⚠️ Unlike the .NET track, there is **no separate UI server**. FastAPI serves the
 REST API, chat stream, static HTML, and JavaScript from the same process on port
-5060.
+5070.
+
+💡 **Why 5070 and not 5060?** Chrome, Edge, and Firefox refuse to open port 5060
+— it is the SIP port and sits on the browsers' blocked-port list, so the page
+fails with `ERR_UNSAFE_PORT` even though `curl` works fine. If you change the
+port, avoid 5060, 5061, and 6000.
 
 For edit-refresh development, add `--reload`:
 
 ```bash
-uv run uvicorn app.main:app --port 5060 --reload
+uv run uvicorn app.main:app --port 5070 --reload
 ```
 
 ⚠️ **Port already in use?** A server from an earlier run may still be alive and
-serve stale code. Stop the process listening on 5060 before restarting.
+serve stale code. Stop the process listening on 5070 before restarting.
 
 ## Step 6 — Verify the health endpoint
 
 In a second terminal, still from `src/AgentOrchestrator-python`:
 
 ```bash
-curl http://localhost:5060/api/chat/health
+curl http://localhost:5070/api/chat/health
 ```
 
 Expected:
@@ -153,9 +163,9 @@ The Python API keeps the same camelCase JSON contract as .NET. That means
 Run:
 
 ```bash
-curl -s http://localhost:5060/api/transactions | jq 'length'
-curl -s http://localhost:5060/api/segments | jq 'length'
-curl http://localhost:5060/api/segments/predict/C003
+curl -s http://localhost:5070/api/transactions | jq 'length'
+curl -s http://localhost:5070/api/segments | jq 'length'
+curl http://localhost:5070/api/segments/predict/C003
 ```
 
 Expected facts:
@@ -178,7 +188,7 @@ This proves the Copilot SDK is wired up, the CLI is signed in, and the API can
 stream model output back to the browser or terminal.
 
 ```bash
-curl -sN -X POST http://localhost:5060/api/chat/stream \
+curl -sN -X POST http://localhost:5070/api/chat/stream \
   -H 'Content-Type: application/json' \
   -d '{"prompt":"Reply with exactly: streaming works","model":"claude-haiku-4.5"}'
 ```
@@ -230,7 +240,7 @@ Later labs use `uv run python -m sdk_labs events`,
 
 ## Step 10 — Try the UI
 
-Back in the browser at <http://localhost:5060>, open the **Model** dropdown and
+Back in the browser at <http://localhost:5070>, open the **Model** dropdown and
 send a message to watch the SSE rendering path.
 
 💡 The request body uses `prompt`, matching `ChatRequest`. An earlier revision
@@ -245,7 +255,7 @@ You should now have:
 - [x] Python dependencies restored with `uv sync`
 - [x] 18/18 tests passing
 - [x] Ruff passing
-- [x] API and UI running together on port 5060
+- [x] API and UI running together on port 5070
 - [x] REST endpoints returning seeded camelCase data
 - [x] A live streamed response from a real model
 - [x] The SDK lab samples reachable through `uv run python -m sdk_labs ...`
@@ -255,7 +265,7 @@ You should now have:
 Query the model endpoint and count what your account offers:
 
 ```bash
-curl -s http://localhost:5060/api/chat/models | jq 'length'
+curl -s http://localhost:5070/api/chat/models | jq 'length'
 ```
 
 Then inspect the fallback catalogue in

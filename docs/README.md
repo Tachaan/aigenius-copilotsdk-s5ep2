@@ -12,7 +12,7 @@ SDK concepts and expose an identical HTTP contract, so **work one, not both**.
 | **.NET** | .NET 10, ASP.NET Core, Blazor WebAssembly | [labs/](labs/) | [demos/](demos/) |
 | **Python** | Python 3.11+, FastAPI, static HTML + JS | [labs-python/](labs-python/) | [demos-python/](demos-python/) |
 
-The ports differ (5050/5051 vs 5060), so both stacks can run side by side if you
+The ports differ (5050/5051 vs 5070), so both stacks can run side by side if you
 want to compare them.
 
 ## 📚 Sections

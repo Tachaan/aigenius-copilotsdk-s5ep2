@@ -14,7 +14,7 @@ Work either track — you do not need both.
 | UI | Blazor WebAssembly | Static HTML + vanilla JS |
 | Tests | xUnit (14) | pytest (14) |
 | Packaging | `dotnet` | `uv` |
-| Ports | 5050 API + 5051 UI | 5060 (API and UI together) |
+| Ports | 5050 API + 5051 UI | 5070 (API and UI together) |
 
 Both stacks can run at the same time — the ports do not overlap.
 
@@ -33,15 +33,15 @@ Both stacks can run at the same time — the ports do not overlap.
 cd src/AgentOrchestrator-python
 
 uv sync                                        # install dependencies
-uv run uvicorn app.main:app --port 5060        # start API + UI
+uv run uvicorn app.main:app --port 5070        # start API + UI
 ```
 
-Open <http://localhost:5060>. The database is created and seeded on first run.
+Open <http://localhost:5070>. The database is created and seeded on first run.
 
 `--reload` gives you hot reload while editing:
 
 ```bash
-uv run uvicorn app.main:app --port 5060 --reload
+uv run uvicorn app.main:app --port 5070 --reload
 ```
 
 ## Tests and linting
@@ -97,8 +97,8 @@ either stack.
 JSON is camelCase (`customerId`, not `customer_id`) to match the .NET contract.
 
 ```bash
-curl http://localhost:5060/api/transactions
-curl http://localhost:5060/api/segments/predict/C003
+curl http://localhost:5070/api/transactions
+curl http://localhost:5070/api/segments/predict/C003
 ```
 
 ## Layout

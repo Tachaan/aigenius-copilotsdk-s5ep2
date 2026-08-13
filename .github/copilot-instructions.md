@@ -196,11 +196,11 @@ uv run ruff check .
 # Run tests
 uv run pytest
 
-# Run the API and UI together on 5060
-uv run uvicorn app.main:app --port 5060
+# Run the API and UI together on 5070
+uv run uvicorn app.main:app --port 5070
 
 # Watch mode for development
-uv run uvicorn app.main:app --port 5060 --reload
+uv run uvicorn app.main:app --port 5070 --reload
 
 # Run a lab sample
 uv run python -m sdk_labs tools|events|sessions|mcp|permissions
@@ -217,7 +217,7 @@ mkdocs build --strict
 
 If someone asks "How do I run this?" or "How does this work?":
 1. Ask which track they want — .NET or Python — then point at the matching
-   quick start. Both stacks can run at once; the ports differ (5050/5051 vs 5060)
+   quick start. Both stacks can run at once; the ports differ (5050/5051 vs 5070)
 2. Point them to this file for conventions
 3. Explain the multi-agent architecture
 4. Reference the custom agents in `.github/agents/`
