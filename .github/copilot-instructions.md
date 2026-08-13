@@ -4,29 +4,46 @@ This file provides context and coding guidelines for **all AI assistants** worki
 
 ## Project Overview
 
-This is a **.NET 10 LTS Retail Transaction Analytics** app demonstrating modern AI-assisted development:
+This is a **Retail Transaction Analytics** app demonstrating modern AI-assisted development:
 - Retail transactions, customer segmentation, and segment prediction
 - Multi-agent workflows (Copilot, Claude, Codex working together)
 - Autonomous coding agents that plan, implement, and iterate
 - Enterprise governance with audit trails and policy controls
-- SQLite database with EF Core for zero-config data persistence
+- SQLite for zero-config data persistence
+
+It is implemented **twice** — once in .NET 10 LTS and once in Python 3.11+ —
+so learners can follow whichever track they prefer. The two are behavioural
+mirrors: same endpoints, same camelCase JSON contract, same seed data, same
+14 domain tests, same four intentional code smells. Change behaviour in one and
+you must change it in the other.
 
 ## Repository Structure
 
 ```
 src/
-├── AgentHQDemo.Api/          # ASP.NET Core Web API
-│   ├── Controllers/          # Chat, Transactions, Segments endpoints
-│   ├── Data/                 # EF Core DbContext (SQLite)
-│   ├── Services/             # RetailAnalyticsService, CopilotChatService
-│   ├── Models/               # Transaction, CustomerSegment, SegmentPrediction
-│   └── wwwroot/              # Chat UI
-tests/
-└── AgentHQDemo.Tests/        # Unit and integration tests
+├── AgentOrchestrator/              # .NET track
+│   ├── AgentHQDemo.Api/            # ASP.NET Core Web API
+│   │   ├── Controllers/            # Chat, Transactions, Segments endpoints
+│   │   ├── Data/                   # EF Core DbContext (SQLite)
+│   │   ├── Services/               # RetailAnalyticsService, CopilotChatService
+│   │   └── Models/                 # Transaction, CustomerSegment, SegmentPrediction
+│   ├── AgentHQDemo.Web/            # Blazor WebAssembly UI
+│   ├── samples/SdkLabs/            # Runnable lab samples
+│   └── tests/AgentHQDemo.Tests/    # xUnit tests (14)
+└── AgentOrchestrator-python/       # Python track
+    ├── app/
+    │   ├── routers/                # chat, transactions, segments
+    │   ├── services/               # retail_analytics, copilot_chat
+    │   ├── models.py               # SQLModel entities
+    │   ├── database.py             # engine + session dependency
+    │   ├── main.py                 # FastAPI app, lifespan seed, static mount
+    │   └── static/                 # HTML + vanilla JS chat UI
+    ├── sdk_labs/                   # Runnable lab samples
+    └── tests/                      # pytest tests (14)
 .github/
-├── agents/                   # Custom agent definitions
-├── workflows/                # CI/CD pipelines
-└── copilot-instructions.md   # This file (teaches ALL agents)
+├── agents/                         # Custom agent definitions
+├── workflows/                      # CI/CD pipelines
+└── copilot-instructions.md         # This file (teaches ALL agents)
 ```
 
 ## Coding Standards (All Agents Should Follow)
@@ -54,6 +71,35 @@ tests/
 - Use `Result<T>` pattern over exceptions for expected failures
 - Log structured data with `ILogger<T>`
 - Return `ProblemDetails` for API errors
+
+### Python Conventions
+- Target **Python 3.11+**; manage the project with [uv](https://docs.astral.sh/uv/)
+- Lint and format with **Ruff** — `uv run ruff check .`
+- Full type hints on every public function; prefer `X | None` over `Optional[X]`
+- **SQLModel** for entities. Note the trap: SQLModel skips validation on
+  `table=True` classes, so constrained fields belong on a shared base class
+  (`TransactionBase`) that both the table and the request model inherit
+- Keep the wire format **camelCase** via Pydantic
+  `ConfigDict(alias_generator=to_camel, populate_by_name=True)` — this preserves
+  the .NET HTTP contract so the same `curl` works against either stack
+- `async def` for all I/O; never block the event loop
+- Dependencies via FastAPI `Depends`, routers as `APIRouter` in `app/routers/`
+- Mount `StaticFiles` **last** in `app/main.py` so it does not shadow `/api`
+- Private module-level names use a leading underscore
+
+### Python Copilot SDK Notes
+- Package `github-copilot-sdk`, import root `copilot`
+- `CopilotClient()` supports `async with`; otherwise `await client.start()`
+- `await client.create_session(...)` is keyword-only
+- `session.on(handler)` returns an unsubscribe callable — events are
+  **push-only**, so bridge them into an `asyncio.Queue` to expose a stream
+  (the analogue of C#'s `Channel`)
+- `SessionEvent` is a **single dataclass** — branch on `evt.type`
+  (a `SessionEventType` enum), not on subclasses as in C#
+- ⚠️ Custom tools **require** `on_permission_request` or the call is denied.
+  The .NET SDK needs no handler. Pass `PermissionHandler.approve_all` in samples
+- No `GHCP001` suppression is needed — `copilot.rpc` decisions are not gated
+- `PermissionInvocation` is imported from `copilot.session`, not the package root
 
 ## Multi-Agent Collaboration
 
@@ -109,14 +155,22 @@ var session = await client.CreateSessionAsync(new SessionConfig
 ## Testing Requirements
 
 - Unit tests required for all agent logic
-- Mock `CopilotClient` for unit tests
 - Integration tests for full SDK flow (requires auth)
-- Use `FluentAssertions` for readable assertions
 - Test both success and failure paths
+- Keep the two suites at parity — 14 domain tests each. Python adds 4 contract
+  tests (`test_chat_contract.py`) guarding the static UI's request shape, which
+  .NET does not need because its Blazor client is strongly typed.
+
+**.NET** — mock `CopilotClient`; use `FluentAssertions` for readable assertions.
+
+**Python** — pytest with an in-memory SQLite engine and `StaticPool` (see
+`tests/conftest.py`); use `pytest.raises` for failure paths.
 
 ## Common Commands
 
 ```bash
+# --- .NET track ---
+
 # Build the solution
 dotnet build src/AgentOrchestrator/AgentHQDemo.slnx
 
@@ -130,13 +184,44 @@ dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api
 dotnet watch --project src/AgentOrchestrator/AgentHQDemo.Api
 ```
 
+```bash
+# --- Python track (from src/AgentOrchestrator-python) ---
+
+# Install dependencies
+uv sync
+
+# Lint
+uv run ruff check .
+
+# Run tests
+uv run pytest
+
+# Run the API and UI together on 5070
+uv run uvicorn app.main:app --port 5070
+
+# Watch mode for development
+uv run uvicorn app.main:app --port 5070 --reload
+
+# Run a lab sample
+uv run python -m sdk_labs tools|events|sessions|mcp|permissions
+```
+
+```bash
+# --- Docs ---
+python3 scripts/rewrite_doc_links.py --check
+python3 scripts/check_mermaid.py
+mkdocs build --strict
+```
+
 ## When Asked About This Project
 
 If someone asks "How do I run this?" or "How does this work?":
-1. Point them to this file for conventions
-2. Explain the multi-agent architecture
-3. Reference the custom agents in `.github/agents/`
-4. Mention the demo showcases autonomous AI development
+1. Ask which track they want — .NET or Python — then point at the matching
+   quick start. Both stacks can run at once; the ports differ (5050/5051 vs 5070)
+2. Point them to this file for conventions
+3. Explain the multi-agent architecture
+4. Reference the custom agents in `.github/agents/`
+5. Mention the demo showcases autonomous AI development
 
 ## Security Considerations
 

@@ -58,3 +58,32 @@ jobs:
       - name: Check formatting
         run: dotnet format src/AgentOrchestrator/AgentHQDemo.slnx --verify-no-changes --verbosity diagnostic
         continue-on-error: true
+
+  python:
+    name: Python (build, lint, test)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+
+    defaults:
+      run:
+        working-directory: src/AgentOrchestrator-python
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: src/AgentOrchestrator-python/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Test
+        run: uv run pytest -q

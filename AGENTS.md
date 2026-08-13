@@ -36,7 +36,20 @@ This repository is demo content for the **AI Genius S5E2** session. It should:
 
 - Provide clear, runnable content for session attendees
 - Support self-guided learning for people working through it later
-- Stay reproducible — `dotnet build` and `dotnet test` on `src/AgentOrchestrator/AgentHQDemo.slnx` must pass from a clean clone
+- Stay reproducible — both tracks must pass from a clean clone:
+  - .NET: `dotnet build` and `dotnet test` on `src/AgentOrchestrator/AgentHQDemo.slnx`
+  - Python: `uv sync`, `uv run ruff check .`, and `uv run pytest` in `src/AgentOrchestrator-python`
+
+### Two implementations, one lesson
+
+The same retail analytics app exists twice — `src/AgentOrchestrator/` (.NET) and
+`src/AgentOrchestrator-python/` (Python). They deliberately mirror each other:
+same endpoints, same camelCase JSON contract, same seed data, the same 14 domain
+tests, and the same four intentional code smells.
+
+**When you change behaviour in one, change it in the other**, or the labs drift
+apart. Purely idiomatic changes (a C#-only refactor, a Python-only lint fix) do
+not need mirroring.
 
 ### What NOT to modify without permission
 
@@ -57,10 +70,12 @@ This repo **deliberately** contains code issues used to demonstrate code
 review and static analysis. See *Security Notes* in the [README](README.md).
 **Do not "fix" these without checking first** — they are the demo:
 
-- N+1 query in `GetTransactionsWithSegmentsAsync`
-- Missing null check in `GetTransactionAsync`
-- No input validation in `AddTransactionAsync`
-- Hardcoded threshold in `PredictSegmentAsync`
+| Flaw | .NET — `RetailAnalyticsService.cs` | Python — `app/services/retail_analytics.py` |
+|:-----|:-----------------------------------|:--------------------------------------------|
+| N+1 query | `GetTransactionsWithSegmentsAsync` | `get_transactions_with_segments` |
+| Missing null check | `GetTransactionAsync` | `get_transaction` |
+| No input validation | `AddTransactionAsync` | `add_transaction` |
+| Hardcoded threshold | `PredictSegmentAsync` | `predict_segment` |
 
 ### Issue Management
 
@@ -80,7 +95,28 @@ wants to file an issue:
 
 ## ✅ Before You Push
 
+Run the checks for whichever track you touched. If you touched both, run both.
+
+**.NET**
+
 - `dotnet build src/AgentOrchestrator/AgentHQDemo.slnx` succeeds with no warnings
 - `dotnet test src/AgentOrchestrator/AgentHQDemo.slnx` passes (14 tests)
+
+**Python** — from `src/AgentOrchestrator-python`
+
+- `uv sync` resolves cleanly
+- `uv run ruff check .` reports no errors
+- `uv run pytest` passes (18 tests: 14 domain + 4 contract)
+
+**Docs** — if you touched anything under `docs/` or `mkdocs.yml`
+
+- `python3 scripts/rewrite_doc_links.py --check` passes — every
+  `blob/main` link must point at a file that actually exists
+- `python3 scripts/check_mermaid.py` passes
+- `mkdocs build --strict` succeeds
+- New pages are wired into the `nav:` block in `mkdocs.yml`
+
+**Always**
+
 - No secrets, customer names, or internal material in the diff **or** in
   commit history

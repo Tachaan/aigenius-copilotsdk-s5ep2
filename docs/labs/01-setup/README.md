@@ -96,7 +96,12 @@ In a **second** terminal:
 dotnet run --project src/AgentOrchestrator/AgentHQDemo.Web --urls "http://localhost:5051"
 ```
 
-Then open <http://localhost:5051>.
+Then open <http://localhost:5051>. You should see the empty chat UI:
+
+![The Retail Analytics Assistant chat UI in its empty state: a dark header with
+the model dropdown, Clear button and theme toggle, a centred welcome heading,
+five suggested retail questions, and the message input at the
+bottom.](../../screenshots/chat-ui.png)
 
 ⚠️ **Port already in use?** A server from an earlier run may still be alive and
 will silently serve stale code. Find and stop it:

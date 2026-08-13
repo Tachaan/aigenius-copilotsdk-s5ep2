@@ -1,0 +1,11 @@
+# uv-managed virtual environment
+.venv/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+
+# SQLite database created on first run
+*.db
+*.db-shm
+*.db-wal

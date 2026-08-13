@@ -90,13 +90,22 @@ For more info, other clients, and to post questions, visit the
 
 ## 🛠️ Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| Runtime | .NET 10 LTS |
-| AI SDK | GitHub Copilot SDK v1.0.9 |
-| Backend | ASP.NET Core Web API |
-| Frontend | Blazor WebAssembly |
-| Database | SQLite + EF Core |
+The same application is implemented twice — pick whichever language you prefer.
+Both tracks teach identical SDK concepts and expose an identical HTTP contract.
+
+| Component | .NET track | Python track |
+|-----------|------------|--------------|
+| Runtime | .NET 10 LTS | Python 3.11+ ([uv](https://docs.astral.sh/uv/)) |
+| AI SDK | GitHub Copilot SDK v1.0.9 | `github-copilot-sdk` v1.0.9 |
+| Backend | ASP.NET Core Web API | FastAPI |
+| Frontend | Blazor WebAssembly | Static HTML + vanilla JS |
+| Database | SQLite + EF Core | SQLite + SQLModel |
+| Tests | xUnit (14) | pytest (14) |
+| Lint | Roslyn analysers | Ruff |
+| Ports | 5050 API / 5051 UI | 5070 (API + UI) |
+
+| Shared | Technology |
+|--------|------------|
 | CI/CD | GitHub Actions |
 | Security | CodeQL, custom agents |
 
@@ -104,11 +113,13 @@ For more info, other clients, and to post questions, visit the
 
 ### Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [GitHub Copilot CLI](https://docs.github.com/copilot) — signed in with an
   account that has Copilot access
+- **.NET track:** [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- **Python track:** [Python 3.11+](https://www.python.org/downloads/) and
+  [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
-### Run it
+### Run it — .NET
 
 ```bash
 dotnet restore src/AgentOrchestrator/AgentHQDemo.slnx
@@ -123,11 +134,25 @@ dotnet run --project src/AgentOrchestrator/AgentHQDemo.Web --urls "http://localh
 
 Then open <http://localhost:5051>. The API runs on 5050.
 
+### Run it — Python
+
+```bash
+cd src/AgentOrchestrator-python
+uv sync
+
+# One server for both the API and the UI
+uv run uvicorn app.main:app --port 5070
+```
+
+Then open <http://localhost:5070>.
+
+The ports differ deliberately, so both stacks can run at the same time.
+
 ### GitHub Codespaces
 
 1. Click **Code** → **Create codespace on main**
 2. Wait for setup (~2 minutes)
-3. Run the two `dotnet run` commands above
+3. Run the commands for whichever track you are following
 
 ### Copilot CLI binary
 
@@ -232,11 +257,18 @@ graph TB
 ├── .vscode/mcp.json            # MS Learn MCP server
 ├── docs/                       # Demo script, slides, screenshots
 ├── img/                        # Session branding
-├── src/AgentOrchestrator/      # .NET implementation
-│   ├── AgentHQDemo.Api/        # Web API — chat, transactions, segments
-│   ├── AgentHQDemo.Web/        # Blazor WebAssembly UI
-│   ├── tests/                  # xUnit tests (14)
-│   └── AgentHQDemo.slnx        # Solution
+├── src/
+│   ├── AgentOrchestrator/          # .NET implementation
+│   │   ├── AgentHQDemo.Api/        # Web API — chat, transactions, segments
+│   │   ├── AgentHQDemo.Web/        # Blazor WebAssembly UI
+│   │   ├── samples/SdkLabs/        # Runnable lab samples
+│   │   ├── tests/                  # xUnit tests (14)
+│   │   └── AgentHQDemo.slnx        # Solution
+│   └── AgentOrchestrator-python/   # Python implementation
+│       ├── app/                    # FastAPI — routers, services, models, UI
+│       ├── sdk_labs/               # Runnable lab samples
+│       ├── tests/                  # pytest tests (14)
+│       └── pyproject.toml          # uv project
 ├── AGENTS.md                   # Guidelines for AI agents
 └── Directory.Build.props       # Copilot CLI resolution
 ```
@@ -267,20 +299,29 @@ Full documentation lives in [`docs/`](docs/):
 
 | Section | What it is |
 |:--------|:-----------|
-| [**Labs**](docs/labs/) | Seven Copilot SDK exercises (~2 hours) — start at [Lab 01](docs/labs/01-setup/), plus optional extras |
-| [**Demos**](docs/demos/) | Walkthroughs of the code in `/src` |
+| [**Labs — .NET**](docs/labs/) | Seven Copilot SDK exercises (~2 hours) — start at [Lab 01](docs/labs/01-setup/), plus optional extras |
+| [**Labs — Python**](docs/labs-python/) | The same seven exercises in Python — start at [Lab 01](docs/labs-python/01-setup/) |
+| [**Demos — .NET**](docs/demos/) | Walkthroughs of the code in `src/AgentOrchestrator/` |
+| [**Demos — Python**](docs/demos-python/) | Walkthroughs of the code in `src/AgentOrchestrator-python/` |
 | [**Breakouts**](docs/breakouts/) | Architecture diagrams, agents, hooks, [troubleshooting](docs/breakouts/troubleshooting.md) |
 | [**Demo script**](docs/demos/demo-script.md) | Capability-focused presenter talk track |
+
+Work **one** track, not both — they teach the same material.
 
 ## 🔐 Security Notes
 
 This demo **intentionally** includes flawed code patterns so they can be found
 live during code review and static analysis demonstrations:
 
-- N+1 query in `GetTransactionsWithSegmentsAsync` (performance review)
-- Missing null check in `GetTransactionAsync` (static analysis)
-- No input validation in `AddTransactionAsync` (security review)
-- Hardcoded threshold in `PredictSegmentAsync` (code smell)
+| Flaw | .NET | Python |
+|:-----|:-----|:-------|
+| N+1 query (performance review) | `GetTransactionsWithSegmentsAsync` | `get_transactions_with_segments` |
+| Missing null check (static analysis) | `GetTransactionAsync` | `get_transaction` |
+| No input validation (security review) | `AddTransactionAsync` | `add_transaction` |
+| Hardcoded threshold (code smell) | `PredictSegmentAsync` | `predict_segment` |
+
+Both implementations carry the same four flaws, so the same answer key applies
+to either track.
 
 **Do not use in production without addressing these.** See
 [`SECURITY.md`](SECURITY.md).

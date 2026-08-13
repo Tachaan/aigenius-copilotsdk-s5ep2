@@ -5,6 +5,9 @@
     "ghcr.io/devcontainers/features/node:1": {
       "version": "lts"
     },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    },
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "customizations": {
@@ -15,6 +18,8 @@
         "ms-dotnettools.csdevkit",
         "ms-dotnettools.csharp",
         "ms-dotnettools.vscode-dotnet-runtime",
+        "ms-python.python",
+        "charliermarsh.ruff",
         "eamodio.gitlens",
         "streetsidesoftware.code-spell-checker"
       ],
@@ -27,7 +32,7 @@
       }
     }
   },
-  "postCreateCommand": "dotnet restore src/AgentOrchestrator/AgentHQDemo.slnx && dotnet build src/AgentOrchestrator/AgentHQDemo.slnx",
+  "postCreateCommand": ".devcontainer/post-create.sh",
   "remoteUser": "vscode",
   "portsAttributes": {
     "5050": {
@@ -36,6 +41,10 @@
     },
     "5051": {
       "label": "Blazor UI",
+      "onAutoForward": "notify"
+    },
+    "5070": {
+      "label": "Python API + UI",
       "onAutoForward": "notify"
     }
   }
