@@ -1,0 +1,44 @@
+[project]
+name = "agenthqdemo-python"
+version = "1.0.0"
+description = "Python version of the AI Genius S5E2 Copilot SDK learning series"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "github-copilot-sdk==1.0.9",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlmodel>=0.0.22",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.28",
+    "ruff>=0.8",
+]
+
+[tool.uv]
+# This is a runnable demo application, not a distributable library, so there is
+# no wheel to build. Keeping it non-packaged makes `uv sync` faster and avoids
+# needing a build backend.
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# E,F = pycodestyle/pyflakes, I = import sorting, UP = pyupgrade,
+# B = bugbear, ASYNC = async correctness (the one that matters most here).
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency injection is expressed as a call in a default argument,
+# which B008 flags by default. It is the documented pattern, so allow it.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
