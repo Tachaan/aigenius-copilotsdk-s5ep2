@@ -109,6 +109,23 @@ nav:
       - Retail analytics: demos/03-retail-analytics.md
       - Blazor UI: demos/04-blazor-ui.md
       - Demo script: demos/demo-script.md
+  - Python:
+      - Labs:
+          - Overview: labs-python/README.md
+          - 01 — Setup: labs-python/01-setup/README.md
+          - 02 — First chat: labs-python/02-first-chat/README.md
+          - 03 — Tools: labs-python/03-tools/README.md
+          - 04 — Events: labs-python/04-events/README.md
+          - 05 — Sessions: labs-python/05-sessions/README.md
+          - 06 — MCP: labs-python/06-mcp/README.md
+          - 07 — Wrap-up: labs-python/07-wrap-up/README.md
+          - Extend the API: labs-python/extra-extend-api/README.md
+      - Demos:
+          - Overview: demos-python/README.md
+          - Copilot SDK integration: demos-python/01-copilot-sdk-integration.md
+          - SSE streaming: demos-python/02-sse-streaming.md
+          - Retail analytics: demos-python/03-retail-analytics.md
+          - Web UI: demos-python/04-web-ui.md
   - Breakouts:
       - Overview: breakouts/README.md
       - Architecture: breakouts/architecture.md
