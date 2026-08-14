@@ -127,8 +127,8 @@ nav:
           - 02 — SSE streaming: demos-python/02-sse-streaming.md
           - 03 — Retail analytics: demos-python/03-retail-analytics.md
           - 04 — Web UI: demos-python/04-web-ui.md
-  # Track-agnostic material: reference pages, the two Copilot CLI labs that
-  # apply to both tracks, and the presenter talk track.
+  # Track-agnostic material: reference pages and the two Copilot CLI labs that
+  # apply to both tracks.
   - Breakouts:
       - breakouts/README.md
       - Reference:
@@ -140,9 +140,6 @@ nav:
       - Hands-on extras:
           - Custom agents: labs/extra-custom-agents/README.md
           - Governance hooks: labs/extra-governance-hooks/README.md
-      - Presenting:
-          - Demo script: demos/demo-script.md
-
 extra:
   social:
     - icon: fontawesome/brands/github

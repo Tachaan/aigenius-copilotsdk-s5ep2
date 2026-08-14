@@ -26,7 +26,7 @@ material that belongs to neither sits in Breakouts.
 | [**.NET — Demos**](demos/) | Walkthroughs explaining the code in [`src/AgentOrchestrator`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator) | [Copilot SDK integration](demos/01-copilot-sdk-integration.md) |
 | [**Python — Labs**](labs-python/) | The same exercises against the Python SDK | [Lab 01 — Setup](labs-python/01-setup/) |
 | [**Python — Demos**](demos-python/) | Walkthroughs explaining the code in [`src/AgentOrchestrator-python`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator-python) | [Copilot SDK integration](demos-python/01-copilot-sdk-integration.md) |
-| [**Breakouts**](breakouts/) | Reference, the shared Copilot CLI labs, and the demo script | [Architecture](breakouts/architecture.md) |
+| [**Breakouts**](breakouts/) | Reference and the shared Copilot CLI labs | [Architecture](breakouts/architecture.md) |
 
 ### .NET — the SDK path
 
@@ -97,8 +97,6 @@ Reference, plus everything that belongs to neither track.
 instead of being duplicated per track:
 [Custom agents](labs/extra-custom-agents/) ·
 [Governance hooks](labs/extra-governance-hooks/)
-
-**Presenting** — [Demo script](demos/demo-script.md), the presenter talk track
 
 ## 🖼️ Assets
 

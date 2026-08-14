@@ -1,6 +1,6 @@
 ---
 name: demo-verifier
-description: "**CRITICAL: Use this skill to verify demo capabilities.** Reads all demo scripts (docs/demos/demo-script*.md) and cross-references every claimed capability against current GitHub documentation. Reports what is confirmed, in preview, or deprecated. MUST be invoked when reviewing demo accuracy, checking feature availability, or preparing for a live demo."
+description: "**CRITICAL: Use this skill to verify demo capabilities.** Reads the .NET and Python demo walkthroughs and cross-references every claimed capability against current GitHub documentation. Reports what is confirmed, in preview, or deprecated. MUST be invoked when reviewing demo accuracy, checking feature availability, or preparing for a live demo."
 license: MIT
 ---
 
@@ -11,7 +11,7 @@ Verify that every capability demonstrated in the Agent HQ demo is currently avai
 ## When to Use
 
 - Before a live demo — run verification to catch any deprecated or changed features
-- After updating demo scripts — ensure new content references real capabilities
+- After updating demo documentation — ensure new content references real capabilities
 - When GitHub ships updates — check if demo needs refreshing
 - When asked: "is this demo accurate?", "verify the demo", "check demo capabilities"
 
@@ -67,9 +67,10 @@ Verify that every capability demonstrated in the Agent HQ demo is currently avai
 
 ## How to Run Verification
 
-### Step 1: Read Demo Scripts
-Read all files in `docs/` that contain demo steps:
-- `docs/demos/demo-script.md` (generic demo)
+### Step 1: Read Demo Documentation
+Read the walkthroughs for both implementations:
+- `docs/demos/*.md` (.NET)
+- `docs/demos-python/*.md` (Python)
 
 ### Step 2: Extract Capabilities
 For each demo step, identify:

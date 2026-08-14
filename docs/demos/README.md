@@ -13,17 +13,10 @@ hands-on counterpart.
 | 03 | [Retail analytics](03-retail-analytics.md) | Domain models, EF Core, seeding, prediction, and the intentional code smells |
 | 04 | [Blazor UI](04-blazor-ui.md) | `Home.razor`, model picker, localStorage, streaming render |
 
-## Presenting
-
-- [**demo-script.md**](demo-script.md) — the capability-focused talk track,
-  with timings and a commands cheat sheet. It covers both tracks, so the site
-  files it under [Breakouts → Presenting](../breakouts/).
-
 ## Suggested order
 
 If you're new to the codebase, read them in numbered order — each assumes the
-previous. If you're preparing to present, start with the demo script and dip
-into the walkthroughs for the sections you'll be asked about.
+previous.
 
 ## ⚠️ On the intentional code smells
 

@@ -17,8 +17,8 @@ Copilot CLI signed in, or VS Code with Copilot Chat.
 ## ⚠️ Read this first
 
 The issues you are about to find are **intentional**. They exist so reviews
-have something real to catch. **Do not fix them** — Lab 05, the demo script,
-and the review-instructions file all assume they're still present.
+have something real to catch. **Do not fix them** — Lab 05 and the
+review-instructions file both assume they're still present.
 
 Your job here is to *detect and describe*, not repair.
 

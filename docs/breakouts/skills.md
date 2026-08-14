@@ -67,17 +67,17 @@ domain rules, examples, checklists, and output formats.
 - **Path**: `.github/skills/demo-verifier/SKILL.md`
 - **Frontmatter name**: `demo-verifier`
 - **Frontmatter description**:
-  "**CRITICAL: Use this skill to verify demo capabilities.** Reads all demo
-  scripts (docs/demos/demo-script*.md) and cross-references every claimed
-  capability against current GitHub documentation. Reports what is confirmed,
-  in preview, or deprecated. MUST be invoked when reviewing demo accuracy,
-  checking feature availability, or preparing for a live demo."
+  "**CRITICAL: Use this skill to verify demo capabilities.** Reads the .NET and
+  Python demo walkthroughs and cross-references every claimed capability
+  against current GitHub documentation. Reports what is confirmed, in preview,
+  or deprecated. MUST be invoked when reviewing demo accuracy, checking feature
+  availability, or preparing for a live demo."
 - **Other frontmatter**: `license: MIT`
-- **Covers**: Reading demo scripts, extracting claimed capabilities,
+- **Covers**: Reading demo walkthroughs, extracting claimed capabilities,
   cross-referencing them with current GitHub documentation, and reporting
   whether capabilities are confirmed, in preview, changed, or unavailable.
 - **When Copilot would invoke it**: Before a live demo, after updating demo
-  scripts, when checking demo accuracy, or when asked to verify feature
+  documentation, when checking demo accuracy, or when asked to verify feature
   availability.
 
 ## `frontend-conventions`
