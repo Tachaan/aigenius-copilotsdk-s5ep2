@@ -255,7 +255,7 @@ graph TB
 │   ├── copilot-instructions.md # Coding standards for all agents
 │   └── copilot-review-instructions.md
 ├── .vscode/mcp.json            # MS Learn MCP server
-├── docs/                       # Demo script, slides, screenshots
+├── docs/                       # Labs, walkthroughs, and reference material
 ├── img/                        # Session branding
 ├── src/
 │   ├── AgentOrchestrator/          # .NET implementation
@@ -311,7 +311,6 @@ Everything that belongs to neither track lives in
 |:------|:-----------|
 | Reference | [Architecture](docs/breakouts/architecture.md), [custom agents](docs/breakouts/custom-agents.md), [hooks](docs/breakouts/hooks-and-governance.md), [skills](docs/breakouts/skills.md), [troubleshooting](docs/breakouts/troubleshooting.md) |
 | Hands-on extras | Copilot CLI labs shared by both tracks — [custom agents](docs/labs/extra-custom-agents/), [governance hooks](docs/labs/extra-governance-hooks/) |
-| Presenting | [Demo script](docs/demos/demo-script.md) — capability-focused talk track |
 
 ## 🔐 Security Notes
 

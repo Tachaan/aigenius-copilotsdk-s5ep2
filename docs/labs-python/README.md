@@ -98,7 +98,7 @@ The Python implementation **intentionally** contains four flawed code patterns i
 
 They mirror the .NET smells exactly, so the same answer key applies to both
 tracks. [Extra — Custom agents](../labs/extra-custom-agents/) asks you to
-*find* them. Do not repair them — the demo script relies on them still being
+*find* them. Do not repair them — the review exercises rely on them still being
 there. See [`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md).
 
 ## Related

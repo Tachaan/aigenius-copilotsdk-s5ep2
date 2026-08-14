@@ -1,7 +1,7 @@
 # Breakouts
 
-Track-agnostic material: reference pages you look things up in, the two Copilot
-CLI labs that apply equally to .NET and Python, and the presenter talk track.
+Track-agnostic material: reference pages you look things up in and the two
+Copilot CLI labs that apply equally to .NET and Python.
 
 ## Reference
 
@@ -26,12 +26,6 @@ either the [.NET](../labs/) or the [Python](../labs-python/) path.
 
 The SDK equivalent of hook-style control is tool definition — see
 [.NET Lab 03](../labs/03-tools/) or [Python Lab 03](../labs-python/03-tools/).
-
-## Presenting
-
-| Doc | Use it when |
-|:----|:------------|
-| [Demo script](../demos/demo-script.md) | You're running the session — capability-focused talk track, timings, commands cheat sheet |
 
 ## Common problems, fast
 
