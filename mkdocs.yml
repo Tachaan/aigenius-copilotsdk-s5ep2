@@ -87,31 +87,32 @@ exclude_docs: |
 hooks:
   - scripts/build_index.py
 
+# Grouped by track, not by content type: .NET and Python are behavioural
+# mirrors of each other and belong at the same level. Section README.md files
+# are attached as section index pages (the navigation.indexes feature), so
+# clicking a section header opens its overview.
 nav:
   - Home: index.md
-  - Labs:
-      - Overview: labs/README.md
-      - 01 — Setup: labs/01-setup/README.md
-      - 02 — First chat: labs/02-first-chat/README.md
-      - 03 — Tools: labs/03-tools/README.md
-      - 04 — Events: labs/04-events/README.md
-      - 05 — Sessions: labs/05-sessions/README.md
-      - 06 — MCP: labs/06-mcp/README.md
-      - 07 — Wrap-up: labs/07-wrap-up/README.md
-      - Extras:
-          - Custom agents: labs/extra-custom-agents/README.md
-          - Governance hooks: labs/extra-governance-hooks/README.md
-          - Extend the API: labs/extra-extend-api/README.md
-  - Demos:
-      - Overview: demos/README.md
-      - Copilot SDK integration: demos/01-copilot-sdk-integration.md
-      - SSE streaming: demos/02-sse-streaming.md
-      - Retail analytics: demos/03-retail-analytics.md
-      - Blazor UI: demos/04-blazor-ui.md
-      - Demo script: demos/demo-script.md
+  - .NET:
+      - Labs:
+          - labs/README.md
+          - 01 — Setup: labs/01-setup/README.md
+          - 02 — First chat: labs/02-first-chat/README.md
+          - 03 — Tools: labs/03-tools/README.md
+          - 04 — Events: labs/04-events/README.md
+          - 05 — Sessions: labs/05-sessions/README.md
+          - 06 — MCP: labs/06-mcp/README.md
+          - 07 — Wrap-up: labs/07-wrap-up/README.md
+          - Extra — Extend the API: labs/extra-extend-api/README.md
+      - Demos:
+          - demos/README.md
+          - 01 — Copilot SDK integration: demos/01-copilot-sdk-integration.md
+          - 02 — SSE streaming: demos/02-sse-streaming.md
+          - 03 — Retail analytics: demos/03-retail-analytics.md
+          - 04 — Blazor UI: demos/04-blazor-ui.md
   - Python:
       - Labs:
-          - Overview: labs-python/README.md
+          - labs-python/README.md
           - 01 — Setup: labs-python/01-setup/README.md
           - 02 — First chat: labs-python/02-first-chat/README.md
           - 03 — Tools: labs-python/03-tools/README.md
@@ -119,20 +120,28 @@ nav:
           - 05 — Sessions: labs-python/05-sessions/README.md
           - 06 — MCP: labs-python/06-mcp/README.md
           - 07 — Wrap-up: labs-python/07-wrap-up/README.md
-          - Extend the API: labs-python/extra-extend-api/README.md
+          - Extra — Extend the API: labs-python/extra-extend-api/README.md
       - Demos:
-          - Overview: demos-python/README.md
-          - Copilot SDK integration: demos-python/01-copilot-sdk-integration.md
-          - SSE streaming: demos-python/02-sse-streaming.md
-          - Retail analytics: demos-python/03-retail-analytics.md
-          - Web UI: demos-python/04-web-ui.md
+          - demos-python/README.md
+          - 01 — Copilot SDK integration: demos-python/01-copilot-sdk-integration.md
+          - 02 — SSE streaming: demos-python/02-sse-streaming.md
+          - 03 — Retail analytics: demos-python/03-retail-analytics.md
+          - 04 — Web UI: demos-python/04-web-ui.md
+  # Track-agnostic material: reference pages, the two Copilot CLI labs that
+  # apply to both tracks, and the presenter talk track.
   - Breakouts:
-      - Overview: breakouts/README.md
-      - Architecture: breakouts/architecture.md
-      - Custom agents: breakouts/custom-agents.md
-      - Hooks and governance: breakouts/hooks-and-governance.md
-      - Skills: breakouts/skills.md
-      - Troubleshooting: breakouts/troubleshooting.md
+      - breakouts/README.md
+      - Reference:
+          - Architecture: breakouts/architecture.md
+          - Custom agents: breakouts/custom-agents.md
+          - Hooks and governance: breakouts/hooks-and-governance.md
+          - Skills: breakouts/skills.md
+          - Troubleshooting: breakouts/troubleshooting.md
+      - Hands-on extras:
+          - Custom agents: labs/extra-custom-agents/README.md
+          - Governance hooks: labs/extra-governance-hooks/README.md
+      - Presenting:
+          - Demo script: demos/demo-script.md
 
 extra:
   social:

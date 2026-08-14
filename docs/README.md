@@ -17,15 +17,18 @@ want to compare them.
 
 ## 📚 Sections
 
+Documentation is grouped **by track first** — .NET and Python are peers, and the
+material that belongs to neither sits in Breakouts.
+
 | Section | What it is | Start here |
 |:--------|:-----------|:-----------|
-| [**Labs — .NET**](labs/) | Hands-on Copilot SDK exercises, ~2 hours end to end | [Lab 01 — Setup](labs/01-setup/) |
-| [**Labs — Python**](labs-python/) | The same exercises against the Python SDK | [Lab 01 — Setup](labs-python/01-setup/) |
-| [**Demos — .NET**](demos/) | Walkthroughs explaining the code in [`src/AgentOrchestrator`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator) | [Copilot SDK integration](demos/01-copilot-sdk-integration.md) |
-| [**Demos — Python**](demos-python/) | Walkthroughs explaining the code in [`src/AgentOrchestrator-python`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator-python) | [Copilot SDK integration](demos-python/01-copilot-sdk-integration.md) |
-| [**Breakouts**](breakouts/) | Diagrams, configuration reference, troubleshooting | [Architecture](breakouts/architecture.md) |
+| [**.NET — Labs**](labs/) | Hands-on Copilot SDK exercises, ~2 hours end to end | [Lab 01 — Setup](labs/01-setup/) |
+| [**.NET — Demos**](demos/) | Walkthroughs explaining the code in [`src/AgentOrchestrator`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator) | [Copilot SDK integration](demos/01-copilot-sdk-integration.md) |
+| [**Python — Labs**](labs-python/) | The same exercises against the Python SDK | [Lab 01 — Setup](labs-python/01-setup/) |
+| [**Python — Demos**](demos-python/) | Walkthroughs explaining the code in [`src/AgentOrchestrator-python`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator-python) | [Copilot SDK integration](demos-python/01-copilot-sdk-integration.md) |
+| [**Breakouts**](breakouts/) | Reference, the shared Copilot CLI labs, and the demo script | [Architecture](breakouts/architecture.md) |
 
-### Labs — the SDK path (.NET)
+### .NET — the SDK path
 
 | # | Lab | Time |
 |:--|:----|:-----|
@@ -40,7 +43,16 @@ want to compare them.
 Backed by a runnable samples project at
 [`src/AgentOrchestrator/samples/SdkLabs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator/samples/SdkLabs).
 
-### Labs — the SDK path (Python)
+### .NET — demos
+
+| # | Walkthrough |
+|:--|:------------|
+| 01 | [Copilot SDK integration](demos/01-copilot-sdk-integration.md) |
+| 02 | [SSE streaming](demos/02-sse-streaming.md) |
+| 03 | [Retail analytics](demos/03-retail-analytics.md) |
+| 04 | [Blazor UI](demos/04-blazor-ui.md) |
+
+### Python — the SDK path
 
 | # | Lab | Time |
 |:--|:----|:-----|
@@ -55,29 +67,7 @@ Backed by a runnable samples project at
 Backed by a runnable samples package at
 [`src/AgentOrchestrator-python/sdk_labs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator-python/sdk_labs).
 
-### Labs — extras (not the SDK)
-
-Optional. These cover Copilot **CLI** and general app development.
-
-[Custom agents](labs/extra-custom-agents/) ·
-[Governance hooks](labs/extra-governance-hooks/) ·
-[Extend the API — .NET](labs/extra-extend-api/) ·
-[Extend the API — Python](labs-python/extra-extend-api/)
-
-Custom agents and governance hooks are Copilot CLI features and therefore
-language-agnostic — the Python track links to them rather than duplicating them.
-
-### Demos — .NET
-
-| # | Walkthrough |
-|:--|:------------|
-| 01 | [Copilot SDK integration](demos/01-copilot-sdk-integration.md) |
-| 02 | [SSE streaming](demos/02-sse-streaming.md) |
-| 03 | [Retail analytics](demos/03-retail-analytics.md) |
-| 04 | [Blazor UI](demos/04-blazor-ui.md) |
-| — | [Demo script](demos/demo-script.md) — presenter talk track |
-
-### Demos — Python
+### Python — demos
 
 | # | Walkthrough |
 |:--|:------------|
@@ -86,13 +76,29 @@ language-agnostic — the Python track links to them rather than duplicating the
 | 03 | [Retail analytics](demos-python/03-retail-analytics.md) |
 | 04 | [Web UI](demos-python/04-web-ui.md) |
 
+### Track-specific extras
+
+Optional. [Extend the API](labs/extra-extend-api/) exists once per track and
+covers general app development rather than the SDK:
+[.NET](labs/extra-extend-api/) · [Python](labs-python/extra-extend-api/)
+
 ### Breakouts
 
+Reference, plus everything that belongs to neither track.
+
+**Reference** —
 [Architecture](breakouts/architecture.md) ·
 [Custom agents](breakouts/custom-agents.md) ·
 [Hooks and governance](breakouts/hooks-and-governance.md) ·
 [Skills](breakouts/skills.md) ·
 [Troubleshooting](breakouts/troubleshooting.md)
+
+**Hands-on extras** — Copilot **CLI** labs, language-agnostic, so they live here
+instead of being duplicated per track:
+[Custom agents](labs/extra-custom-agents/) ·
+[Governance hooks](labs/extra-governance-hooks/)
+
+**Presenting** — [Demo script](demos/demo-script.md), the presenter talk track
 
 ## 🖼️ Assets
 
@@ -111,6 +117,12 @@ language-agnostic — the Python track links to them rather than duplicating the
 - Keep images in `screenshots/` or an `assets/` subfolder
 - Update the tables above, the relevant section `README.md`, and the `nav:`
   block in [`mkdocs.yml`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/mkdocs.yml)
+
+The site nav is grouped **by track** (`.NET`, `Python`), not by folder, so a new
+page goes under the track it belongs to. Anything language-agnostic — CLI
+material, reference, presenter notes — goes under `Breakouts`, even if the file
+itself lives in `labs/` or `demos/`. Folder names are kept as-is because
+cross-links, `scripts/build_index.py`, and the link checker depend on them.
 
 ## Content rules
 
