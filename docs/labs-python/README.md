@@ -1,4 +1,4 @@
-# Labs — Python track
+# Python labs
 
 Hands-on exercises for the **AI Genius S5E2 — Agent HQ Demo**, focused on the
 **GitHub Copilot SDK**. This is the **Python track**: pick **one** track —
@@ -71,11 +71,13 @@ the SDK. Optional, and independent of the numbered path.
 | Lab | Covers | Why it's extra |
 |:----|:-------|:---------------|
 | [Extend the API](extra-extend-api/) | FastAPI, SQLModel, pytest | Copilot as a coding assistant; touches no SDK |
-| [Custom agents](../labs/extra-custom-agents/) | `.agent.md` files, agent-assisted review | Shared with the .NET track; a CLI feature, not the SDK |
-| [Governance hooks](../labs/extra-governance-hooks/) | Shell hooks, security gate, audit log | Shared with the .NET track; the SDK equivalent is in [Lab 03](03-tools/) |
+| [Custom agents](../labs/extra-custom-agents/) | `.agent.md` files, agent-assisted review | A Copilot CLI feature shared by both tracks — filed under [Breakouts](../breakouts/) |
+| [Governance hooks](../labs/extra-governance-hooks/) | Shell hooks, security gate, audit log | A Copilot CLI feature; the SDK equivalent is in [Lab 03](03-tools/) |
 
-Only [Extend the API](extra-extend-api/) is Python-specific; the other extras
-are shared Copilot **CLI** labs linked here rather than duplicated.
+Only [Extend the API](extra-extend-api/) is Python-specific. Custom agents and
+governance hooks are language-agnostic CLI labs, so the site lists them under
+[Breakouts → Hands-on extras](../breakouts/) rather than duplicating them per
+track.
 
 ## Conventions
 

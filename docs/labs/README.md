@@ -1,8 +1,9 @@
-# Labs
+# .NET labs
 
 Hands-on exercises for the **AI Genius S5E2 — Agent HQ Demo**, focused on the
-**GitHub Copilot SDK**. Work through the SDK path in order; each lab builds on
-the previous one.
+**GitHub Copilot SDK**. This is the **.NET track**: pick **one** track — .NET or
+[Python](../labs-python/) — and work through it in order. Both stacks can run at
+once because .NET uses **5050/5051** and Python uses **5070**.
 
 ## Prerequisites
 
@@ -55,9 +56,13 @@ the SDK. Optional, and independent of the numbered path.
 
 | Lab | Covers | Why it's extra |
 |:----|:-------|:---------------|
-| [Custom agents](extra-custom-agents/) | `.agent.md` files, agent-assisted review | A CLI feature, not the SDK |
-| [Governance hooks](extra-governance-hooks/) | Shell hooks, security gate, audit log | A CLI feature; the SDK equivalent is in [Lab 03](03-tools/) |
 | [Extend the API](extra-extend-api/) | ASP.NET Core, EF Core, xUnit | Copilot as a coding assistant; touches no SDK |
+| [Custom agents](extra-custom-agents/) | `.agent.md` files, agent-assisted review | A Copilot CLI feature shared by both tracks — filed under [Breakouts](../breakouts/) |
+| [Governance hooks](extra-governance-hooks/) | Shell hooks, security gate, audit log | A Copilot CLI feature; the SDK equivalent is in [Lab 03](03-tools/) |
+
+Only [Extend the API](extra-extend-api/) is .NET-specific. Custom agents and
+governance hooks are language-agnostic CLI labs, so the site lists them under
+[Breakouts → Hands-on extras](../breakouts/) and both tracks share one copy.
 
 ## Conventions
 

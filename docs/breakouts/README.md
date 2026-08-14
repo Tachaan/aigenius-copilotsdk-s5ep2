@@ -1,8 +1,7 @@
 # Breakouts
 
-Supplementary reference material — diagrams, configuration reference, and
-troubleshooting. Use these to look things up, rather than reading front to
-back.
+Track-agnostic material: reference pages you look things up in, the two Copilot
+CLI labs that apply equally to .NET and Python, and the presenter talk track.
 
 ## Reference
 
@@ -13,6 +12,26 @@ back.
 | [Hooks and governance](hooks-and-governance.md) | You're configuring `preToolUse` gates or reading the audit trail |
 | [Skills](skills.md) | You want to know what the five skills do and when Copilot picks them |
 | [Troubleshooting](troubleshooting.md) | **Something broke** — start here |
+
+## Hands-on extras
+
+Optional labs covering **Copilot CLI** rather than the SDK. They're
+language-agnostic, so they sit here instead of inside a track — do them from
+either the [.NET](../labs/) or the [Python](../labs-python/) path.
+
+| Lab | Covers | Time |
+|:----|:-------|:-----|
+| [Custom agents](../labs/extra-custom-agents/) | `.agent.md` files, agent-assisted review of the intentional code smells | ~20 min |
+| [Governance hooks](../labs/extra-governance-hooks/) | Shell hooks, the security gate, the audit log | ~20 min |
+
+The SDK equivalent of hook-style control is tool definition — see
+[.NET Lab 03](../labs/03-tools/) or [Python Lab 03](../labs-python/03-tools/).
+
+## Presenting
+
+| Doc | Use it when |
+|:----|:------------|
+| [Demo script](../demos/demo-script.md) | You're running the session — capability-focused talk track, timings, commands cheat sheet |
 
 ## Common problems, fast
 
@@ -27,7 +46,7 @@ back.
 
 ## Related
 
-- [Labs](../labs/) — hands-on exercises
-- [Demos](../demos/) — code walkthroughs
+- [.NET labs](../labs/) · [.NET demos](../demos/)
+- [Python labs](../labs-python/) · [Python demos](../demos-python/)
 - [Root README](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/README.md) — quick start and endpoint reference
 - [`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md) — repository rules for AI agents

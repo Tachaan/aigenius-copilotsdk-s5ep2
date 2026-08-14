@@ -1,7 +1,7 @@
-# Demos
+# .NET demos
 
 Walkthroughs of the code in [`/src`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator). Read these
-to understand *how* the Agent HQ demo works — the [labs](../labs/) are the
+to understand *how* the Agent HQ demo works — the [.NET labs](../labs/) are the
 hands-on counterpart.
 
 ## Walkthroughs
@@ -16,7 +16,8 @@ hands-on counterpart.
 ## Presenting
 
 - [**demo-script.md**](demo-script.md) — the capability-focused talk track,
-  with timings and a commands cheat sheet
+  with timings and a commands cheat sheet. It covers both tracks, so the site
+  files it under [Breakouts → Presenting](../breakouts/).
 
 ## Suggested order
 
@@ -32,6 +33,7 @@ See [`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/m
 
 ## Related
 
-- [Labs](../labs/) — hands-on exercises covering this same ground
+- [.NET labs](../labs/) — hands-on exercises covering this same ground
+- [Python demos](../demos-python/) — the FastAPI equivalents of these walkthroughs
 - [Breakouts](../breakouts/) — architecture diagrams and reference material
 - [Architecture](../breakouts/architecture.md) — the system at a glance

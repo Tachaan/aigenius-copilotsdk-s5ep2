@@ -295,18 +295,23 @@ across 5 customers (C001–C005), 4 categories, and 4 stores, plus:
 
 ## 📋 Demo Materials
 
-Full documentation lives in [`docs/`](docs/):
+Full documentation lives in [`docs/`](docs/), grouped by track:
 
-| Section | What it is |
-|:--------|:-----------|
-| [**Labs — .NET**](docs/labs/) | Seven Copilot SDK exercises (~2 hours) — start at [Lab 01](docs/labs/01-setup/), plus optional extras |
-| [**Labs — Python**](docs/labs-python/) | The same seven exercises in Python — start at [Lab 01](docs/labs-python/01-setup/) |
-| [**Demos — .NET**](docs/demos/) | Walkthroughs of the code in `src/AgentOrchestrator/` |
-| [**Demos — Python**](docs/demos-python/) | Walkthroughs of the code in `src/AgentOrchestrator-python/` |
-| [**Breakouts**](docs/breakouts/) | Architecture diagrams, agents, hooks, [troubleshooting](docs/breakouts/troubleshooting.md) |
-| [**Demo script**](docs/demos/demo-script.md) | Capability-focused presenter talk track |
+| Track | Labs | Demos |
+|:------|:-----|:------|
+| **.NET** | [Seven Copilot SDK exercises](docs/labs/) (~2 hours) — start at [Lab 01](docs/labs/01-setup/) | [Walkthroughs](docs/demos/) of the code in `src/AgentOrchestrator/` |
+| **Python** | [The same seven exercises](docs/labs-python/) — start at [Lab 01](docs/labs-python/01-setup/) | [Walkthroughs](docs/demos-python/) of the code in `src/AgentOrchestrator-python/` |
 
 Work **one** track, not both — they teach the same material.
+
+Everything that belongs to neither track lives in
+[**Breakouts**](docs/breakouts/):
+
+| Group | What it is |
+|:------|:-----------|
+| Reference | [Architecture](docs/breakouts/architecture.md), [custom agents](docs/breakouts/custom-agents.md), [hooks](docs/breakouts/hooks-and-governance.md), [skills](docs/breakouts/skills.md), [troubleshooting](docs/breakouts/troubleshooting.md) |
+| Hands-on extras | Copilot CLI labs shared by both tracks — [custom agents](docs/labs/extra-custom-agents/), [governance hooks](docs/labs/extra-governance-hooks/) |
+| Presenting | [Demo script](docs/demos/demo-script.md) — capability-focused talk track |
 
 ## 🔐 Security Notes
 
