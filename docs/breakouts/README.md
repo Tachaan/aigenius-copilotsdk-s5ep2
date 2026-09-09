@@ -8,6 +8,7 @@ Copilot CLI labs that apply equally to .NET and Python.
 | Doc | Use it when |
 |:----|:------------|
 | [Architecture](architecture.md) | You need the system diagram, request sequence, or data model |
+| [System map](../system-map/) | You want to explore that architecture interactively |
 | [Custom agents](custom-agents.md) | You're writing or invoking an `.agent.md` |
 | [Hooks and governance](hooks-and-governance.md) | You're configuring `preToolUse` gates or reading the audit trail |
 | [Skills](skills.md) | You want to know what the five skills do and when Copilot picks them |

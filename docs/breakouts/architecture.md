@@ -4,6 +4,11 @@ This page is a system reference for the AI Genius S5E2 Agent HQ demo. It
 summarises the .NET 10 Blazor WebAssembly front end, ASP.NET Core Web API,
 GitHub Copilot SDK integration, and zero-config SQLite analytics store.
 
+!!! tip "Prefer to explore it?"
+
+    The [System map](../system-map/) is the same architecture as an interactive
+    diagram — search nodes, trace routes, and play three guided views.
+
 ## Component view
 
 The demo runs as two local processes: the Blazor WebAssembly UI on port 5051

@@ -140,6 +140,10 @@ nav:
       - Hands-on extras:
           - Custom agents: labs/extra-custom-agents/README.md
           - Governance hooks: labs/extra-governance-hooks/README.md
+  # Interactive Archify artifact. The HTML beside it is generated output; the
+  # typed JSON source next to it is what you edit.
+  - System map:
+      - system-map/README.md
 extra:
   social:
     - icon: fontawesome/brands/github
