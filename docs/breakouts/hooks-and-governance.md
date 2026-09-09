@@ -75,7 +75,12 @@ terms:
 
 For `edit` and `create`, it extracts `.toolArgs.path`. Paths that do not match
 the hook's allow-list expression — `src/`, `tests/`, `docs/`, or `.github/` —
-are denied.
+are denied, except for a short allow-list of top-level project files
+(`README.md`, `AGENTS.md`, `mkdocs.yml`) matched against the **repo-relative**
+path. Anchoring to the repo root is what stops `/etc/README.md` slipping through
+on a filename match alone. Note that `SECURITY.md` and the licence files stay
+outside the allow-list, matching the "do not modify without permission" rule in
+[`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md).
 
 Allowed operations emit:
 

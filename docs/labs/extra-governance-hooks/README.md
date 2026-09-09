@@ -141,7 +141,26 @@ echo '{"toolName":"create","toolArgs":{"path":"/etc/hosts"}}' \
   | ./.github/hooks/scripts/security-gate.sh
 ```
 
-→ `"File edits restricted to src/, tests/, docs/, and .github/ directories"`
+→ `"File edits restricted to src/, tests/, docs/, .github/, and top-level project docs"`
+
+A top-level project file, which must pass:
+
+```bash
+echo '{"toolName": "create", "toolArgs": {"path": "README.md"}}' \
+  | ./.github/hooks/scripts/security-gate.sh
+```
+
+→ `{"permissionDecision":"allow"}`
+
+The allow-list is matched against the **repo-relative** path, so a lookalike
+outside the repo is still refused:
+
+```bash
+echo '{"toolName": "create", "toolArgs": {"path": "/etc/README.md"}}' \
+  | ./.github/hooks/scripts/security-gate.sh
+```
+
+→ denied. Matching on filename alone would have let that through.
 
 And a legitimate call, which must pass:
 

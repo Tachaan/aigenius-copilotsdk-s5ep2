@@ -100,7 +100,8 @@ Both tracks teach identical SDK concepts and expose an identical HTTP contract.
 | Backend | ASP.NET Core Web API | FastAPI |
 | Frontend | Blazor WebAssembly | Static HTML + vanilla JS |
 | Database | SQLite + EF Core | SQLite + SQLModel |
-| Tests | xUnit (14) | pytest (14) |
+| Model data access | MCP (`ModelContextProtocol`) | MCP (`mcp`) |
+| Tests | xUnit (26) | pytest (30) |
 | Lint | Roslyn analysers | Ruff |
 | Ports | 5050 API / 5051 UI | 5070 (API + UI) |
 
@@ -260,14 +261,16 @@ graph TB
 ├── src/
 │   ├── AgentOrchestrator/          # .NET implementation
 │   │   ├── AgentHQDemo.Api/        # Web API — chat, transactions, segments
+│   │   ├── AgentHQDemo.McpServer/  # Read-only MCP server over retail.db
 │   │   ├── AgentHQDemo.Web/        # Blazor WebAssembly UI
 │   │   ├── samples/SdkLabs/        # Runnable lab samples
-│   │   ├── tests/                  # xUnit tests (14)
+│   │   ├── tests/                  # xUnit tests (26)
 │   │   └── AgentHQDemo.slnx        # Solution
 │   └── AgentOrchestrator-python/   # Python implementation
 │       ├── app/                    # FastAPI — routers, services, models, UI
+│       ├── mcp_server/             # Read-only MCP server over retail.db
 │       ├── sdk_labs/               # Runnable lab samples
-│       ├── tests/                  # pytest tests (14)
+│       ├── tests/                  # pytest tests (30)
 │       └── pyproject.toml          # uv project
 ├── AGENTS.md                   # Guidelines for AI agents
 └── Directory.Build.props       # Copilot CLI resolution
@@ -326,6 +329,13 @@ live during code review and static analysis demonstrations:
 
 Both implementations carry the same four flaws, so the same answer key applies
 to either track.
+
+By contrast, the chat's database access is *not* one of the flaws. Both tracks
+expose `retail.db` to the model through a read-only MCP server
+(`AgentHQDemo.McpServer` / `mcp_server/`) that opens SQLite with `Mode=ReadOnly`
+and publishes five specific domain tools rather than a generic query tool. The
+REST API keeps its direct ORM access — MCP is for the model, not for the
+application talking to its own database.
 
 **Do not use in production without addressing these.** See
 [`SECURITY.md`](SECURITY.md).
