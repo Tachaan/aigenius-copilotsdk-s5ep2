@@ -1,8 +1,8 @@
 # System map
 
-An interactive map of the retail analytics app, generated with
-[Archify](https://github.com/tt-a1i/archify) from a typed JSON source and
-rendered as a single self-contained HTML file.
+An interactive map of the retail analytics app, generated from a typed JSON
+source and rendered as a single self-contained HTML file — no external assets,
+no build step.
 
 Both tracks are behavioural mirrors, so one map covers them: where the stacks
 differ, the node carries both names (`ASP.NET Core · FastAPI`).
@@ -59,8 +59,8 @@ Light and dark themes, pan/zoom, and PNG/SVG export are in the top-right menu.
 
 The typed source is
 [`agent-hq-demo.architecture.json`](agent-hq-demo.architecture.json) — edit it
-rather than the HTML, which is generated output. With the Archify CLI
-available:
+rather than the HTML, which is generated output. With the generator CLI
+available (see [Credits](#credits)):
 
 ```bash
 node bin/archify.mjs validate architecture \
@@ -81,3 +81,8 @@ leaves the last good map in place.
 - [.NET Lab 06 — MCP](../labs/06-mcp/) · [Python Lab 06 — MCP](../labs-python/06-mcp/)
 - [Hooks and governance](../breakouts/hooks-and-governance.md) — the other half
   of the least-privilege story
+
+## Credits
+
+Map generated with [Archify](https://github.com/tt-a1i/archify), MIT licensed.
+`map.html` embeds its viewer runtime.
