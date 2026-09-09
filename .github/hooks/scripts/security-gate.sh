@@ -29,10 +29,16 @@ fi
 if [ "$TOOL_NAME" = "edit" ] || [ "$TOOL_NAME" = "create" ]; then
   FILE_PATH=$(echo "$TOOL_ARGS" | jq -r '.path // empty')
 
+  # Top-level project files that legitimately need editing. Matched against the
+  # repo-relative path, so /etc/README.md is still refused.
+  ALLOWED_ROOT_FILES='^(README\.md|AGENTS\.md|mkdocs\.yml)$'
+  REL_PATH="${FILE_PATH#"$PWD"/}"
+
   if [ -n "$FILE_PATH" ]; then
-    if [[ ! "$FILE_PATH" =~ (src/|tests/|docs/|\.github/) ]]; then
+    if [[ ! "$FILE_PATH" =~ (src/|tests/|docs/|\.github/) ]] \
+       && [[ ! "$REL_PATH" =~ $ALLOWED_ROOT_FILES ]]; then
       DENIED=true
-      REASON="File edits restricted to src/, tests/, docs/, and .github/ directories"
+      REASON="File edits restricted to src/, tests/, docs/, .github/, and top-level project docs"
     fi
   fi
 fi

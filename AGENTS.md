@@ -45,7 +45,8 @@ This repository is demo content for the **AI Genius S5E2** session. It should:
 The same retail analytics app exists twice — `src/AgentOrchestrator/` (.NET) and
 `src/AgentOrchestrator-python/` (Python). They deliberately mirror each other:
 same endpoints, same camelCase JSON contract, same seed data, the same 14 domain
-tests, and the same four intentional code smells.
+tests, the same read-only MCP server tool surface, and the same four intentional
+code smells.
 
 **When you change behaviour in one, change it in the other**, or the labs drift
 apart. Purely idiomatic changes (a C#-only refactor, a Python-only lint fix) do
@@ -77,6 +78,10 @@ review and static analysis. See *Security Notes* in the [README](README.md).
 | No input validation | `AddTransactionAsync` | `add_transaction` |
 | Hardcoded threshold | `PredictSegmentAsync` | `predict_segment` |
 
+Note the MCP servers reuse `PredictSegmentAsync` / `predict_segment` rather than
+reimplementing the scoring logic, so the hardcoded threshold stays in exactly one
+place per track. Do not "helpfully" inline a corrected copy into the MCP server.
+
 ### Issue Management
 
 When a user reports a problem, asks a question that should be tracked, or
@@ -100,13 +105,13 @@ Run the checks for whichever track you touched. If you touched both, run both.
 **.NET**
 
 - `dotnet build src/AgentOrchestrator/AgentHQDemo.slnx` succeeds with no warnings
-- `dotnet test src/AgentOrchestrator/AgentHQDemo.slnx` passes (14 tests)
+- `dotnet test src/AgentOrchestrator/AgentHQDemo.slnx` passes (26 tests)
 
 **Python** — from `src/AgentOrchestrator-python`
 
 - `uv sync` resolves cleanly
 - `uv run ruff check .` reports no errors
-- `uv run pytest` passes (18 tests: 14 domain + 4 contract)
+- `uv run pytest` passes (30 tests: 14 domain + 12 MCP + 4 contract)
 
 **Docs** — if you touched anything under `docs/` or `mkdocs.yml`
 

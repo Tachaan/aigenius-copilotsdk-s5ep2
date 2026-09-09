@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="AgentHQDemo.Api/AgentHQDemo.Api.csproj" />
+    <Project Path="AgentHQDemo.McpServer/AgentHQDemo.McpServer.csproj" />
     <Project Path="AgentHQDemo.Web/AgentHQDemo.Web.csproj" />
   </Folder>
   <Folder Name="/samples/">

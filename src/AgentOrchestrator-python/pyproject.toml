@@ -9,6 +9,9 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
     "sqlmodel>=0.0.22",
+    # Serves the read-only retail MCP server in mcp_server/. Note 2.x renamed
+    # FastMCP to MCPServer, so v1 examples found online will not run here.
+    "mcp>=2.1,<3",
 ]
 
 [dependency-groups]

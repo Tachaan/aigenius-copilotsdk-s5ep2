@@ -36,6 +36,10 @@ graph LR
         Models["Claude / GPT / Gemini models"]
     end
 
+    subgraph Mcp["AgentHQDemo.McpServer — stdio subprocess"]
+        RetailTools["RetailTools<br/>5 read-only tools"]
+    end
+
     SQLite[("SQLite<br/>retail.db")]
 
     Browser --> Blazor
@@ -48,11 +52,19 @@ graph LR
     CopilotService --> Client
     Client --> Session
     Session --> Models
+    Session -->|"MCP over stdio"| RetailTools
+    RetailTools -->|"Mode=ReadOnly"| SQLite
     TxController --> Analytics
     SegController --> Analytics
     Analytics --> DbContext
     DbContext --> SQLite
 ```
+
+Note the two distinct paths to `retail.db`. The REST controllers read and write
+through `RetailDbContext` directly. The *model* reaches the same database only
+through the MCP server, on a connection opened `Mode=ReadOnly`, and only via the
+five domain tools that server publishes. MCP is for the model, not for the
+application talking to its own database.
 
 ## SSE chat sequence
 
