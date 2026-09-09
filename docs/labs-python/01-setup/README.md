@@ -77,18 +77,19 @@ For the compact CI-style check:
 uv run pytest -q
 ```
 
-Expected: 18 tests pass. One verified run produced:
+Expected: 30 tests pass. One verified run produced:
 
 ```text
-..................                                                       [100%]
-18 passed in 0.28s
+..............................                                           [100%]
+30 passed in 0.61s
 ```
 
-That is 14 domain tests — matching the .NET suite one-for-one — plus 4
-Python-only contract tests that guard the browser/API request shape.
+That is 14 domain tests and 12 MCP server tests — both matching the .NET suite
+one-for-one — plus 4 Python-only contract tests that guard the browser/API
+request shape.
 
 Remember that number. Later labs ask you to extend behaviour without breaking
-these 18 tests.
+these 30 tests.
 
 ## Step 4 — Run the linter
 
@@ -253,7 +254,7 @@ now asserts the field `app.js` sends is the field the API reads.
 You should now have:
 
 - [x] Python dependencies restored with `uv sync`
-- [x] 18/18 tests passing
+- [x] 30/30 tests passing
 - [x] Ruff passing
 - [x] API and UI running together on port 5070
 - [x] REST endpoints returning seeded camelCase data

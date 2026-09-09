@@ -12,7 +12,7 @@ Work either track — you do not need both.
 | Web framework | ASP.NET Core | FastAPI |
 | ORM | EF Core | SQLModel |
 | UI | Blazor WebAssembly | Static HTML + vanilla JS |
-| Tests | xUnit (14) | pytest (14) |
+| Tests | xUnit (26) | pytest (30) |
 | Packaging | `dotnet` | `uv` |
 | Ports | 5050 API + 5051 UI | 5070 (API and UI together) |
 
@@ -47,7 +47,7 @@ uv run uvicorn app.main:app --port 5070 --reload
 ## Tests and linting
 
 ```bash
-uv run pytest          # 18 tests (14 domain + 4 contract)
+uv run pytest          # 30 tests (14 domain + 12 MCP + 4 contract)
 uv run ruff check .    # lint
 ```
 

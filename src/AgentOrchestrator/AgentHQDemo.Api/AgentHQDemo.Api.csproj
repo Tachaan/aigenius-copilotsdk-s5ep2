@@ -4,6 +4,13 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!--
+      GHCP001: the permission-decision API (GitHub.Copilot.Rpc.PermissionDecision)
+      is marked experimental in SDK 1.0.9 and raises a build error unless suppressed.
+      CopilotChatService uses it to scope MCP tool approval to the read-only
+      retail-analytics server.
+    -->
+    <NoWarn>$(NoWarn);GHCP001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

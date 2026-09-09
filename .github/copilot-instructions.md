@@ -14,8 +14,8 @@ This is a **Retail Transaction Analytics** app demonstrating modern AI-assisted 
 It is implemented **twice** — once in .NET 10 LTS and once in Python 3.11+ —
 so learners can follow whichever track they prefer. The two are behavioural
 mirrors: same endpoints, same camelCase JSON contract, same seed data, same
-14 domain tests, same four intentional code smells. Change behaviour in one and
-you must change it in the other.
+14 domain tests, same read-only MCP server tool surface, same four intentional
+code smells. Change behaviour in one and you must change it in the other.
 
 ## Repository Structure
 
@@ -27,9 +27,10 @@ src/
 │   │   ├── Data/                   # EF Core DbContext (SQLite)
 │   │   ├── Services/               # RetailAnalyticsService, CopilotChatService
 │   │   └── Models/                 # Transaction, CustomerSegment, SegmentPrediction
+│   ├── AgentHQDemo.McpServer/      # Read-only MCP server over retail.db
 │   ├── AgentHQDemo.Web/            # Blazor WebAssembly UI
 │   ├── samples/SdkLabs/            # Runnable lab samples
-│   └── tests/AgentHQDemo.Tests/    # xUnit tests (14)
+│   └── tests/AgentHQDemo.Tests/    # xUnit tests (26)
 └── AgentOrchestrator-python/       # Python track
     ├── app/
     │   ├── routers/                # chat, transactions, segments
@@ -38,8 +39,9 @@ src/
     │   ├── database.py             # engine + session dependency
     │   ├── main.py                 # FastAPI app, lifespan seed, static mount
     │   └── static/                 # HTML + vanilla JS chat UI
+    ├── mcp_server/                 # Read-only MCP server over retail.db
     ├── sdk_labs/                   # Runnable lab samples
-    └── tests/                      # pytest tests (14)
+    └── tests/                      # pytest tests (30)
 .github/
 ├── agents/                         # Custom agent definitions
 ├── workflows/                      # CI/CD pipelines
@@ -101,6 +103,25 @@ src/
 - No `GHCP001` suppression is needed — `copilot.rpc` decisions are not gated
 - `PermissionInvocation` is imported from `copilot.session`, not the package root
 
+## MCP Server Notes
+
+Both tracks ship a **read-only** MCP server over `retail.db` so the chat can
+answer from real data. The REST API keeps its direct ORM access — MCP is for the
+model, not for the app talking to its own database.
+
+- .NET: `AgentHQDemo.McpServer` uses the `ModelContextProtocol` package with
+  `[McpServerToolType]` / `[McpServerTool]` and `WithToolsFromAssembly()`
+- Python: `mcp_server/` uses the `mcp` package. ⚠️ **2.x renamed `FastMCP` to
+  `MCPServer`** (`from mcp.server.mcpserver import MCPServer`), so v1 examples
+  found online will not run
+- Read-only is enforced at the connection — `Mode=ReadOnly` in .NET,
+  `?mode=ro&uri=true` in Python — not merely by omitting writes
+- stdio carries the protocol on **stdout**, so all logging must go to stderr
+- Expose domain tools, never a generic `run_query`. The tool surface is the
+  security boundary
+- In the Python stdio config use `working_directory`, not `cwd`; the SDK renames
+  it on the way to the wire format
+
 ## Multi-Agent Collaboration
 
 This repo supports multiple AI agents working together:
@@ -157,7 +178,8 @@ var session = await client.CreateSessionAsync(new SessionConfig
 - Unit tests required for all agent logic
 - Integration tests for full SDK flow (requires auth)
 - Test both success and failure paths
-- Keep the two suites at parity — 14 domain tests each. Python adds 4 contract
+- Keep the two suites at parity — 14 domain tests plus 12 MCP server tests each.
+  Python adds 4 contract
   tests (`test_chat_contract.py`) guarding the static UI's request shape, which
   .NET does not need because its Blazor client is strongly typed.
 
@@ -176,6 +198,9 @@ dotnet build src/AgentOrchestrator/AgentHQDemo.slnx
 
 # Run tests
 dotnet test src/AgentOrchestrator/AgentHQDemo.slnx
+
+# Run the MCP server standalone (normally spawned by CopilotChatService)
+dotnet run --project src/AgentOrchestrator/AgentHQDemo.McpServer
 
 # Run the API locally
 dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api
@@ -204,6 +229,9 @@ uv run uvicorn app.main:app --port 5070 --reload
 
 # Run a lab sample
 uv run python -m sdk_labs tools|events|sessions|mcp|permissions
+
+# Run the MCP server standalone (normally spawned by CopilotChatService)
+uv run python -m mcp_server
 ```
 
 ```bash

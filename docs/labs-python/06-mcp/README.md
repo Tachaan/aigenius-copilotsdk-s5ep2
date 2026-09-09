@@ -52,11 +52,18 @@ The union has two shapes:
 | Shape | Required fields | Use when |
 |:------|:----------------|:---------|
 | `MCPHTTPServerConfig` | `type` (`"http"` or `"sse"`), `url`, `tools` | The server is reachable over the network |
-| `MCPStdioServerConfig` | `type` (`"local"` or `"stdio"`), `command`, `tools` | The server runs as a local subprocess |
+| `MCPStdioServerConfig` | `command`, `tools` | The server runs as a local subprocess |
 
 ⚠️ **`tools` is required, not optional.** Use `["*"]` to allow everything the
 server publishes, or list specific tool names to narrow it. Omitting the key is
 a type error.
+
+💡 **`type` is optional for the stdio shape.** The CLI infers stdio from the
+presence of `command`, just as it infers a remote server from `url`. The
+optional stdio keys are `args`, `env`, `timeout` and `working_directory` — note
+that last one is **`working_directory`, not `cwd`**. The SDK renames it to `cwd`
+on the way to the wire format, so passing `cwd` yourself happens to work today
+but is not the typed public API.
 
 ⚠️ **`on_permission_request` matters here too.** As in
 [Lab 03](../03-tools/), Python denies tool calls when no handler is supplied.
@@ -194,6 +201,96 @@ Keep the two configurations separate in your mental model: editor MCP settings
 help your developer tools, while `mcp_servers=` changes what this SDK session
 can offer to the model.
 
+## Step 6 — Consuming MCP versus *serving* it
+
+Everything so far pointed the session at someone else's server. This repository
+also **implements** one, and it is worth understanding why.
+
+Until now `CopilotChatService` sent your prompt to the model with no access to
+the application's own data. Ask the chat "who are my highest-spending
+customers?" and it could only guess — the retail database was invisible to it.
+
+[`mcp_server/`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/mcp_server/server.py)
+closes that gap with five read-only tools over `retail.db`:
+
+| Tool | Answers |
+|:-----|:--------|
+| `list_transactions` | "Show me recent purchases for C003" |
+| `get_transaction` | "What was transaction 7?" |
+| `list_segments` | "What segments do we have?" |
+| `get_customer_summary` | "How much has C001 spent in total?" |
+| `predict_segment` | "Which segment does C003 belong to?" |
+
+[`copilot_chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/services/copilot_chat.py)
+attaches it as a stdio server — the shape from the table above:
+
+```python
+{
+    "retail-analytics": {
+        "command": sys.executable,      # same interpreter as the API
+        "args": ["-m", "mcp_server"],
+        "working_directory": str(PROJECT_ROOT),
+        "tools": ["*"],
+    }
+}
+```
+
+Two design decisions are the actual lesson here.
+
+**1. Least privilege at the connection, not just in code.** The engine opens
+SQLite with `mode=ro`, so a write is rejected by the driver:
+
+```python
+create_engine("sqlite:///file:" + str(path) + "?mode=ro&uri=true")
+```
+
+Even an instruction smuggled into a prompt cannot modify data, because the
+capability was never granted. Compare that with "we simply did not write any
+INSERT statements", which is a convention, not a control.
+
+**2. Domain tools, not raw SQL.** The model gets `get_customer_summary`, not
+`run_query`. A generic SQLite MCP server would have been zero code, but it also
+hands the model an arbitrary-SQL escape hatch. The tool surface *is* the
+security boundary, so keep it small and specific.
+
+Note what did **not** change: the REST API still reads the database directly
+through `RetailAnalyticsService`. MCP is for the *model*, not for an application
+talking to its own database — routing your own CRUD through an LLM tool protocol
+would add a subprocess hop and lose transactions and type safety for nothing.
+
+Try it:
+
+```bash
+cd src/AgentOrchestrator-python
+uv run uvicorn app.main:app --port 5070
+```
+
+```bash
+curl -s -X POST http://localhost:5070/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"What is customer C003 total spend and which segment are they in?"}'
+```
+
+Watch the API log for the proof, exactly as in Step 4:
+
+```
+INFO:app.services.copilot_chat:MCP tool call: retail-analytics/get_customer_summary
+INFO:app.services.copilot_chat:MCP tool call: retail-analytics/predict_segment
+```
+
+💡 **The permission handler is scoped, not blanket.** `approve_all` is fine for a
+console lab, but this service is reachable from a browser, so it approves only
+read-only tools from `retail-analytics` and refuses everything else:
+
+```python
+if (
+    isinstance(request, PermissionRequestMcp)
+    and request.server_name == RETAIL_MCP_SERVER
+    and request.read_only
+):
+    return PermissionDecisionApproveOnce()
+```
+
 ## ⚠️ Traps
 
 - **`tools` is mandatory** in both config shapes; use `["*"]` for everything
@@ -206,6 +303,11 @@ can offer to the model.
 - **MCP servers are third-party code** and can expose powerful capabilities. Vet
   the server, its permissions, and its data access before pointing an agent that
   handles real work at it
+- **`working_directory`, not `cwd`**, in the stdio config — the SDK renames it
+  for you, and only the public key is type-checked
+- **A read-only *hint* is not a read-only *guarantee*.** `read_only_hint` tells a
+  host it is safe to auto-approve; what actually stops a write in `mcp_server/`
+  is the `mode=ro` SQLite connection
 
 ## 💡 Extra credit
 
@@ -231,6 +333,9 @@ You can now explain:
 - [x] Why a plausible answer is not proof that MCP tools were called
 - [x] How `mcp_server_name` distinguishes a real MCP tool from a built-in
 - [x] How `.vscode/mcp.json` and SDK configuration target the same server
+- [x] Why this repo *serves* an MCP server as well as consuming one, and why the
+      REST API still talks to the database directly
+- [x] Why `mode=ro` is the real control and `read_only_hint` is only a hint
 
 ## Related
 

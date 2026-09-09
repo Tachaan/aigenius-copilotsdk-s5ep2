@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\AgentHQDemo.Api\AgentHQDemo.Api.csproj" />
+    <ProjectReference Include="..\..\AgentHQDemo.McpServer\AgentHQDemo.McpServer.csproj" />
   </ItemGroup>
 
 </Project>

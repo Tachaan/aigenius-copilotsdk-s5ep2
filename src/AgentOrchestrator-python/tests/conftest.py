@@ -1,14 +1,15 @@
 """Shared pytest fixtures."""
 
 import pytest
+from sqlalchemy import Engine
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 
 from app.services.retail_analytics import RetailAnalyticsService
 
 
-@pytest.fixture(name="session")
-def session_fixture():
+@pytest.fixture(name="engine")
+def engine_fixture():
     """In-memory SQLite, equivalent to the .NET tests' ``DataSource=:memory:``.
 
     ``StaticPool`` keeps every connection pointed at the same in-memory database,
@@ -20,6 +21,11 @@ def session_fixture():
         poolclass=StaticPool,
     )
     SQLModel.metadata.create_all(engine)
+    return engine
+
+
+@pytest.fixture(name="session")
+def session_fixture(engine: Engine):
     with Session(engine) as session:
         yield session
 

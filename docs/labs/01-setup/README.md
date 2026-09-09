@@ -67,7 +67,7 @@ dotnet test src/AgentOrchestrator/AgentHQDemo.slnx
 Expected:
 
 ```
-Passed!  - Failed: 0, Passed: 14, Skipped: 0, Total: 14
+Passed!  - Failed: 0, Passed: 26, Skipped: 0, Total: 26
 ```
 
 Remember that number. Lab 05 asks you to add tests without breaking these.
@@ -199,7 +199,7 @@ Back in the browser at <http://localhost:5051>:
 
 You should now have:
 
-- [x] A clean build, 14/14 tests passing
+- [x] A clean build, 26/26 tests passing
 - [x] API on 5050, UI on 5051
 - [x] REST endpoints returning seeded data
 - [x] A live streamed response from a real model

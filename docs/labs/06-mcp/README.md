@@ -193,6 +193,127 @@ they speak to the same server over the same protocol.
 That is the point of MCP: one protocol, many clients. The same tool server can
 serve an editor, a CLI, a test harness or an application agent.
 
+## Step 6 — Consuming MCP versus *serving* it
+
+Everything so far pointed the session at someone else's server. This repository
+also **implements** one, and it is worth understanding why.
+
+Until now `CopilotChatService` sent your prompt to the model with no access to
+the application's own data. Ask the chat "who are my highest-spending
+customers?" and it could only guess — the retail database was invisible to it.
+
+[`AgentHQDemo.McpServer`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.McpServer/RetailTools.cs)
+closes that gap with five read-only tools over `retail.db`:
+
+| Tool | Answers |
+|:-----|:--------|
+| `list_transactions` | "Show me recent purchases for C003" |
+| `get_transaction` | "What was transaction 7?" |
+| `list_segments` | "What segments do we have?" |
+| `get_customer_summary` | "How much has C001 spent in total?" |
+| `predict_segment` | "Which segment does C003 belong to?" |
+
+The server is a console app built on the `ModelContextProtocol` package, where
+attributes do the registration:
+
+```csharp
+builder.Services
+    .AddMcpServer(options => options.ServerInfo = new() { Name = "retail-analytics", Version = "1.0.0" })
+    .WithStdioServerTransport()
+    .WithToolsFromAssembly();
+```
+
+```csharp
+[McpServerTool(Name = "get_customer_summary", ReadOnly = true, Destructive = false)]
+[Description("Summarises one customer's spending: total, average, transaction count ...")]
+public static async Task<CustomerSummaryDto> GetCustomerSummaryAsync(...)
+```
+
+⚠️ **stdio carries the protocol on stdout**, so every log must go to stderr. A
+stray `Console.WriteLine` corrupts the stream and the server appears to hang:
+
+```csharp
+builder.Logging.AddConsole(options =>
+{
+    options.LogToStandardErrorThreshold = LogLevel.Trace;
+});
+```
+
+[`CopilotChatService`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Services/CopilotChatService.cs)
+attaches it with the `McpStdioServerConfig` shape from Step 2:
+
+```csharp
+McpServers = new Dictionary<string, McpServerConfig>
+{
+    ["retail-analytics"] = new McpStdioServerConfig
+    {
+        Command = "dotnet",
+        Args = [serverDll],
+        WorkingDirectory = apiDirectory
+    }
+};
+```
+
+Two design decisions are the actual lesson here.
+
+**1. Least privilege at the connection, not just in code.** The context is opened
+with `Mode=ReadOnly`, so a write is rejected by SQLite itself:
+
+```csharp
+options.UseSqlite($"Data Source={dbPath};Mode=ReadOnly");
+```
+
+Even an instruction smuggled into a prompt cannot modify data, because the
+capability was never granted. Compare that with "we simply did not write any
+`SaveChangesAsync` calls", which is a convention, not a control.
+
+**2. Domain tools, not raw SQL.** The model gets `get_customer_summary`, not
+`run_query`. A generic SQLite MCP server would have been zero code, but it also
+hands the model an arbitrary-SQL escape hatch. The tool surface *is* the
+security boundary, so keep it small and specific.
+
+Note what did **not** change: the REST API still reads the database directly
+through `RetailAnalyticsService`. MCP is for the *model*, not for an application
+talking to its own database — routing your own CRUD through an LLM tool protocol
+would add a subprocess hop and lose transactions and type safety for nothing.
+
+Try it:
+
+```bash
+dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api
+```
+
+```bash
+curl -s -X POST http://localhost:5050/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"What is customer C003 total spend and which segment are they in?"}'
+```
+
+Watch the API log for the proof, exactly as in Step 4:
+
+```
+MCP tool call: retail-analytics/get_customer_summary
+MCP tool call: retail-analytics/predict_segment
+```
+
+💡 **The permission handler is scoped, not blanket.** `PermissionHandler.ApproveAll`
+is fine for a console lab, but this service is reachable from a browser, so it
+approves only read-only tools from `retail-analytics`:
+
+```csharp
+if (request is PermissionRequestMcp mcp
+    && mcp.ServerName == RetailMcpServer
+    && mcp.ReadOnly)
+{
+    return Task.FromResult(PermissionDecision.ApproveOnce());
+}
+```
+
+Treat that as defence in depth rather than the primary control — as
+[the permissions diagnostic](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/samples/SdkLabs/PermissionsSample.cs)
+records, the hook was never observed firing when the host CLI has pre-granted
+tool approval. The `Mode=ReadOnly` connection is what actually holds.
+
 ## ⚠️ Traps
 
 - `McpServers` is not a `Dictionary<string, object>`. It is an
@@ -204,6 +325,11 @@ serve an editor, a CLI, a test harness or an application agent.
 - MCP servers are third-party code and can expose powerful capabilities. Vet the
   server, its permissions and its data access before adding it to an agent that
   handles real work.
+- A stdio MCP server must never write to stdout. Route all logging to stderr, or
+  the protocol stream is corrupted and the server looks like it is hanging.
+- A read-only *hint* is not a read-only *guarantee*. `ReadOnly = true` tells a
+  host it is safe to auto-approve; what actually stops a write in
+  `AgentHQDemo.McpServer` is the `Mode=ReadOnly` connection string.
 
 ## 💡 Extra credit
 
@@ -225,6 +351,9 @@ You can now explain:
 - [x] How `SessionConfig.McpServers` attaches a server by name
 - [x] Why a plausible answer is not proof that MCP tools were called
 - [x] How `.vscode/mcp.json` and SDK configuration can target the same server
+- [x] Why this repo *serves* an MCP server as well as consuming one, and why the
+      REST API still talks to the database directly
+- [x] Why `Mode=ReadOnly` is the real control and `ReadOnly = true` is only a hint
 
 ## Related
 

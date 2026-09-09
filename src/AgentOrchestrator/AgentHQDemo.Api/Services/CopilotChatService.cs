@@ -1,4 +1,5 @@
 using GitHub.Copilot;
+using GitHub.Copilot.Rpc;
 
 namespace AgentHQDemo.Api.Services;
 
@@ -6,8 +7,19 @@ namespace AgentHQDemo.Api.Services;
 /// Service for managing Copilot chat sessions.
 /// Demonstrates GitHub Copilot SDK integration for the Three Mondays demo.
 /// </summary>
+/// <remarks>
+/// The session attaches the read-only retail MCP server (AgentHQDemo.McpServer),
+/// so the model can answer questions from real data instead of guessing.
+/// See <see cref="BuildRetailMcpServers"/> and <see cref="HandlePermissionRequest"/>.
+/// </remarks>
 public class CopilotChatService : IAsyncDisposable
 {
+    /// <summary>
+    /// Name the session registers the retail MCP server under. The permission
+    /// handler below only trusts this name.
+    /// </summary>
+    private const string RetailMcpServer = "retail-analytics";
+
     private readonly ILogger<CopilotChatService> _logger;
     private CopilotClient? _client;
     private bool _isStarted;
@@ -15,6 +27,112 @@ public class CopilotChatService : IAsyncDisposable
     public CopilotChatService(ILogger<CopilotChatService> logger)
     {
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Builds the stdio config for the read-only retail MCP server.
+    /// </summary>
+    /// <remarks>
+    /// Returns null when the database has not been created yet, so the chat
+    /// still works (just without data access) instead of failing to start.
+    /// </remarks>
+    private Dictionary<string, McpServerConfig>? BuildRetailMcpServers()
+    {
+        var apiDirectory = Directory.GetCurrentDirectory();
+        if (!File.Exists(Path.Combine(apiDirectory, "retail.db")))
+        {
+            _logger.LogWarning(
+                "retail.db not found in {Directory} — starting chat without database access",
+                apiDirectory);
+            return null;
+        }
+
+        var serverDll = ResolveMcpServerPath();
+        if (serverDll is null)
+        {
+            _logger.LogWarning(
+                "MCP server not built — run dotnet build on AgentHQDemo.slnx. "
+                + "Starting chat without database access.");
+            return null;
+        }
+
+        return new Dictionary<string, McpServerConfig>
+        {
+            [RetailMcpServer] = new McpStdioServerConfig
+            {
+                Command = "dotnet",
+                Args = [serverDll],
+                WorkingDirectory = apiDirectory
+            }
+        };
+    }
+
+    /// <summary>
+    /// Finds the MCP server's build output.
+    /// </summary>
+    /// <remarks>
+    /// Derived from this assembly's own location, so the configuration and
+    /// target framework always match the running API. Probing a hardcoded
+    /// "Debug" first would launch a stale Debug build when the API itself is
+    /// running in Release.
+    /// </remarks>
+    private static string? ResolveMcpServerPath()
+    {
+        const string dllName = "AgentHQDemo.McpServer.dll";
+
+        // .../AgentHQDemo.Api/bin/<Configuration>/<Tfm>/ -> .../AgentHQDemo.McpServer/bin/<Configuration>/<Tfm>/
+        var apiOutput = AppContext.BaseDirectory;
+        var sibling = apiOutput.Replace(
+            $"{Path.DirectorySeparatorChar}AgentHQDemo.Api{Path.DirectorySeparatorChar}",
+            $"{Path.DirectorySeparatorChar}AgentHQDemo.McpServer{Path.DirectorySeparatorChar}",
+            StringComparison.Ordinal);
+
+        var candidate = Path.Combine(sibling, dllName);
+        if (File.Exists(candidate))
+        {
+            return Path.GetFullPath(candidate);
+        }
+
+        // Fall back to a source-tree layout, matching the running configuration
+        // first so a stale build of the other one is never preferred.
+        var configuration = new DirectoryInfo(apiOutput).Parent?.Name;
+        var configurations = configuration is null
+            ? ["Debug", "Release"]
+            : new[] { configuration }.Concat(new[] { "Debug", "Release" }).Distinct();
+
+        var tfm = new DirectoryInfo(apiOutput).Name;
+
+        return configurations
+            .Select(config => Path.GetFullPath(Path.Combine(
+                Directory.GetCurrentDirectory(), "..", "AgentHQDemo.McpServer", "bin", config, tfm,
+                dllName)))
+            .FirstOrDefault(File.Exists);
+    }
+
+    /// <summary>
+    /// Approves only read-only tools from our own MCP server.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Defence in depth, not the primary control. As documented in
+    /// samples/SdkLabs/PermissionsSample.cs, this hook was never observed
+    /// firing when the host Copilot CLI has pre-granted tool approval. The
+    /// guarantee that actually holds is the MCP server's read-only SQLite
+    /// connection, which rejects writes at the driver.
+    /// </remarks>
+    private Task<PermissionDecision> HandlePermissionRequest(
+        PermissionRequest request,
+        PermissionInvocation invocation)
+    {
+        if (request is PermissionRequestMcp mcp
+            && mcp.ServerName == RetailMcpServer
+            && mcp.ReadOnly)
+        {
+            return Task.FromResult(PermissionDecision.ApproveOnce());
+        }
+
+        _logger.LogWarning("Denied permission request: {Kind}", request.Kind);
+        return Task.FromResult(PermissionDecision.Reject(
+            "Only read-only retail-analytics tools are permitted in this chat."));
     }
 
     /// <summary>
@@ -84,6 +202,8 @@ public class CopilotChatService : IAsyncDisposable
                 {
                     Model = model,
                     Streaming = true,
+                    McpServers = BuildRetailMcpServers(),
+                    OnPermissionRequest = HandlePermissionRequest,
                     SystemMessage = systemMessage != null ? new SystemMessageConfig
                     {
                         Mode = SystemMessageMode.Append,
@@ -103,6 +223,12 @@ public class CopilotChatService : IAsyncDisposable
                             break;
                         case AssistantMessageEvent msg:
                             _logger.LogInformation("Assistant response complete: {Length} chars", msg.Data.Content?.Length ?? 0);
+                            break;
+                        case ToolExecutionStartEvent start when !string.IsNullOrWhiteSpace(start.Data.McpServerName):
+                            // Makes MCP visible in the API logs, which is what
+                            // the lab asks you to watch for.
+                            _logger.LogInformation("MCP tool call: {Server}/{Tool}",
+                                start.Data.McpServerName, start.Data.McpToolName);
                             break;
                         case SessionIdleEvent:
                             done.SetResult();

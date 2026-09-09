@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>AgentHQDemo.McpServer</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Reuses the API's models and RetailAnalyticsService rather than copying
+      them. Copying PredictSegmentAsync in particular would duplicate one of the
+      four intentional code smells the labs rely on finding in exactly one place.
+    -->
+    <ProjectReference Include="../AgentHQDemo.Api/AgentHQDemo.Api.csproj" />
+  </ItemGroup>
+
+</Project>
