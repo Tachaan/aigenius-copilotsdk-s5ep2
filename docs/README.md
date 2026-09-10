@@ -27,6 +27,7 @@ material that belongs to neither sits in Breakouts.
 | [**Python — Labs**](labs-python/) | The same exercises against the Python SDK | [Lab 01 — Setup](labs-python/01-setup/) |
 | [**Python — Demos**](demos-python/) | Walkthroughs explaining the code in [`src/AgentOrchestrator-python`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator-python) | [Copilot SDK integration](demos-python/01-copilot-sdk-integration.md) |
 | [**Breakouts**](breakouts/) | Reference and the shared Copilot CLI labs | [Architecture](breakouts/architecture.md) |
+| [**System map**](system-map/) | Interactive diagram of the running system | [Open the map](system-map/) |
 
 ### .NET — the SDK path
 
