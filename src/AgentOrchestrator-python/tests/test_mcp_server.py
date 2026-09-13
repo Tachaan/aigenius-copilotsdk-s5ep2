@@ -165,13 +165,16 @@ async def test_read_only_engine_rejects_writes():
         connection.close()
 
         engine = create_read_only_engine(db_path)
-        with Session(engine) as session:
-            # The row reads back fine, so the connection genuinely works...
-            assert session.exec(text("SELECT count(*) FROM probe")).one()[0] == 0
+        try:
+            with Session(engine) as session:
+                # The row reads back fine, so the connection genuinely works...
+                assert session.exec(text("SELECT count(*) FROM probe")).one()[0] == 0
 
-            # ...but SQLite itself refuses the write.
-            with pytest.raises(OperationalError, match="readonly"):
-                session.exec(text("INSERT INTO probe (id) VALUES (1)"))
+                # ...but SQLite itself refuses the write.
+                with pytest.raises(OperationalError, match="readonly"):
+                    session.exec(text("INSERT INTO probe (id) VALUES (1)"))
+        finally:
+            engine.dispose()
 
 
 async def test_missing_database_is_reported_clearly():
