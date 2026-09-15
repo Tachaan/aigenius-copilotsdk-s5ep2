@@ -1,43 +1,45 @@
-# .NET labs
+# .NET ラボ
 
-Hands-on exercises for the **AI Genius S5E2 — Agent HQ Demo**, focused on the
-**GitHub Copilot SDK**. This is the **.NET track**: pick **one** track — .NET or
-[Python](../labs-python/) — and work through it in order. Both stacks can run at
-once because .NET uses **5050/5051** and Python uses **5070**.
+**GitHub Copilot SDK** に焦点を当てた、**AI Genius S5E2 — Agent HQ Demo** の
+ハンズオン演習です。これは **.NET トラック**です。.NET または
+[Python](../labs-python/) のどちらか**一方**を選び、順番に進めてください。
+.NET は **5050/5051**、Python は **5070** を使用するため、両方のスタックを同時に実行できます。
 
-## Prerequisites
+<a id="prerequisites"></a>
 
-| Requirement | Notes |
+## 前提条件
+
+| 要件 | 補足 |
 |:------------|:------|
-| [.NET 10 SDK](https://dotnet.microsoft.com/download) | `dotnet --version` should report `10.x` |
-| [GitHub Copilot CLI](https://docs.github.com/copilot) | `npm install -g @github/copilot`, signed in with Copilot access |
-| `git`, `curl`, `jq` | `jq` is used by the optional governance-hooks lab |
-| A terminal + editor | VS Code recommended — the repo ships `.vscode/mcp.json` |
+| [.NET 10 SDK](https://dotnet.microsoft.com/download) | `dotnet --version` で `10.x` が表示されること |
+| [GitHub Copilot CLI](https://docs.github.com/copilot) | `npm install -g @github/copilot` でインストールし、Copilot を利用できるアカウントでサインイン済みであること |
+| `git`, `curl`, `jq` | `jq` はオプションのガバナンスフックラボで使用します |
+| ターミナルとエディター | VS Code を推奨します。このリポジトリには `.vscode/mcp.json` が含まれています |
 
-Verify before you start:
+開始前に確認してください。
 
 ```bash
 dotnet --version     # 10.x
 copilot --version    # 1.x
 ```
 
-## 🎯 The SDK path
+## 🎯 SDK 学習パス
 
-The core route. Roughly two hours end to end.
+中心となる学習ルートです。すべて完了するまでの所要時間は約2時間です。
 
-| # | Lab | What you'll do | Time |
+| # | ラボ | 内容 | 時間 |
 |:--|:----|:---------------|:-----|
-| 01 | [Setup](01-setup/) | Build and run the app and the SDK samples project | ~15 min |
-| 02 | [First chat](02-first-chat/) | Stream a response; discover models at runtime | ~20 min |
-| 03 | [Tools](03-tools/) | Let the model call your C# with `CopilotTool.DefineTool` | ~20 min |
-| 04 | [Events](04-events/) | Read the real session event lifecycle | ~20 min |
-| 05 | [Sessions](05-sessions/) | Persist and resume a conversation across restarts | ~20 min |
-| 06 | [MCP](06-mcp/) | Attach an MCP server for tools you didn't write | ~20 min |
-| 07 | [Wrap-up](07-wrap-up/) | Consolidate, clean up, pick a next step | ~10 min |
+| 01 | [セットアップ](01-setup/) | アプリと SDK サンプルプロジェクトをビルドして実行する | 約15分 |
+| 02 | [最初のチャット](02-first-chat/) | 応答をストリーミングし、実行時にモデルを検出する | 約20分 |
+| 03 | [ツール](03-tools/) | `CopilotTool.DefineTool` を使ってモデルから C# を呼び出す | 約20分 |
+| 04 | [イベント](04-events/) | 実際のセッションイベントのライフサイクルを確認する | 約20分 |
+| 05 | [セッション](05-sessions/) | 再起動をまたいで会話を永続化し、再開する | 約20分 |
+| 06 | [MCP](06-mcp/) | 自分で作成していないツールを提供する MCP サーバーを接続する | 約20分 |
+| 07 | [まとめ](07-wrap-up/) | 学習内容を整理し、クリーンアップして、次のステップを選ぶ | 約10分 |
 
-### Runnable samples
+### 実行可能なサンプル
 
-Labs 03–06 are backed by a real console project, one subcommand per lab:
+ラボ 03〜06 では、各ラボに1つのサブコマンドを割り当てた実際のコンソールプロジェクトを使用します。
 
 ```bash
 dotnet run --project src/AgentOrchestrator/samples/SdkLabs -- tools
@@ -46,47 +48,47 @@ dotnet run --project src/AgentOrchestrator/samples/SdkLabs -- sessions
 dotnet run --project src/AgentOrchestrator/samples/SdkLabs -- mcp
 ```
 
-Every command in these labs was executed against the real Copilot CLI and the
-output pasted in as-is.
+これらのラボに掲載しているすべてのコマンドは実際の Copilot CLI で実行し、
+その出力をそのまま掲載しています。
 
-## 📎 Extra labs — not the SDK
+## 📎 追加ラボ — SDK 以外
 
-Useful, but they cover **Copilot CLI** and general app development rather than
-the SDK. Optional, and independent of the numbered path.
+有用な内容ですが、SDK ではなく **Copilot CLI** と一般的なアプリ開発を扱います。
+これらはオプションであり、番号付きの学習パスからは独立しています。
 
-| Lab | Covers | Why it's extra |
+| ラボ | 扱う内容 | 追加ラボである理由 |
 |:----|:-------|:---------------|
-| [Extend the API](extra-extend-api/) | ASP.NET Core, EF Core, xUnit | Copilot as a coding assistant; touches no SDK |
-| [Custom agents](extra-custom-agents/) | `.agent.md` files, agent-assisted review | A Copilot CLI feature shared by both tracks — filed under [Breakouts](../breakouts/) |
-| [Governance hooks](extra-governance-hooks/) | Shell hooks, security gate, audit log | A Copilot CLI feature; the SDK equivalent is in [Lab 03](03-tools/) |
+| [API の拡張](extra-extend-api/) | ASP.NET Core、EF Core、xUnit | Copilot をコーディングアシスタントとして使用し、SDK には触れないため |
+| [カスタムエージェント](extra-custom-agents/) | `.agent.md` ファイル、エージェントを使ったレビュー | 両トラックで共通する Copilot CLI の機能であり、[詳細解説](../breakouts/)に分類されるため |
+| [ガバナンスフック](extra-governance-hooks/) | シェルフック、セキュリティゲート、監査ログ | Copilot CLI の機能であるため。SDK で同等の内容は[ラボ 03](03-tools/)で扱います |
 
-Only [Extend the API](extra-extend-api/) is .NET-specific. Custom agents and
-governance hooks are language-agnostic CLI labs, so the site lists them under
-[Breakouts → Hands-on extras](../breakouts/) and both tracks share one copy.
+[API の拡張](extra-extend-api/)だけが .NET 固有です。カスタムエージェントと
+ガバナンスフックは言語に依存しない CLI ラボであるため、サイトでは
+[詳細解説 → 追加ハンズオン](../breakouts/)に掲載し、両トラックで同じ内容を共有しています。
 
-## Conventions
+## 表記規則
 
-- Commands are **copy-pasteable** from the repository root
-- Expected output is shown so you can confirm each step
-- ⚠️ marks something that will bite you if skipped
-- 💡 marks optional extra credit
+- コマンドはリポジトリルートから**コピーしてそのまま実行**できます
+- 各手順を確認できるよう、想定される出力を掲載しています
+- ⚠️ は、飛ばすと問題が生じる注意事項を示します
+- 💡 は、オプションの発展課題を示します
 
-## ⚠️ Before you "fix" anything
+## ⚠️ 何かを「修正」する前に
 
-This repository **intentionally** contains four flawed code patterns used for
-code-review demonstrations:
+このリポジトリには、コードレビューのデモで使用する4つの問題のあるコードパターンが
+**意図的に**含まれています。
 
-- N+1 query in `GetTransactionsWithSegmentsAsync`
-- Missing null check in `GetTransactionAsync`
-- No input validation in `AddTransactionAsync`
-- Hardcoded threshold in `PredictSegmentAsync`
+- `GetTransactionsWithSegmentsAsync` の N+1 クエリ
+- `GetTransactionAsync` の null チェック漏れ
+- `AddTransactionAsync` の入力検証不足
+- `PredictSegmentAsync` のハードコードされたしきい値
 
-[Extra — Custom agents](extra-custom-agents/) asks you to *find* them. Do not
-repair them — the review exercises rely on them still being there. See
-[`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md).
+[追加 — カスタムエージェント](extra-custom-agents/)では、これらを*見つける*ことが課題です。
+修正しないでください。レビュー演習は、これらが残っていることを前提としています。詳しくは
+[`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md) を参照してください。
 
-## Related
+## 関連資料
 
-- [Demos](../demos/) — walkthroughs of the code these labs touch
-- [Breakouts](../breakouts/) — architecture, agents, hooks, and troubleshooting
-- [Troubleshooting](../breakouts/troubleshooting.md) — start here when a step fails
+- [デモ](../demos/) — これらのラボで扱うコードのウォークスルー
+- [詳細解説](../breakouts/) — アーキテクチャ、エージェント、フック、トラブルシューティング
+- [トラブルシューティング](../breakouts/troubleshooting.md) — 手順が失敗した場合は、まずこちらを確認してください

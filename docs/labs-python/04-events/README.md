@@ -1,29 +1,27 @@
-# Lab 04 — Events
+# ラボ 04 — イベント
 
-**Goal:** understand the Copilot SDK session event lifecycle: what the SDK
-actually emits, the order events arrive in, and which events matter for common
-jobs such as streaming, telemetry, completion, and errors.
+**目的:** Copilot SDK のセッションイベントのライフサイクルを理解します。具体的には、SDK が実際に何を発行するのか、イベントがどの順序で到着するのか、そしてストリーミング、テレメトリ、完了、エラーなどの一般的な処理でどのイベントが重要なのかを把握します。
 
-**Time:** ~20 minutes
+**所要時間:** 約20分です。
 
-**Prerequisites:** [Lab 03](../03-tools/) complete.
+**前提条件:** [ラボ 03](../03-tools/) を完了していること。
 
-## Step 1 — Run the event sample
+## ステップ 1 — イベントのサンプルを実行する
 
-From `src/AgentOrchestrator-python`, run the SDK lab sample:
+`src/AgentOrchestrator-python` から SDK のラボサンプルを実行します。
 
 ```bash
 cd src/AgentOrchestrator-python
 uv run python -m sdk_labs events
 ```
 
-Add `--model <id>` to override the model:
+モデルを上書きするには `--model <id>` を付けます。
 
 ```bash
 uv run python -m sdk_labs events --model gpt-5-mini
 ```
 
-Expected output:
+想定される出力は次のとおりです。
 
 ```text
 == Lab 04: events ==
@@ -77,52 +75,32 @@ Total delta events: 3
  40. session.background_tasks_changed
 ```
 
-The important surprise is the volume. A simple one-prompt exchange emits far
-more than "user message, assistant message, done".
+注目すべきなのは、その量です。単純な 1 回のプロンプトのやり取りでも、「ユーザーメッセージ、アシスタントメッセージ、完了」よりはるかに多くのイベントが発行されます。
 
-⚠️ **Events 38–40 arrive after the summary line.** `Total delta events: 3` is
-printed as soon as the session reports idle, but the `async with session:` block
-has not exited yet. Teardown emits three more events on the way out. That is a
-useful reminder that *idle is not the same as closed*.
+⚠️ **イベント 38〜40 は集計行の後に到着します。** `Total delta events: 3` はセッションがアイドル状態を報告した時点で出力されますが、`async with session:` ブロックはまだ終了していません。終了処理の過程でさらに 3 個のイベントが発行されます。これは、*アイドル状態と終了済みは同じではない*ことを示す重要な注意点です。
 
-⚠️ **The numbers above are one observed run, not a contract.** Exact counts and
-ordering vary by model, prompt, and SDK version — read the sequence for its
-shape, not as a fixed specification.
+⚠️ **上の番号は 1 回の観測結果であり、契約ではありません。** 正確な件数や順序はモデル、プロンプト、SDK のバージョンによって変わります。固定仕様としてではなく、全体の形を理解するために読んでください。
 
-## Step 2 — Walk the lifecycle phases
+## ステップ 2 — ライフサイクルの各段階をたどる
 
-The event stream is easier to remember if you group it by phase:
+イベントストリームは、段階ごとにまとめると理解しやすくなります。
 
-1. **Session setup (1–5)** — the session starts, pending messages and skills
-   load, the system message appears, and tools are announced with
-   `session.tools_updated`
-2. **User turn (6–9)** — the user message is accepted, hook events run in-band,
-   and the session title can change
-3. **Assistant turn start (10–12)** — the assistant turn starts, usage
-   information surfaces, and the model call begins
-4. **Streaming (13–28)** — streaming and reasoning deltas arrive, followed by
-   `assistant.message_start`
-5. **Completion (29–32)** — assistant usage is reported, the final assistant
-   message arrives, reasoning is finalised, and the assistant turn ends
-6. **Teardown and idle (33–37)** — another hook pair runs, usage is
-   checkpointed, the assistant becomes idle, then the whole session becomes idle
-7. **Shutdown (38–40)** — emitted while `async with session:` unwinds
+1. **セッションの準備（1〜5）** — セッションが開始され、保留中のメッセージとスキルが読み込まれ、システムメッセージが現れ、`session.tools_updated` によってツールが通知されます。
+2. **ユーザーのターン（6〜9）** — ユーザーメッセージが受理され、フックイベントが一連の処理の中で実行され、セッションタイトルが変わる場合があります。
+3. **アシスタントターンの開始（10〜12）** — アシスタントのターンが始まり、使用量情報が現れ、モデル呼び出しが開始されます。
+4. **ストリーミング（13〜28）** — ストリーミングのデルタと推論のデルタが到着し、その後に `assistant.message_start` が続きます。
+5. **完了（29〜32）** — アシスタントの使用量が報告され、最終的なアシスタントメッセージが届き、推論が確定し、アシスタントのターンが終了します。
+6. **終了処理とアイドル状態（33〜37）** — 別の一対のフックが実行され、使用量のチェックポイントが記録されます。アシスタントがアイドル状態になり、その後セッション全体もアイドル状態になります。
+7. **終了（38〜40）** — `async with session:` の終了処理中に発行されます。
 
-Hook events are part of the same ordered stream. If you are exploring
-governance hooks, that ordering matters because `hook.start` and `hook.end`
-appear around the work rather than in a separate side channel. See
-[Extra — Governance hooks](../../labs/extra-governance-hooks/) and
-[hooks and governance](../../breakouts/hooks-and-governance.md).
+フックイベントは、同じ順序付きストリームの一部です。ガバナンスフックを調べている場合、この順序は重要です。`hook.start` と `hook.end` は別チャネルではなく、実際の処理の前後に現れるためです。詳しくは [追加ラボ — ガバナンスフック](../../labs/extra-governance-hooks/) と [フックとガバナンス](../../breakouts/hooks-and-governance.md) を参照してください。
 
-Usage also has its own events: `session.usage_info`, `assistant.usage`, and
-`session.usage_checkpoint`. Those are the events to inspect when you want token
-and cost telemetry rather than text content.
+使用量にも専用のイベントがあります。`session.usage_info`、`assistant.usage`、`session.usage_checkpoint` です。テキスト内容ではなく、トークンやコストのテレメトリを確認したい場合は、これらのイベントに注目してください。
 
-## Step 3 — Subscribe with `session.on`
+## ステップ 3 — `session.on` で購読する
 
-Open
 [`events_sample.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/events_sample.py)
-and find the subscription:
+を開き、購読処理を確認します。
 
 ```python
             waiter = IdleWaiter()
@@ -150,41 +128,29 @@ and find the subscription:
             session.on(on_event)
 ```
 
-The lab project pins PyPI `github-copilot-sdk` **1.0.9**, imports it from
-`copilot`, and requires Python 3.11 or later.
+このラボプロジェクトでは、PyPI の `github-copilot-sdk` **1.0.9** にバージョンを固定し、`copilot` からインポートしています。また、Python 3.11 以降が必要です。
 
-⚠️ **This is the biggest structural difference from the .NET SDK.** In C# every
-event is its own class and you pattern-match on the subclass:
+⚠️ **これは .NET SDK との最大の構造的な違いです。** C# では各イベントがそれぞれ独立したクラスであり、そのサブクラスに対してパターンマッチします。
 
 ```csharp
 // .NET — one class per event
 session.On<SessionEvent>(evt => Console.WriteLine(evt.GetType().Name));
 ```
 
-In Python there is exactly **one** `SessionEvent` dataclass. The kind of event
-is a *value* on the object, not its type.
+Python には `SessionEvent` データクラスが **1 つだけ**あります。イベントの種類は、そのオブジェクトの*型*ではなく*値*として表現されます。
 
-That is why the transcript prints `assistant.message` (the enum's `.value`)
-where the .NET lab printed `AssistantMessageEvent` (the class name). Use `is`
-for the comparison — `SessionEventType` members are singletons.
+そのため、この実行記録では .NET ラボの `AssistantMessageEvent`（クラス名）ではなく、`assistant.message`（列挙型の `.value`）が表示されます。比較には `is` を使ってください。`SessionEventType` の各メンバーは単一のインスタンスです。
 
-`SessionEvent` carries `data`, `id`, `timestamp`, `type`, `agent_id`,
-`ephemeral`, `parent_id`, and `raw_type`. The shape of `evt.data` depends on
-`evt.type`, which is why the sample only reads `evt.data.content` inside the
-`ASSISTANT_MESSAGE` branch.
+`SessionEvent` には `data`、`id`、`timestamp`、`type`、`agent_id`、`ephemeral`、`parent_id`、`raw_type` が含まれます。`evt.data` の形式は `evt.type` に依存するため、このサンプルでは `ASSISTANT_MESSAGE` の分岐内でだけ `evt.data.content` を読んでいます。
 
-💡 `session.on(handler)` **returns an unsubscribe callable**. Keep it if you
-need to stop listening before the session ends; for example, store the result
-of `session.on(on_event)` and call it later.
+💡 `session.on(handler)` は**購読解除用の呼び出し可能オブジェクトを返します**。セッションが終了する前に監視を止める必要がある場合は保持してください。たとえば `session.on(on_event)` の戻り値を保存して、あとで呼び出します。
 
-## Step 4 — Compare with what the app handles
+## ステップ 4 — 実アプリのハンドラーと比較する
 
-The sample logs almost everything so you can learn the lifecycle. The real app
-does not need all of that.
+ライフサイクルを学べるように、このサンプルはほぼすべてをログに出します。しかし実際のアプリでは、そこまで多くは必要ありません。
 
-Open
 [`copilot_chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/services/copilot_chat.py)
-and look at its handler. It reacts to only four event types:
+を開いてハンドラーを見てください。反応しているのは 4 種類のイベントだけです。
 
 ```python
                         if evt.type is SessionEventType.ASSISTANT_MESSAGE_DELTA:
@@ -203,29 +169,16 @@ and look at its handler. It reacts to only four event types:
                                 done.set_exception(RuntimeError(evt.data.message))
 ```
 
-That is a reasonable production choice. For browser streaming, the app needs
-text chunks, final-message logging, a completion signal, and an error path. It
-does not need to branch on every setup, hook, reasoning, or telemetry event.
+これは本番向けとして妥当な選択です。ブラウザーへのストリーミングでアプリに必要なのは、テキストの断片、最終メッセージのログ出力、完了通知、エラー処理です。準備、フック、推論、テレメトリのすべてのイベントで分岐する必要はありません。
 
-Notice the two mechanisms working together: text chunks go onto an
-`asyncio.Queue` so they can be streamed out immediately, while idle and error
-resolve a `Future` that tells the generator when to stop. That split is the
-subject of [Demo 01](../../demos-python/01-copilot-sdk-integration.md).
+2 つの仕組みが連携している点に注目してください。テキストの断片は `asyncio.Queue` に入るので即座にストリーミングできます。一方、アイドル状態とエラーは `Future` を完了させ、ジェネレーターがいつ停止すべきかを伝えます。この分担は [Demo 01](../../demos-python/01-copilot-sdk-integration.md) の主題です。
 
-⚠️ **There are two different delta families.**
-`assistant.streaming_delta` and `assistant.message_delta` are *not* the same
-event. The sample suppresses only `ASSISTANT_MESSAGE_DELTA`, which is why
-`Total delta events: 3` coexists with many visible `assistant.streaming_delta`
-lines in the transcript above. If you subscribe to the wrong one you may see far
-fewer chunks than expected. Measure what your scenario actually emits before
-assuming the names mean the same thing.
+⚠️ **デルタには 2 系統あります。**
+`assistant.streaming_delta` と `assistant.message_delta` は同じイベントではありません。このサンプルが抑制しているのは `ASSISTANT_MESSAGE_DELTA` だけなので、上の実行記録ではデルタ数として `Total delta events: 3` が表示される一方で、多数の `assistant.streaming_delta` 行も見えています。誤ったほうを購読すると、期待よりもずっと少ないデータの断片しか見えない場合があります。名前だけで同じだと決めつけず、自分のシナリオで実際に何が発行されるかを測定してください。
 
-## Step 5 — Complete on idle, fail on error
+## ステップ 5 — アイドル状態で完了し、エラーで失敗させる
 
-`session.idle` is the completion signal used by the samples and the app.
-Because events are **push-only callbacks** — there is no async iterator to
-`await` — you need a future that the callback resolves. The samples share
-[`IdleWaiter`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/_common.py):
+`session.idle` は、サンプルとアプリが使っている完了シグナルです。イベントは**プッシュ専用のコールバック**であり、`await` できる非同期イテレーターはありません。そのため、コールバックによって完了する `Future` が必要です。サンプルでは共通の [`IdleWaiter`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/_common.py) を使います。
 
 ```python
 class IdleWaiter:
@@ -250,64 +203,53 @@ class IdleWaiter:
         await asyncio.wait_for(self._future, timeout=TIMEOUT_SECONDS)
 ```
 
-In the event sample, the callback above calls `waiter.handle(evt)` for each
-event; after sending the prompt, the sample awaits `waiter.wait()` before
-printing the summary.
+イベントのサンプルでは、上のコールバックが各イベントに対して `waiter.handle(evt)` を呼びます。プロンプトを送ったあと、集計を表示する前に `waiter.wait()` の完了を待ちます。
 
-This is the Python analogue of C#'s `TaskCompletionSource`.
+これは、C# の `TaskCompletionSource` に相当する Python 側の仕組みです。
 
-⚠️ **Always handle the error event.** If the session fails and nothing sets the
-exception, `await waiter.wait()` waits until the timeout expires. That failure
-mode is easy to miss because the happy path works perfectly.
+⚠️ **エラーイベントは必ず処理してください。** セッションが失敗しても例外を設定する処理がなければ、`await waiter.wait()` はタイムアウトするまで待ち続けます。正常系は問題なく動くため、この失敗モードは見落としやすいです。
 
-⚠️ **Always set a timeout.** `IdleWaiter.wait()` wraps the future in
-`asyncio.wait_for(..., timeout=180)`. A dropped transport means idle *and*
-error may never arrive, and without the timeout your coroutine hangs forever.
+⚠️ **タイムアウトは必ず設定してください。** `IdleWaiter.wait()` は Future を `asyncio.wait_for(..., timeout=180)` で包んでいます。トランスポートが切断されるとアイドル通知もエラーも来ない可能性があり、タイムアウトがなければコルーチンは永久に停止しません。
 
-💡 If you only want the reply and do not care about the lifecycle, the SDK has
-a shortcut that does this waiting for you:
-`await session.send_and_wait(prompt, timeout=180)`.
+💡 応答だけが必要で、ライフサイクルに関心がない場合、SDK にはこの待機を代行する簡便な方法があります。
+`await session.send_and_wait(prompt, timeout=180)` です。
 
-## ⚠️ Traps
+## ⚠️ 落とし穴
 
-- There is one `SessionEvent` dataclass; branch on `evt.type`, not on subclasses
-- `assistant.streaming_delta` and `assistant.message_delta` are distinct events
-- Idle is not closed — more events arrive as the `async with` block unwinds
-- Logging every event is useful for learning but noisy for app code
-- Waiting only for an assistant message is not enough; complete on `session.idle`
-- Ignoring `session.error` leaves your caller waiting for the full timeout
-- Handlers are called *by the SDK* — keep them fast and push work onto a queue
-  rather than doing slow work inline
+- `SessionEvent` データクラスは 1 つだけなので、サブクラスではなく `evt.type` で分岐してください。
+- `assistant.streaming_delta` と `assistant.message_delta` は別のイベントです。
+- アイドル状態は終了済みを意味しません。`async with` ブロックの終了処理中にもイベントは到着します。
+- すべてのイベントをログに出すのは学習には有用ですが、アプリのコードとしてはノイズが多くなります。
+- assistant message だけを待つのでは不十分です。`session.idle` で完了させてください。
+- `session.error` を無視すると、呼び出し元はタイムアウトするまで待たされます。
+- ハンドラーは *SDK から* 呼び出されるため、重い処理をその場で実行せず、高速に保ってキューに仕事を渡してください。
 
-## 💡 Extra credit
+## 💡 追加課題
 
-1. Change the sample to print only tool-related events — those whose
-   `evt.type.value` starts with `tool.`
-2. Measure time-to-first-token by recording `time.perf_counter()` before
-   `session.send(...)` and stopping on the first delta you care about
-3. Count usage-related events separately and log where they appear
-4. Group events into the seven lifecycle phases above instead of printing a flat
-   numbered list
-5. Print `evt.raw_type` alongside `evt.type.value` and see where the two differ
+1. サンプルを変更して、`evt.type.value` が `tool.` で始まるツール関連のイベントだけを表示してください。
+2. `session.send(...)` の前に `time.perf_counter()` を記録し、関心のある最初の delta で止めて、time-to-first-token を測定してください。
+3. 使用量関連のイベントを別に数え、どこに現れるかをログに出してください。
+4. 単純な番号付き一覧ではなく、上で説明した 7 つのライフサイクル段階にイベントを分類してください。
+5. `evt.raw_type` を `evt.type.value` と並べて出力し、両者がどこで異なるかを確認してください。
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-You can now explain:
+ここまでで、次の内容を説明できるようになります。
 
-- [x] The ordered session lifecycle emitted by the SDK
-- [x] Why Python uses one `SessionEvent` with an `evt.type` enum, unlike C#
-- [x] That `session.on` returns an unsubscribe callable
-- [x] Why real apps handle a small subset of all emitted events
-- [x] The difference between `streaming_delta` and `message_delta`
-- [x] Why `session.idle` completes the operation, and why idle ≠ closed
-- [x] Why the error event must fail the waiting future, and why timeouts matter
-- [x] Where hook and usage events appear in the lifecycle
+- [x] SDK が発行する順序付きのセッションライフサイクル
+- [x] Python が C# と異なり、`evt.type` 列挙型を持つ 1 つの `SessionEvent` を使う理由
+- [x] `session.on` が購読解除用の呼び出し可能オブジェクトを返すこと
+- [x] 実アプリが発行されたイベント全部ではなく、その一部だけを扱う理由
+- [x] `streaming_delta` と `message_delta` の違い
+- [x] `session.idle` が処理完了を意味する理由と、idle ≠ closed である理由
+- [x] エラーイベントが待機中の Future を失敗させる必要がある理由と、タイムアウトが重要な理由
+- [x] フックイベントと使用量イベントがライフサイクルのどこに現れるか
 
-## Related
+## 関連資料
 
-- Previous: [Lab 03 — Tools](../03-tools/)
-- Next: [Lab 05 — Sessions](../05-sessions/)
-- [Demo: Copilot SDK integration](../../demos-python/01-copilot-sdk-integration.md)
-- [Extra — Governance hooks](../../labs/extra-governance-hooks/)
-- [Hooks and governance](../../breakouts/hooks-and-governance.md)
-- [Troubleshooting](../../breakouts/troubleshooting.md)
+- 前へ: [ラボ 03 — ツール](../03-tools/)
+- 次へ: [ラボ 05 — セッション](../05-sessions/)
+- [デモ: Copilot SDK の組み込み](../../demos-python/01-copilot-sdk-integration.md)
+- [追加ラボ — ガバナンス フック](../../labs/extra-governance-hooks/)
+- [フックとガバナンス](../../breakouts/hooks-and-governance.md)
+- [トラブルシューティング](../../breakouts/troubleshooting.md)

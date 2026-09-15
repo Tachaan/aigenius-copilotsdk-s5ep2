@@ -1,33 +1,31 @@
-# Lab 03 — Tools
+# ラボ 03 — ツール
 
-**Goal:** replace static prompt context with a real C# function the model can
-call on demand using `CopilotTool.DefineTool` and `SessionConfig.Tools`.
+**目標:** `CopilotTool.DefineTool` と `SessionConfig.Tools` を使用し、静的なプロンプトの
+コンテキストを、モデルがオンデマンドで呼び出せる実際の C# 関数に置き換えます。
 
-**Time:** ~20 minutes
+**所要時間:** 約20分
 
-**Prerequisites:** [Lab 02](../02-first-chat/) complete.
+**前提条件:** [ラボ 02](../02-first-chat/)を完了していること。
 
-## Step 1 — Why tools
+## 手順 1 — ツールを使う理由
 
-In Lab 02, you grounded the assistant by putting retail facts into a system
-message. That works for tiny examples, but it has three problems:
+ラボ 02 では、小売に関する事実をシステムメッセージに含めることで、アシスタントに根拠を与えました。
+小さな例では機能しますが、次の3つの問題があります。
 
-1. The context is static — it only knows what you pasted in up front
-2. The model has to guess which facts matter
-3. Every fact burns tokens, even when the answer does not need it
+1. コンテキストが静的であり、事前に貼り付けた内容しか認識できない
+2. どの事実が重要かをモデルが推測する必要がある
+3. 回答に不要な場合でも、すべての事実がトークンを消費する
 
-A tool changes the shape of the problem. Instead of hoping the prompt contains
-the right data, you register a C# function. The model decides when it needs
-that function, asks the SDK to call it, receives the result, then writes the
-final answer.
+ツールを使うと、問題の構造が変わります。プロンプトに適切なデータが含まれていることを期待する代わりに、
+C# 関数を登録します。モデルは関数が必要なタイミングを判断し、SDK に呼び出しを要求して結果を受け取り、
+最終回答を作成します。
 
-## Step 2 — Inspect the tool shape
+## 手順 2 — ツールの形式を確認する
 
-Open
 [`ToolsSample.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/samples/SdkLabs/ToolsSample.cs)
-and find `GetCustomerTotal`.
+を開き、`GetCustomerTotal` を探します。
 
-A Copilot SDK tool starts as an ordinary C# method:
+Copilot SDK のツールは、通常の C# メソッドから始まります。
 
 ```csharp
 [Description("Gets the total amount a given retail customer has spent.")]
@@ -38,18 +36,16 @@ private static string GetCustomerTotal(
 }
 ```
 
-The important part is the `[Description]` metadata from
-`System.ComponentModel`.
+重要なのは、`System.ComponentModel` の `[Description]` メタデータです。
 
-Those descriptions are the model's API documentation. If the method description
-is vague, the model may miss the tool. If a parameter description is vague, it
-may pass the wrong value. Write descriptions the same way you would document a
-public API for another developer.
+これらの説明はモデルにとっての API ドキュメントです。メソッドの説明が曖昧だと、モデルがツールを
+選択しない可能性があります。パラメーターの説明が曖昧だと、誤った値を渡す可能性があります。
+別の開発者向けにパブリック API を文書化するときと同じように、説明を記述してください。
 
-## Step 3 — Register the tool
+## 手順 3 — ツールを登録する
 
-`CopilotTool.DefineTool(GetCustomerTotal)` turns the method into an
-`AIFunction`. You then assign that function to the session configuration:
+`CopilotTool.DefineTool(GetCustomerTotal)` はメソッドを `AIFunction` に変換します。
+次に、その関数をセッション構成に割り当てます。
 
 ```csharp
 var modelId = await ModelPicker.PickAsync(client, requestedModelId);
@@ -63,19 +59,18 @@ var config = new SessionConfig
 };
 ```
 
-That `Tools = [totalTool]` line is the difference between "the model has some
-textual context" and "the model can ask the host application to do real work".
-`ModelPicker` keeps `claude-haiku-4.5` as the preferred model for these labs,
-but falls back to a model available to your account. You can override it with
-`--model <id>`.
+`Tools = [totalTool]` の行によって、「モデルにテキストのコンテキストがある」状態から、
+「モデルがホストアプリケーションに実際の処理を要求できる」状態になります。
+`ModelPicker` はこれらのラボで `claude-haiku-4.5` を優先モデルとして使用しますが、
+利用できない場合はアカウントで使用可能なモデルにフォールバックします。`--model <id>` で上書きできます。
 
-## Step 4 — Run it
+## 手順 4 — 実行する
 
 ```bash
 dotnet run --project src/AgentOrchestrator/samples/SdkLabs -- tools
 ```
 
-Expected output:
+想定される出力:
 
 ```
 == Lab 03: tools ==
@@ -90,47 +85,42 @@ Assistant:
 Assistant: Customer C003 has spent a total of **$1,700.00** across 2 transactions.
 ```
 
-⚠️ Notice the empty first `Assistant:` line. That is real: the assistant
-message event fires around the tool call, before the final natural-language
-answer is composed.
+⚠️ 最初の空の `Assistant:` 行に注目してください。これは実際の動作です。最終的な自然言語の回答が
+作成される前、ツール呼び出しの前後でアシスタントメッセージイベントが発生します。
 
-## Step 5 — Trace what happened
+## 手順 5 — 処理を追跡する
 
-The run has four moving parts:
+この実行には、次の4つの処理があります。
 
-1. The prompt asks for the total spend for customer `C003`
-2. The model decides that the registered tool is the right way to answer
-3. The SDK invokes the C# method, producing the `[tool]` line
-4. The tool result is fed back to the model, which writes the final answer
+1. プロンプトが顧客 `C003` の合計支出額を尋ねる
+2. モデルが、登録済みツールを使うことが適切な回答方法だと判断する
+3. SDK が C# メソッドを呼び出し、`[tool]` 行を生成する
+4. ツールの結果がモデルへ返され、モデルが最終回答を作成する
 
-The `[tool] GetCustomerTotal(C003) -> $1,700.00` line is not simulated output.
-It is printed by the real `GetCustomerTotal` method while the SDK is handling
-the model's tool call.
+`[tool] GetCustomerTotal(C003) -> $1,700.00` 行は模擬出力ではありません。
+SDK がモデルのツール呼び出しを処理している間に、実際の `GetCustomerTotal` メソッドが出力しています。
 
-## Step 6 — Experiment
+## 手順 6 — 実験する
 
-Try a customer that does not exist, for example `C999`. The tool handles that
-case by returning a normal string instead of throwing:
+`C999` など、存在しない顧客を試します。ツールは例外をスローせず、通常の文字列を返して処理します。
 
 ```csharp
 Prompt = "How much has customer C999 spent in total? Use the available tool."
 ```
 
-Re-run the sample and check that the assistant reports that no transactions
-were found.
+サンプルを再実行し、トランザクションが見つからなかったことをアシスタントが報告するか確認します。
 
-Then try a prompt that does not need retail data:
+次に、小売データを必要としないプロンプトを試します。
 
 ```csharp
 Prompt = "In one short sentence, define average order value."
 ```
 
-The model should answer directly. Because no customer lookup is needed, the
-`[tool]` line should not appear.
+モデルは直接回答するはずです。顧客の検索が不要なため、`[tool]` 行は表示されません。
 
-## Step 7 — Control tool execution with permissions
+## 手順 7 — アクセス許可でツール実行を制御する
 
-The SDK also exposes an in-process permission hook:
+SDK は、プロセス内のアクセス許可フックも公開しています。
 
 ```csharp
 OnPermissionRequest = (request, invocation) =>
@@ -139,68 +129,64 @@ OnPermissionRequest = (request, invocation) =>
 }
 ```
 
-The signature is:
+シグネチャは次のとおりです。
 
 ```csharp
 Func<PermissionRequest, PermissionInvocation, Task<PermissionDecision>>
 ```
 
-Decisions come from `GitHub.Copilot.Rpc.PermissionDecision`, including
-`ApproveOnce()` and `Reject(string feedback)`. There is also a built-in
-shortcut, `PermissionHandler.ApproveAll`, for samples where every request is
-allowed.
+判定には `GitHub.Copilot.Rpc.PermissionDecision` の `ApproveOnce()` や
+`Reject(string feedback)` などを使用します。すべての要求を許可するサンプル向けに、組み込みの
+ショートカット `PermissionHandler.ApproveAll` も用意されています。
 
-⚠️ In GitHub Copilot SDK v1.0.9 this permission-decision API is marked
-experimental. Using `GitHub.Copilot.Rpc.PermissionDecision` raises build error
-`GHCP001` unless it is suppressed. The samples project does that deliberately
-in
+⚠️ GitHub Copilot SDK v1.0.9 では、このアクセス許可判定 API は試験的機能としてマークされています。
+`GitHub.Copilot.Rpc.PermissionDecision` を使用すると、抑制しない限りビルドエラー `GHCP001` が
+発生します。サンプルプロジェクトでは、次のファイルで意図的に抑制しています。
 [`SdkLabs.csproj`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/samples/SdkLabs/SdkLabs.csproj):
 
 ```xml
 <NoWarn>$(NoWarn);GHCP001</NoWarn>
 ```
 
-⚠️ Be scrupulously careful about relying on this hook as an enforcement point.
-When we tested it, the handler was **never invoked** — even a handler that
-rejected every request still let the command run, because the host CLI had
-pre-granted tool approval. Treat `OnPermissionRequest` as a hook that only
-engages where the host defers to it. Verify that it fires in **your**
-environment before relying on it as a control.
+⚠️ このフックを強制ポイントとして利用する場合は、細心の注意を払ってください。検証時には、
+ホスト CLI がツールを事前承認していたため、ハンドラーは**一度も呼び出されませんでした**。
+すべての要求を拒否するハンドラーでもコマンドは実行されました。`OnPermissionRequest` は、
+ホストが判断を委ねた場合にのみ動作するフックとして扱ってください。制御に利用する前に、
+**自分の**環境で実際に発火することを確認してください。
 
-See
+参考コードについては、
 [`PermissionsSample.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/samples/SdkLabs/PermissionsSample.cs)
-for reference code. For a shell-hook governance alternative, see
-[extra-governance-hooks](../extra-governance-hooks/).
+を参照してください。シェルフックを使った別のガバナンス手法については、
+[追加 — ガバナンスフック](../extra-governance-hooks/)を参照してください。
 
-`CopilotToolOptions.SkipPermission` also exists for opting a tool out of the
-permission flow when that is appropriate for your host.
+ホストにとって適切な場合にツールをアクセス許可フローから除外するため、
+`CopilotToolOptions.SkipPermission` も用意されています。
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-You can now explain:
+ここまでで、次の項目を説明できるようになりました。
 
-- [x] Why tools are better than stuffing dynamic data into a system message
-- [x] How `[Description]` attributes guide tool selection and arguments
-- [x] How `CopilotTool.DefineTool` registers a C# method as an `AIFunction`
-- [x] How `SessionConfig.Tools` makes that function available to the model
-- [x] Why permission hooks must be verified in the host you actually run
+- [x] 動的データをシステムメッセージに詰め込むより、ツールが適している理由
+- [x] `[Description]` 属性がツールの選択と引数を導く仕組み
+- [x] `CopilotTool.DefineTool` が C# メソッドを `AIFunction` として登録する仕組み
+- [x] `SessionConfig.Tools` が関数をモデルから利用可能にする仕組み
+- [x] 実際に実行するホストでアクセス許可フックを検証する必要がある理由
 
-## 💡 Extra credit
+## 💡 発展課題
 
-Add a second tool that returns the product categories a customer has purchased
-from, such as `Electronics` and `Fashion` for `C003`. Give the method and its
-parameter precise `[Description]` attributes, register it beside
-`GetCustomerTotal`, then ask:
+顧客が購入した製品カテゴリを返す2つ目のツールを追加します。たとえば、`C003` に対して
+`Electronics` と `Fashion` を返します。メソッドとそのパラメーターに正確な `[Description]` 属性を付け、
+`GetCustomerTotal` と並べて登録してから、次のように質問します。
 
 ```text
 Which categories has customer C003 bought from, and how much have they spent?
 ```
 
-Check whether the model calls one tool, both tools, or answers directly.
+モデルが片方のツール、両方のツールのどちらを呼び出すか、または直接回答するかを確認します。
 
-## Related
+## 関連資料
 
-- Previous: [Lab 02 — Your first streaming chat](../02-first-chat/)
-- Next: [Lab 04 — Events](../04-events/)
-- [Demo: Copilot SDK integration](../../demos/01-copilot-sdk-integration.md)
-- [Troubleshooting](../../breakouts/troubleshooting.md)
+- 前へ: [ラボ 02 — 最初のストリーミングチャット](../02-first-chat/)
+- 次へ: [ラボ 04 — イベント](../04-events/)
+- [デモ: Copilot SDK の統合](../../demos/01-copilot-sdk-integration.md)
+- [トラブルシューティング](../../breakouts/troubleshooting.md)

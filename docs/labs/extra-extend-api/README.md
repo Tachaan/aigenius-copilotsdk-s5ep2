@@ -1,31 +1,31 @@
-# Extra — Extend the API
+# 追加ラボ — API の拡張
 
-> **📎 Extra lab — not Copilot SDK.**
-> This covers ASP.NET Core, EF Core and xUnit in the demo app. It exercises
-> Copilot as a *coding assistant*, but touches none of the Copilot SDK.
-> Optional and independent of the numbered SDK path.
+> **📎 追加ラボ — Copilot SDK の内容ではありません。**
+> ここではデモアプリの ASP.NET Core、EF Core、xUnit を扱います。Copilot を
+> *コーディングアシスタント*として使用しますが、Copilot SDK には触れません。
+> オプションであり、番号付きの SDK 学習手順からは独立しています。
 
-**Goal:** add a new endpoint and its tests using Copilot, keeping the existing
-26 tests green and the deliberate code smells intact.
+**目標:** 意図的なコードスメルを残し、既存の 26 テストを成功させたまま、Copilot を使用して
+新しいエンドポイントとテストを追加します。
 
-**Time:** ~30 minutes
+**所要時間:** 約 30 分
 
-**Prerequisites:** [Extra — Governance hooks](../extra-governance-hooks/) complete, both services
-runnable.
+**前提条件:** [Extra — ガバナンスフック](../extra-governance-hooks/) を完了し、両方の
+サービスを実行できること。
 
-## ⚠️ Ground rules
+## ⚠️ 基本ルール
 
-1. **Do not fix the four intentional smells.** Later demos depend on them. If
-   Copilot offers to clean up `GetTransactionsWithSegmentsAsync`, decline.
-2. **Keep all 14 existing tests passing.** New tests add to that number.
-3. Follow the conventions in
+1. **意図的な 4 つのコードスメルを修正しないでください。** 後続のデモがこれらに依存します。
+    Copilot が `GetTransactionsWithSegmentsAsync` の改善を提案しても断ってください。
+2. **既存の 14 テストをすべて成功させてください。** 新しいテストはこの数に追加されます。
+3. 次のファイルの規約に従ってください。
    [`copilot-instructions.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/copilot-instructions.md) —
-   file-scoped namespaces, primary constructors, `async`/`Async` suffix,
-   `CancellationToken`, `record` DTOs.
+    ファイルスコープ名前空間、プライマリコンストラクター、`async`/`Async` サフィックス、
+    `CancellationToken`、`record` DTO。
 
-## What you'll build
+## 構築するもの
 
-`GET /api/segments/summary` — portfolio-level statistics across all segments:
+`GET /api/segments/summary` — 全セグメントにわたるポートフォリオレベルの統計:
 
 ```json
 {
@@ -37,29 +37,29 @@ runnable.
 }
 ```
 
-Deliberately *not* a trivial passthrough: the weighted average has to weight
-retention by customer count, which is exactly the kind of thing worth a test.
+意図的に単純なパススルーにはしていません。加重平均では顧客数によって顧客維持率を重み付けする
+必要があり、まさにテストする価値がある処理です。
 
-## Step 1 — Study the existing shape
+## 手順 1 — 既存の構造を確認する
 
 ```bash
 cat src/AgentOrchestrator/AgentHQDemo.Api/Controllers/SegmentsController.cs
 ```
 
-Note the patterns to mirror:
+踏襲すべきパターンを確認します。
 
-- Primary constructor injection: `SegmentsController(RetailAnalyticsService service)`
-- `[HttpGet("{id:int}")]` route constraints
-- `ActionResult<T>` returns, `NotFound()` for missing resources
-- Controller stays thin; logic lives in the service
+- プライマリコンストラクターによる注入: `SegmentsController(RetailAnalyticsService service)`
+- `[HttpGet("{id:int}")]` のルート制約
+- `ActionResult<T>` を返し、リソースがない場合は `NotFound()` を返す
+- Controller は薄く保ち、ロジックは service に置く
 
-## Step 2 — Look at how tests are written
+## 手順 2 — テストの書き方を確認する
 
 ```bash
 cat src/AgentOrchestrator/tests/AgentHQDemo.Tests/RetailAnalyticsServiceTests.cs
 ```
 
-This test class builds an **in-memory SQLite** context:
+このテストクラスは **in-memory SQLite** コンテキストを構築します。
 
 ```csharp
 var options = new DbContextOptionsBuilder<RetailDbContext>()
@@ -71,12 +71,12 @@ _db.Database.OpenConnection();
 _db.Database.EnsureCreated();
 ```
 
-The `OpenConnection()` call matters — an in-memory SQLite database only lives
-as long as its connection is open. Close it and your schema vanishes mid-test.
+`OpenConnection()` の呼び出しは重要です。in-memory SQLite データベースは、接続が開いている
+間だけ存在します。接続を閉じると、テストの途中でスキーマが消えます。
 
-## Step 3 — Add the DTO
+## 手順 3 — DTO を追加する
 
-Create `src/AgentOrchestrator/AgentHQDemo.Api/Models/SegmentSummary.cs`:
+`src/AgentOrchestrator/AgentHQDemo.Api/Models/SegmentSummary.cs` を作成します。
 
 ```csharp
 namespace AgentHQDemo.Api.Models;
@@ -92,11 +92,11 @@ public record SegmentSummary(
     string LowestRetention);
 ```
 
-A `record` because it's an immutable DTO — the house style.
+不変 DTO であり、このリポジトリのスタイルに合わせて `record` を使用します。
 
-## Step 4 — Add the service method
+## 手順 4 — service メソッドを追加する
 
-Ask Copilot, giving it the constraints up front:
+最初に制約を示して Copilot に依頼します。
 
 ```
 Add a GetSegmentSummaryAsync method to RetailAnalyticsService that returns a
@@ -106,7 +106,7 @@ CancellationToken and pass it to async EF Core calls. Follow the existing
 conventions in this file. Do not modify any other method.
 ```
 
-The shape you're aiming for:
+目標とする実装は次のとおりです。
 
 ```csharp
 public async Task<SegmentSummary> GetSegmentSummaryAsync(
@@ -131,12 +131,12 @@ public async Task<SegmentSummary> GetSegmentSummaryAsync(
 }
 ```
 
-⚠️ **Guard the divide.** `totalCustomers` of zero would throw. An empty table is
-unlikely with seeding, but tests can construct one — and a reviewer will ask.
+⚠️ **ゼロ除算を防いでください。** `totalCustomers` が 0 の場合は例外が発生します。シードを
+使用すれば空のテーブルはほぼありませんが、テストでは作成できます。レビュアーも確認する点です。
 
-## Step 5 — Add the endpoint
+## 手順 5 — エンドポイントを追加する
 
-In `SegmentsController`:
+`SegmentsController` に次を追加します。
 
 ```csharp
 [HttpGet("summary")]
@@ -147,12 +147,12 @@ public async Task<ActionResult<SegmentSummary>> GetSummary(
 }
 ```
 
-⚠️ **Route ordering.** `summary` must not be captured by another route. It's
-safe here because the sibling route is constrained to `{id:int}` — had it been
-a bare `{id}`, `/api/segments/summary` would try to bind "summary" as an id and
-fail. Ask Copilot about route precedence if you're unsure.
+⚠️ **ルートの順序。** `summary` が別のルートに取り込まれないようにする必要があります。ここでは
+隣接するルートが `{id:int}` に制約されているため安全です。単なる `{id}` だった場合、
+`/api/segments/summary` は "summary" を id としてバインドしようとして失敗します。不明な場合は
+ルートの優先順位について Copilot に確認してください。
 
-## Step 6 — Write the tests
+## 手順 6 — テストを作成する
 
 ```
 Add xUnit tests to RetailAnalyticsServiceTests for GetSegmentSummaryAsync.
@@ -162,20 +162,19 @@ existing in-memory SQLite setup in this class. Remember that the constructor
 starts with an empty database, so seed the seeded-case tests explicitly.
 ```
 
-The weighted-average case is the one worth care. With the seed data:
+顧客維持率の加重平均のケースは特に注意が必要です。シードデータは次のとおりです。
 
-| Segment | Customers | Retention |
+| セグメント | 顧客数 | 顧客維持率 |
 |:--------|----------:|----------:|
 | High Value | 150 | 0.92 |
 | Regular | 3,200 | 0.78 |
 | At Risk | 890 | 0.45 |
 | New | 420 | 0.65 |
 
-A plain mean gives `0.70`. The weighted figure is
-`(150×0.92 + 3200×0.78 + 890×0.45 + 420×0.65) / 4660 ≈ 0.71`.
-
-Those differ — which is precisely why the test is worth writing. Assert the
-weighted value and a naive implementation fails loudly.
+単純平均は `0.70` です。加重平均は
+`(150×0.92 + 3200×0.78 + 890×0.45 + 420×0.65) / 4660 ≈ 0.71`
+となり、値が異なります。これこそテストを作成する価値がある理由です。加重値をアサートすれば、
+単純な実装は明確に失敗します。
 
 ```csharp
 [Fact]
@@ -194,29 +193,29 @@ public async Task GetSegmentSummaryAsync_WeightsRetentionByCustomerCount()
 }
 ```
 
-💡 The in-memory database starts empty. Seed it in tests that assert the four
-sample segments; leave it empty for the zero-segment case.
+💡 in-memory データベースは空の状態で開始します。4 つのサンプルセグメントを検証するテストでは
+シードし、セグメントが 0 のケースでは空のままにします。
 
-## Step 7 — Build and test
+## 手順 7 — ビルドしてテストする
 
 ```bash
 dotnet build src/AgentOrchestrator/AgentHQDemo.slnx
 dotnet test  src/AgentOrchestrator/AgentHQDemo.slnx
 ```
 
-Expected: a clean build and **more than 14** passing, none failing.
+想定結果は、警告のないビルドと、失敗なしで **14 件を超える**テストの成功です。
 
-⚠️ If a previously-passing test now fails, something outside your new code
-changed. Check the diff:
+⚠️ 以前成功していたテストが失敗する場合は、新しいコード以外の何かが変更されています。
+差分を確認してください。
 
 ```bash
 git diff --stat
 ```
 
-Only `SegmentSummary.cs`, `RetailAnalyticsService.cs`, `SegmentsController.cs`,
-and the test file should appear.
+表示されるのは `SegmentSummary.cs`、`RetailAnalyticsService.cs`、`SegmentsController.cs`、
+テストファイルだけである必要があります。
 
-## Step 8 — Verify it live
+## 手順 8 — 実際に動かして確認する
 
 ```bash
 dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api --urls "http://localhost:5050"
@@ -226,41 +225,40 @@ dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api --urls "http://localh
 curl -s http://localhost:5050/api/segments/summary | jq
 ```
 
-Confirm the numbers match the table above, and that the existing endpoints
-still behave:
+数値が上の表と一致し、既存のエンドポイントも引き続き動作することを確認します。
 
 ```bash
 curl -s http://localhost:5050/api/segments | jq 'length'          # 4
 curl -s http://localhost:5050/api/segments/predict/C003 | jq -r .predictedSegment
 ```
 
-## Step 9 — Review your own change
+## 手順 9 — 自分の変更をレビューする
 
-Close the loop with Lab 03's agent:
+ラボ 03 のエージェントを使用して仕上げます。
 
 ```bash
 copilot --agent dotnet-reviewer -p "Review my uncommitted changes for correctness, async usage, and adherence to .github/copilot-instructions.md. Report only." --allow-all-tools
 ```
 
-Then update the API table in the root [`README.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/README.md) to list
-the new endpoint — docs drift is a review finding too.
+次に、ルートの [`README.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/README.md) にある API の表を更新し、
+新しいエンドポイントを追加します。ドキュメントの乖離もレビューで指摘すべき問題です。
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-- [x] New `record` DTO, service method, and endpoint added
-- [x] Tests cover the weighted average and the empty case
-- [x] All original 26 tests still pass
-- [x] The four intentional smells are untouched
-- [x] Endpoint verified against the running API
+- [x] 新しい `record` DTO、service メソッド、エンドポイントを追加した
+- [x] 加重平均と空のケースをテストでカバーした
+- [x] 元の 26 テストがすべて引き続き成功する
+- [x] 意図的な 4 つのコードスメルを変更していない
+- [x] 実行中の API に対してエンドポイントを検証した
 
-## 💡 Extra credit
+## 💡 発展課題
 
-Add `GET /api/transactions/summary` — totals by product category and store.
-Consider whether the N+1 pattern from `GetTransactionsWithSegmentsAsync` would
-creep in, and write it so it doesn't.
+`GET /api/transactions/summary` を追加し、商品カテゴリおよび店舗別の合計を返します。
+`GetTransactionsWithSegmentsAsync` の N+1 パターンが入り込まないか検討し、発生しないように
+実装してください。
 
-## Related
+## 関連項目
 
-- Next: [Lab 07 — Wrap-up](../07-wrap-up/)
-- [Demo: Retail analytics](../../demos/03-retail-analytics.md)
-- [Breakout: Architecture](../../breakouts/architecture.md)
+- 次へ: [ラボ 07 — まとめ](../07-wrap-up/)
+- [デモ: 小売分析](../../demos/03-retail-analytics.md)
+- [補足資料: アーキテクチャ](../../breakouts/architecture.md)

@@ -1,44 +1,43 @@
-# Lab 01 — Setup
+# ラボ 01 — セットアップ
 
-**Goal:** set up to work with the Copilot SDK, using the Agent HQ demo app as
-the runnable vehicle for SDK sessions, streaming, and samples.
+**目標:** Agent HQ デモアプリを、SDK セッション、ストリーミング、サンプルを
+実行するための基盤として使用し、Copilot SDK を扱う環境を準備します。
 
-**Time:** ~15 minutes
+**所要時間:** 約15分
 
-## Prerequisites
+## 前提条件
 
-See the [labs README](../README.md#prerequisites). In short: .NET 10 SDK, the
-GitHub Copilot CLI (signed in), plus `curl` and `jq`.
+[ラボの README](../README.md#prerequisites)を参照してください。要約すると、.NET 10 SDK、
+サインイン済みの GitHub Copilot CLI、`curl`、`jq` が必要です。
 
-## Step 1 — Clone and inspect
+## 手順 1 — クローンして確認する
 
 ```bash
 git clone https://github.com/vicperdana/aigenius-copilotsdk-s5ep2.git
 cd aigenius-copilotsdk-s5ep2
 ```
 
-Take a moment to look around:
+まず、内容を確認します。
 
 ```bash
 ls
 ```
 
-The layout follows Microsoft Build session-repo conventions — the .NET
-implementation lives under `src/AgentOrchestrator/`, which holds both projects
-and the tests.
+この構成は Microsoft Build のセッションリポジトリ規則に従っています。.NET の実装は
+`src/AgentOrchestrator/` にあり、プロジェクトとテストの両方が含まれています。
 
-⚠️ **There is no solution file at the repository root.** It lives at
-`src/AgentOrchestrator/AgentHQDemo.slnx`, so build and test commands name it
-explicitly. A bare `dotnet build` from the root will fail with `MSB1003`.
+⚠️ **リポジトリルートにはソリューションファイルがありません。**
+`src/AgentOrchestrator/AgentHQDemo.slnx` にあるため、ビルドとテストのコマンドでは
+明示的に指定します。ルートで引数なしの `dotnet build` を実行すると `MSB1003` で失敗します。
 
-## Step 2 — Restore and build
+## 手順 2 — 復元してビルドする
 
 ```bash
 dotnet restore src/AgentOrchestrator/AgentHQDemo.slnx
 dotnet build   src/AgentOrchestrator/AgentHQDemo.slnx
 ```
 
-Expected:
+想定される出力:
 
 ```
 Build succeeded.
@@ -46,74 +45,70 @@ Build succeeded.
     0 Error(s)
 ```
 
-⚠️ **If you get `MSB3923: Failed to download file ... registry.npmjs.org`**,
-your network blocks the npm registry. The Copilot SDK downloads a matching CLI
-binary at build time. Install the CLI globally instead and rebuild —
-[`Directory.Build.props`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/Directory.Build.props) will detect and reuse it:
+⚠️ **`MSB3923: Failed to download file ... registry.npmjs.org` が表示された場合**、
+ネットワークによって npm レジストリがブロックされています。Copilot SDK はビルド時に
+対応する CLI バイナリをダウンロードします。代わりに CLI をグローバルインストールして再ビルドしてください。
+[`Directory.Build.props`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/Directory.Build.props) が検出して再利用します。
 
 ```bash
 npm install -g @github/copilot
 ```
 
-See [troubleshooting](../../breakouts/troubleshooting.md) for the full set of
-overrides.
+すべてのオーバーライドについては、[トラブルシューティング](../../breakouts/troubleshooting.md)を参照してください。
 
-## Step 3 — Run the tests
+## 手順 3 — テストを実行する
 
 ```bash
 dotnet test src/AgentOrchestrator/AgentHQDemo.slnx
 ```
 
-Expected:
+想定される出力:
 
 ```
 Passed!  - Failed: 0, Passed: 26, Skipped: 0, Total: 26
 ```
 
-Remember that number. Lab 05 asks you to add tests without breaking these.
+この数を覚えておいてください。ラボ 05 では、これらを壊さずにテストを追加します。
 
-## Step 4 — Start the API
+## 手順 4 — API を起動する
 
-In your first terminal:
+1つ目のターミナルで、次を実行します。
 
 ```bash
 dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api --urls "http://localhost:5050"
 ```
 
-On first run the SQLite database is created and seeded automatically — you'll
-see EF Core `CREATE TABLE` and `INSERT` statements, then:
+初回実行時に SQLite データベースが自動的に作成され、シードデータが投入されます。
+EF Core の `CREATE TABLE` 文と `INSERT` 文に続いて、次の出力が表示されます。
 
 ```
 Now listening on: http://localhost:5050
 Application started.
 ```
 
-## Step 5 — Start the Blazor UI
+## 手順 5 — Blazor UI を起動する
 
-In a **second** terminal:
+**2つ目**のターミナルで、次を実行します。
 
 ```bash
 dotnet run --project src/AgentOrchestrator/AgentHQDemo.Web --urls "http://localhost:5051"
 ```
 
-Then open <http://localhost:5051>. You should see the empty chat UI:
+次に、<http://localhost:5051> を開きます。空のチャット UI が表示されます。
 
-![The Retail Analytics Assistant chat UI in its empty state: a dark header with
-the model dropdown, Clear button and theme toggle, a centred welcome heading,
-five suggested retail questions, and the message input at the
-bottom.](../../screenshots/chat-ui.png)
+![Retail Analytics Assistant の空のチャット UI。暗色のヘッダーにはモデルのドロップダウン、Clear ボタン、テーマ切り替えがあり、中央にはウェルカム見出しと小売に関する5つの質問候補、下部にはメッセージ入力欄が表示されています。](../../screenshots/chat-ui.png)
 
-⚠️ **Port already in use?** A server from an earlier run may still be alive and
-will silently serve stale code. Find and stop it:
+⚠️ **ポートがすでに使用されていますか?** 以前に実行したサーバーがまだ動作していて、
+古いコードをそのまま配信している可能性があります。該当するプロセスを見つけて停止します。
 
 ```bash
 lsof -ti:5050        # prints a PID if something is listening
 kill <PID>
 ```
 
-## Step 6 — Verify the REST API
+## 手順 6 — REST API を確認する
 
-In a third terminal:
+3つ目のターミナルで、次を実行します。
 
 ```bash
 curl -s http://localhost:5050/api/chat/health | jq
@@ -122,8 +117,8 @@ curl -s http://localhost:5050/api/segments | jq '.[].name'
 curl -s http://localhost:5050/api/segments/predict/C003 | jq
 ```
 
-Expected: health reports `"status":"healthy"`, 10 transactions, four segment
-names (High Value, Regular, At Risk, New), and a prediction like:
+想定される結果は、ヘルスチェックが `"status":"healthy"` を返すこと、10件のトランザクション、
+4つのセグメント名 (High Value、Regular、At Risk、New)、および次のような予測です。
 
 ```json
 {
@@ -134,9 +129,9 @@ names (High Value, Regular, At Risk, New), and a prediction like:
 }
 ```
 
-## Step 7 — Verify streaming works
+## 手順 7 — ストリーミング動作を確認する
 
-This is the real test — it proves the Copilot SDK is wired up and authenticated:
+これは実動作のテストです。Copilot SDK が正しく接続され、認証されていることを確認します。
 
 ```bash
 curl -N -X POST http://localhost:5050/api/chat/stream \
@@ -144,7 +139,7 @@ curl -N -X POST http://localhost:5050/api/chat/stream \
   -d '{"prompt":"Reply with just the word OK","model":"claude-haiku-4.5"}'
 ```
 
-Expected — chunks arriving progressively, then a terminator:
+想定される出力では、チャンクが順次到着し、最後に終端マーカーが届きます。
 
 ```
 data: {"content":"OK"}
@@ -152,28 +147,27 @@ data: {"content":"OK"}
 data: [DONE]
 ```
 
-⚠️ **If you see `data: {"error":"..."}` instead**, the SDK reached the CLI but
-something failed. Two common causes:
+⚠️ **代わりに `data: {"error":"..."}` が表示された場合**、SDK は CLI に到達していますが、
+何らかの処理に失敗しています。よくある原因は次の2つです。
 
-- `Model "..." is not available` — your account can't use that model id. Ask
-  the API which models you actually have:
+- `Model "..." is not available` — アカウントでそのモデル ID を使用できません。実際に利用できるモデルを
+  API に問い合わせてください。
   `curl -s http://localhost:5050/api/chat/models | jq '.[].id'`
-- A JSON-RPC or deserialization error — your SDK and CLI versions have drifted
-  apart. Run `copilot --version` and check
-  [troubleshooting](../../breakouts/troubleshooting.md).
+- JSON-RPC または逆シリアル化エラー — SDK と CLI のバージョンが一致していません。
+  `copilot --version` を実行し、[トラブルシューティング](../../breakouts/troubleshooting.md)を確認してください。
 
-## Step 8 — Verify the SDK labs samples
+## 手順 8 — SDK ラボのサンプルを確認する
 
-Every later SDK lab uses the samples project, so build it once and confirm the
-CLI entry point is reachable:
+以降のすべての SDK ラボでサンプルプロジェクトを使用します。最初に一度ビルドし、
+CLI エントリポイントを呼び出せることを確認します。
 
 ```bash
 dotnet build src/AgentOrchestrator/samples/SdkLabs
 dotnet run --project src/AgentOrchestrator/samples/SdkLabs
 ```
 
-Expected: the build succeeds, then running with no arguments prints the usage
-banner listing the five sample commands:
+想定される結果は、ビルドが成功し、引数なしで実行すると5つのサンプルコマンドを一覧表示する
+使用方法バナーが出力されることです。
 
 ```
 tools
@@ -183,41 +177,41 @@ sessions
 mcp
 ```
 
-That confirms the SDK loaded, the project can execute, and the lab commands are
-available for the next steps.
+これにより、SDK が読み込まれ、プロジェクトを実行でき、以降の手順でラボコマンドを
+利用できることを確認できます。
 
-## Step 9 — Try the UI
+## 手順 9 — UI を試す
 
-Back in the browser at <http://localhost:5051>:
+ブラウザーで <http://localhost:5051> に戻ります。
 
-1. Open the **Model** dropdown — it's populated at runtime from your account,
-   so the list is whatever you can genuinely use
-2. Ask: *"Which customer segment has the lowest retention?"*
-3. Watch the response stream in token by token
+1. **Model** ドロップダウンを開きます。アカウント情報を基に実行時に項目が設定されるため、
+  実際に利用できるモデルだけが表示されます
+2. *「顧客維持率が最も低い顧客セグメントはどれですか?」* と質問します
+3. 応答がトークン単位でストリーミングされる様子を確認します
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-You should now have:
+ここまでで、次の状態になっていることを確認してください。
 
-- [x] A clean build, 26/26 tests passing
-- [x] API on 5050, UI on 5051
-- [x] REST endpoints returning seeded data
-- [x] A live streamed response from a real model
-- [x] The SDK labs samples project building and printing its command banner
+- [x] クリーンにビルドでき、26件中26件のテストが成功する
+- [x] API がポート 5050、UI がポート 5051 で動作する
+- [x] REST エンドポイントがシードデータを返す
+- [x] 実際のモデルからの応答がライブストリーミングされる
+- [x] SDK ラボのサンプルプロジェクトをビルドでき、コマンドバナーが表示される
 
-## 💡 Extra credit
+## 💡 発展課題
 
-Query the models endpoint and count what your account offers:
+models エンドポイントに問い合わせ、アカウントで利用できるモデル数を確認します。
 
 ```bash
 curl -s http://localhost:5050/api/chat/models | jq 'length'
 ```
 
-Compare that with the static fallback list in `ChatController.AvailableModels`.
-The live list is the source of truth — Lab 02 explains why that matters.
+その結果を `ChatController.AvailableModels` の静的フォールバックリストと比較してください。
+利用可能なモデルの状態判定では、ライブリストが正です。ラボ 02 では、それが重要な理由を説明します。
 
-## Related
+## 関連資料
 
-- Next: [Lab 02 — First chat](../02-first-chat/)
-- [Demo: Copilot SDK integration](../../demos/01-copilot-sdk-integration.md)
-- [Troubleshooting](../../breakouts/troubleshooting.md)
+- 次へ: [ラボ 02 — 最初のチャット](../02-first-chat/)
+- [デモ: Copilot SDK の統合](../../demos/01-copilot-sdk-integration.md)
+- [トラブルシューティング](../../breakouts/troubleshooting.md)

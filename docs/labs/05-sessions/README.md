@@ -1,39 +1,39 @@
-# Lab 05 — Sessions
+# ラボ 05 — セッション
 
-**Goal:** persist and resume a Copilot SDK conversation, the building block
-behind "your agent, anywhere".
+**目標:** 「どこからでも使える自分のエージェント」の基盤となる、Copilot SDK の会話の
+永続化と再開を実装します。
 
-**Time:** ~20 minutes
+**所要時間:** 約 20 分
 
-**Prerequisites:** [Lab 04](../04-events/) complete.
+**前提条件:** [ラボ 04](../04-events/) を完了していること。
 
-## Step 1 — Understand why persistence matters
+## 手順 1 — 永続化が重要な理由を理解する
 
-Without session persistence, every process restart is amnesia. The assistant can
-only see the messages you send in the current process, so a CLI crash, browser
-refresh or server recycle loses the conversation.
+セッションを永続化しない場合、プロセスを再起動するたびに記憶が失われます。アシスタントが
+参照できるのは現在のプロセスで送信されたメッセージだけなので、CLI のクラッシュ、ブラウザーの
+更新、サーバーの再起動によって会話が失われます。
 
-With a stored session, the conversation has an identity. You can start it in a
-CLI, resume it from a web app, then pick it up later from a phone. That is the
-core pattern behind "your agent, anywhere": the client changes, but the session
-history stays attached to the same id.
+セッションを保存すると、会話に識別子が与えられます。CLI で会話を開始し、Web アプリから
+再開して、後からスマートフォンで続きを行えます。これが「どこからでも使える自分の
+エージェント」の中核パターンです。クライアントが変わっても、セッション履歴は同じ ID に
+関連付けられたままです。
 
-This sample first demonstrates the narrower proof: resume after disposing a
-session in the same process and the same `CopilotClient`. It also supports
-`--resume <id>` so you can try a second, separate process when your environment
-uses the same session persistence store and runtime.
+このサンプルでは、まず限定的な動作を確認します。同じプロセス、同じ `CopilotClient` で
+セッションを破棄した後に再開します。また `--resume <id>` もサポートしているため、同じ
+セッション永続化ストアへアクセスでき、互換性のあるランタイムと適切な認可を利用できる環境では、
+別の第 2 プロセスでも試せます。
 
-## Step 2 — Create a session with a known id
+## 手順 2 — 既知の ID でセッションを作成する
 
-Open
+次のファイルを開き、
 [`SessionsSample.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/samples/SdkLabs/SessionsSample.cs)
-and find the session id:
+でセッション ID を確認します。
 
 ```csharp
 var sessionId = $"sdklabs-{Guid.NewGuid():N}"[..24];
 ```
 
-Then find where it is passed to the SDK:
+次に、それが SDK に渡されている箇所を確認します。
 
 ```csharp
 await using var session = await client.CreateSessionAsync(new SessionConfig
@@ -44,21 +44,21 @@ await using var session = await client.CreateSessionAsync(new SessionConfig
 });
 ```
 
-`SessionConfig.SessionId` lets you supply your own id. If you omit it, the SDK
-generates one for you, but then your app needs to capture and store that
-generated value before it can resume the session later.
+`SessionConfig.SessionId` を使うと、独自の id を指定できます。省略した場合は SDK が id を
+生成しますが、後でセッションを再開するには、アプリでその生成値を取得して保存しておく
+必要があります。
 
-For real apps, use ids that are meaningful and unique to your domain, such as a
-conversation id or support case id. Do not put secrets in them: ids often appear
-in logs, diagnostics and URLs.
+実際のアプリでは、会話 id やサポート案件 id など、ドメイン内で意味があり一意になる id を
+使用してください。id にシークレットを含めないでください。id はログ、診断情報、URL に
+表示されることがよくあります。
 
-## Step 3 — Run the sample
+## 手順 3 — サンプルを実行する
 
 ```bash
 dotnet run --project src/AgentOrchestrator/samples/SdkLabs -- sessions
 ```
 
-Expected output:
+想定される出力:
 
 ```
 == Lab 05: sessions ==
@@ -80,16 +80,16 @@ Assistant: 'At Risk'.
   id=sdklabs-7946e93975844b2e metadata retrieved
 ```
 
-The session id is random per run, so yours will differ. The important proof is
-not the id value. It is that turn 2 remembered `'At Risk'` after the first
-session had been disposed.
+セッション ID は実行ごとにランダムに生成されるため、実際の値は異なります。重要なのは ID の
+値そのものではなく、最初のセッションを破棄した後も同じ ID で再開したターン 2 が `'At Risk'` を記憶していた
+ことです。
 
-This run proves resume-after-disposal inside one process. It does not, by
-itself, prove cross-device hand-off or restart recovery.
+この実行で確認できるのは、1 つのプロセス内で破棄後に再開できることです。これだけでは、
+デバイス間の引き継ぎや再起動後の復旧までは確認できません。
 
-## Step 4 — Resume the session
+## 手順 4 — セッションを再開する
 
-The second turn uses the same id, but a different SDK call:
+2 回目のターンでは同じ ID を使用しますが、別の SDK 呼び出しを使用します。
 
 ```csharp
 await using var resumed = await client.ResumeSessionAsync(
@@ -101,28 +101,27 @@ await using var resumed = await client.ResumeSessionAsync(
     });
 ```
 
-⚠️ **The config parameter is required.** In SDK v1.0.9 this does not compile:
+⚠️ **config パラメーターは必須です。** SDK v1.0.9 では、次のコードはコンパイルできません。
 
 ```csharp
 await client.ResumeSessionAsync(sessionId);
 ```
 
-The compiler reports `CS7036` because there is no argument for the required
-configuration parameter.
+必須の構成パラメーターに対応する引数がないため、コンパイラは `CS7036` を報告します。
 
-⚠️ **Use `ResumeSessionConfig`, not `SessionConfig`.** Creating a new session
-uses `SessionConfig`; resuming an existing one uses `ResumeSessionConfig`.
-The resume config carries the same kind of settings used here, including
-`Model` and `Streaming`, but it is a different type.
+⚠️ **`SessionConfig` ではなく `ResumeSessionConfig` を使用してください。** 新しいセッションの
+作成には `SessionConfig`、既存のセッションの再開には `ResumeSessionConfig` を使用します。
+再開用の構成には、ここで使用している `Model` や `Streaming` など同種の設定が含まれますが、
+型は異なります。
 
-To make the proof stronger, run the resume path in a second process using the
-session id printed by the first run:
+さらに確実に確認するため、最初の実行で表示されたセッション ID を使用して、第 2 プロセスで
+再開処理を実行します。
 
 ```bash
 dotnet run --project src/AgentOrchestrator/samples/SdkLabs -- sessions --resume sdklabs-7946e93975844b2e
 ```
 
-Verified output from a second invocation:
+2 回目の起動で確認済みの出力:
 
 ```
 == Lab 05: sessions ==
@@ -138,85 +137,79 @@ Assistant: 'At Risk'.
   id=sdklabs-7946e93975844b2e metadata retrieved
 ```
 
-That second command genuinely crosses a process boundary. Resuming from another
-machine additionally requires access to the same session persistence store, the
-same compatible runtime, and proper authorisation.
+この 2 つ目のコマンドは、実際にプロセス境界を越えます。別のマシンから再開するには、さらに
+同じセッション永続化ストアへアクセスでき、互換性のあるランタイムを実行し、保存済みセッションに
+対する適切な認可を受けている必要があります。
 
-## Step 5 — Discover stored sessions
+## 手順 5 — 保存済みセッションを検出する
 
-The sample also asks the SDK for metadata:
+このサンプルでは、SDK にメタデータも要求します。
 
 ```csharp
 var metadata = await client.GetSessionMetadataAsync(sessionId);
 ```
 
-That call returns metadata for a stored session. To browse available stored
-sessions instead of starting from a known id, use `ListSessionsAsync(...)`:
+この呼び出しは、保存済みセッションのメタデータを返します。既知の ID から開始するのではなく、
+利用可能な保存済みセッションを参照するには、`ListSessionsAsync(...)` を使用します。
 
 ```csharp
 var sessions = await client.ListSessionsAsync(...);
 ```
 
-A common pattern is:
+一般的なパターンは次のとおりです。
 
-1. List sessions for the signed-in user
-2. Let the user choose one, or select the most recent
-3. Pass that id to `ResumeSessionAsync(id, config)`
+1. サインインしているユーザーのセッションを一覧表示する
+2. ユーザーに 1 つ選択してもらうか、最新のものを選択する
+3. その ID を `ResumeSessionAsync(id, config)` に渡す
 
-## Step 6 — Connect it to the architecture
+## 手順 6 — アーキテクチャに結び付ける
 
-Session persistence enables:
+セッションの永続化により、次のことが可能になります。
 
-- **Hand-off across devices and clients** — start in one place, continue in
-  another
-- **Crash recovery** — resume after a process restart instead of rebuilding
-  context from scratch
-- **Auditability** — stable ids make it easier to inspect, organise and trace
-  conversations
+- **デバイスやクライアント間の引き継ぎ** — ある場所で開始し、別の場所で続行する
+- **クラッシュからの復旧** — コンテキストを最初から再構築せず、プロセスの再起動後に再開する
+- **監査性** — 安定した ID により、会話の調査、整理、追跡が容易になる
 
-In the demo app today, the browser keeps chat history in localStorage via
-`StorageService`. That works for one browser on one device, but it cannot move
-the conversation to another device. If you open the app on a phone or another
-machine, the history is gone.
+現在のデモアプリでは、ブラウザーが `StorageService` を介してチャット履歴を localStorage に
+保持します。これは 1 台のデバイス上の 1 つのブラウザーでは機能しますが、会話を別のデバイスへ
+移動できません。スマートフォンや別のマシンでアプリを開くと、履歴はありません。
 
-SDK sessions are the fix. The UI can store a session id instead of the whole
-conversation, and an authorised client using the same session store can resume
-the same server-side session.
+SDK セッションでこの問題を解決できます。UI は会話全体の代わりにセッション ID を保存でき、
+同じセッションストアを使用する認可済みクライアントが、同じサーバー側セッションを再開できます。
 
-⚠️ **A session id is not an access control.** Treat ids as identifiers, not
-secrets or capabilities. Your app still needs normal user authentication and
-authorisation before resuming a stored conversation.
+⚠️ **セッション ID はアクセス制御ではありません。** ID は識別子として扱い、シークレットや
+権限として扱わないでください。保存済みの会話を再開する前に、アプリでは通常どおりユーザーの
+認証と認可が必要です。
 
-## ⚠️ Traps
+## ⚠️ 注意点
 
-- **Id collisions:** the session id is your key. Reusing an id resumes the old
-  conversation instead of creating a clean one.
-- **Opaque ids:** random ids work for demos, but real systems should be able to
-  map ids back to users, cases or workflows.
-- **Ids are not permissions:** knowing or guessing an id must not be enough to
-  access a conversation; enforce authorisation separately.
-- **Secrets in ids:** never include tokens, email addresses, customer secrets or
-  confidential data in a session id.
-- **Wrong resume overload:** `ResumeSessionAsync(sessionId)` fails with
-  `CS7036`; pass `ResumeSessionConfig`.
-- **Wrong config type:** `SessionConfig` is for create; `ResumeSessionConfig`
-  is for resume.
+- **ID の衝突:** セッション ID は保存済み会話を参照するキーです。ID を再利用すると、新しい会話を作成する代わりに
+  古い会話が再開されます。
+- **不透明な ID:** ランダムな ID はデモでは機能しますが、実際のシステムでは ID をユーザー、
+  案件、ワークフローに対応付けられる必要があります。
+- **ID は権限ではない:** ID を知っている、または推測できるだけで会話にアクセスできては
+  いけません。認可は別途適用してください。
+- **ID 内のシークレット:** セッション ID にトークン、メールアドレス、顧客のシークレット、
+  機密データを含めないでください。
+- **誤った再開オーバーロード:** `ResumeSessionAsync(sessionId)` は `CS7036` で失敗します。
+  `ResumeSessionConfig` を渡してください。
+- **誤った構成型:** `SessionConfig` は作成用、`ResumeSessionConfig` は再開用です。
 
-## 💡 Extra credit
+## 💡 発展課題
 
-Resume the same session twice:
+同じセッションを 2 回再開します。
 
-1. Add a third turn after the metadata call
-2. Resume the same `sessionId` again
-3. Ask another question about the original `'At Risk'` message
+1. メタデータ呼び出しの後に 3 回目のターンを追加する
+2. 同じ `sessionId` をもう一度再開する
+3. 元の `'At Risk'` メッセージについて別の質問をする
 
-Or list stored sessions and resume the most recent one:
+または、保存済みセッションを一覧表示し、最新のセッションを再開します。
 
 ```csharp
 var sessions = await client.ListSessionsAsync(...);
 ```
 
-Then pass the selected id to:
+次に、選択した id を以下に渡します。
 
 ```csharp
 await client.ResumeSessionAsync(id, new ResumeSessionConfig
@@ -226,22 +219,22 @@ await client.ResumeSessionAsync(id, new ResumeSessionConfig
 });
 ```
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-You can now explain:
+これで、次の項目を説明できるようになりました。
 
-- [x] Why process restarts lose context without persistence
-- [x] How `SessionConfig.SessionId` gives your app a stable conversation key
-- [x] Why `ResumeSessionAsync(id, config)` requires `ResumeSessionConfig`
-- [x] How `GetSessionMetadataAsync` and `ListSessionsAsync(...)` help discover
-  stored sessions
-- [x] Why SDK sessions are the right foundation for cross-device chat history
-- [x] Why cross-process and cross-device resume also depend on shared storage,
-  compatible runtime behaviour, and authorisation
+- [x] 永続化しない場合、プロセスの再起動でコンテキストが失われる理由
+- [x] `SessionConfig.SessionId` により、アプリに安定した会話キーを与える方法
+- [x] `ResumeSessionAsync(id, config)` に `ResumeSessionConfig` が必要な理由
+- [x] `GetSessionMetadataAsync` と `ListSessionsAsync(...)` が保存済みセッションの検出に
+  役立つ仕組み
+- [x] SDK セッションがデバイス間のチャット履歴に適した基盤である理由
+- [x] プロセス間およびデバイス間の再開が、共有ストレージ、互換性のあるランタイム動作、
+  認可にも依存する理由
 
-## Related
+## 関連項目
 
-- Previous: [Lab 04 — Events](../04-events/)
-- Next: [Lab 06 — MCP](../06-mcp/)
-- [Demo: Copilot SDK integration](../../demos/01-copilot-sdk-integration.md)
-- [Troubleshooting](../../breakouts/troubleshooting.md)
+- 前へ: [ラボ 04 — イベント](../04-events/)
+- 次へ: [ラボ 06 — MCP](../06-mcp/)
+- [デモ: Copilot SDK の統合](../../demos/01-copilot-sdk-integration.md)
+- [トラブルシューティング](../../breakouts/troubleshooting.md)

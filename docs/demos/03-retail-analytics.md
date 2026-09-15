@@ -1,32 +1,26 @@
-# The retail domain
+# 小売ドメイン
 
-This walkthrough documents the retail analytics data model, SQLite setup, seed
-data, and REST endpoints used by the demo. It also calls out the deliberate code
-smells that are present for code-review demonstrations.
+このウォークスルーでは、デモで使用する小売分析のデータモデル、SQLite のセットアップ、シードデータ、REST エンドポイントについて説明します。また、コードレビューのデモ用に意図的に残してあるコードスメルも取り上げます。
 
-## Domain models
+## ドメインモデル
 
-The API models live under
-[`AgentHQDemo.Api/Models`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator/AgentHQDemo.Api/Models).
+API モデルは
+[`AgentHQDemo.Api/Models`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator/AgentHQDemo.Api/Models)
+にあります。
 
 [`Transaction`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Models/Transaction.cs)
-represents one retail purchase. It has an integer `Id`, `CustomerId`, `Amount`,
-`ProductCategory`, `StoreId`, `Timestamp`, and `IsFlagged`. The model includes
-Data Annotations such as `Required`, `StringLength`, and `Range`, which ASP.NET
-Core model binding can use when controllers check `ModelState`.
+は1件の小売購入を表します。整数の `Id` に加え、`CustomerId`、`Amount`、`ProductCategory`、`StoreId`、`Timestamp`、`IsFlagged` を持ちます。このモデルには `Required`、`StringLength`、`Range` などの Data Annotations が含まれており、コントローラーが `ModelState` を確認するときに ASP.NET Core のモデルバインディングで利用できます。
 
 [`CustomerSegment`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Models/CustomerSegment.cs)
-represents an analytics segment. It stores the segment name, description,
-customer count, average monthly spend, and retention rate.
+は分析セグメントを表します。セグメント名、説明、顧客数、月間平均支出、継続率を保持します。
 
 [`SegmentPrediction`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Models/SegmentPrediction.cs)
-is an immutable record returned by prediction calls. It contains the customer
-ID, predicted segment, confidence score, and top feature names.
+は予測呼び出しから返される不変のレコードです。顧客 ID、予測セグメント、信頼度スコア、主要な特徴量名を含みます。
 
-## Database and startup seeding
+## データベースと起動時のシード処理
 
 [`RetailDbContext`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Data/RetailDbContext.cs)
-is a small EF Core context with two sets:
+は、2つのセットを持つ小規模な EF Core コンテキストです。
 
 ```csharp
 public DbSet<Transaction> Transactions => Set<Transaction>();
@@ -34,142 +28,114 @@ public DbSet<CustomerSegment> Segments => Set<CustomerSegment>();
 ```
 
 [`Program.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Program.cs)
-configures SQLite with `Data Source=retail.db`, registers
-`RetailAnalyticsService`, and seeds data during application startup:
+では、`Data Source=retail.db` で SQLite を構成し、`RetailAnalyticsService` を登録して、アプリケーションの起動時にデータをシードします。
 
 ```csharp
 await db.Database.EnsureCreatedAsync();
 await service.SeedDataAsync();
 ```
 
-`RetailAnalyticsService.SeedDataAsync` is idempotent for normal demo restarts:
-it returns immediately when any transaction already exists. On a fresh database
-it inserts the sample transactions and segments, then saves the changes.
+`RetailAnalyticsService.SeedDataAsync` は、通常のデモ再起動に対して冪等です。トランザクションが1件でも存在する場合は、すぐに処理を終了します。新しいデータベースでは、サンプルのトランザクションとセグメントを挿入して変更を保存します。
 
-## Seed data
+## シードデータ
 
-The seed contains 10 transactions across customers `C001` to `C005`:
+シードには、顧客 `C001` から `C005` までの10件のトランザクションが含まれます。
 
-| Customer | Seeded pattern |
+| 顧客 | シードされた購入パターン |
 | --- | --- |
-| `C001` | Grocery and Electronics purchases totalling 335.49 |
-| `C002` | Grocery and Health purchases totalling 47.50 |
-| `C003` | Electronics and Fashion purchases totalling 1,700.00 |
-| `C004` | Two low-value Grocery purchases totalling 21.49 |
-| `C005` | Electronics and Fashion purchases totalling 995.00 |
+| `C001` | Grocery と Electronics の購入、合計 335.49 |
+| `C002` | Grocery と Health の購入、合計 47.50 |
+| `C003` | Electronics と Fashion の購入、合計 1,700.00 |
+| `C004` | 少額の Grocery 購入2件、合計 21.49 |
+| `C005` | Electronics と Fashion の購入、合計 995.00 |
 
-It also creates four customer segments:
+さらに、4つの顧客セグメントを作成します。
 
-| Segment | Customer count | Average monthly spend | Retention rate | Description |
+| セグメント | 顧客数 | 月間平均支出 | 継続率 | 説明 |
 | --- | ---: | ---: | ---: | --- |
-| High Value | 150 | $850 | 92% | Top 10% spenders with strong loyalty indicators |
-| Regular | 3,200 | $180 | 78% | Consistent monthly shoppers across categories |
-| At Risk | 890 | $95 | 45% | Declining purchase frequency over past 90 days |
-| New | 420 | $120 | 65% | Joined within the last 90 days |
+| High Value | 150 | $850 | 92% | ロイヤルティ指標が高い、支出額上位10%の顧客 |
+| Regular | 3,200 | $180 | 78% | 複数カテゴリで毎月継続的に購入する顧客 |
+| At Risk | 890 | $95 | 45% | 過去90日間で購入頻度が低下している顧客 |
+| New | 420 | $120 | 65% | 過去90日以内に加わった顧客 |
 
-## REST endpoints
+## REST エンドポイント
 
 [`TransactionsController`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Controllers/TransactionsController.cs)
-exposes transaction read, create, and delete endpoints:
+は、トランザクションの読み取り、作成、削除を行うエンドポイントを公開します。
 
-| Endpoint | Returns |
+| エンドポイント | 戻り値 |
 | --- | --- |
-| `GET /api/transactions` | All `Transaction` records. |
-| `GET /api/transactions/{id}` | One `Transaction`, or `404` if the controller receives `null`. |
-| `POST /api/transactions` | Creates a transaction and returns `201 Created` with the saved record. |
-| `DELETE /api/transactions/{id}` | `204 No Content` when deleted, or `404` when not found. |
+| `GET /api/transactions` | すべての `Transaction` レコード。 |
+| `GET /api/transactions/{id}` | 1件の `Transaction`。コントローラーが `null` を受け取った場合は `404`。 |
+| `POST /api/transactions` | トランザクションを作成し、保存したレコードとともに `201 Created` を返す。 |
+| `DELETE /api/transactions/{id}` | 削除時は `204 No Content`、見つからない場合は `404`。 |
 
 [`SegmentsController`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Controllers/SegmentsController.cs)
-exposes segment and prediction endpoints:
+は、セグメントと予測のエンドポイントを公開します。
 
-| Endpoint | Returns |
+| エンドポイント | 戻り値 |
 | --- | --- |
-| `GET /api/segments` | All `CustomerSegment` records. |
-| `GET /api/segments/{id}` | One `CustomerSegment`, or `404` when not found. |
-| `GET /api/segments/predict/{customerId}` | A `SegmentPrediction` for that customer. |
+| `GET /api/segments` | すべての `CustomerSegment` レコード。 |
+| `GET /api/segments/{id}` | 1件の `CustomerSegment`。見つからない場合は `404`。 |
+| `GET /api/segments/predict/{customerId}` | その顧客の `SegmentPrediction`。 |
 
-The chat endpoints are covered in
-[Streaming responses over SSE](./02-sse-streaming.md), because they are part of
-the Copilot streaming path rather than the retail data API.
+チャットエンドポイントは、小売データ API ではなく Copilot のストリーミング経路に含まれるため、[SSE による応答のストリーミング](./02-sse-streaming.md)で説明します。
 
-## Segment prediction logic
+## セグメント予測ロジック
 
 [`RetailAnalyticsService.PredictSegmentAsync`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Services/RetailAnalyticsService.cs)
-loads all transactions for a customer and derives total spend, average spend,
-and purchase frequency. It then applies these rules in order:
+は、顧客の全トランザクションを読み込み、総支出、平均支出、購入頻度を算出します。その後、次のルールを順番に適用します。
 
-1. No transactions: return `New` with confidence `0.5` and `no_history`.
-2. Total spend above `1000`: return `High Value` with confidence `0.89`.
-3. Frequency of three or more: return `Regular` with confidence `0.75`.
-4. Average spend below `50`: return `At Risk` with confidence `0.62`.
-5. Otherwise: return `Regular` with confidence `0.55`.
+1. トランザクションなし: 信頼度 `0.5`、`no_history` とともに `New` を返す。
+2. 総支出が `1000` を超える: 信頼度 `0.89` で `High Value` を返す。
+3. 購入頻度が3回以上: 信頼度 `0.75` で `Regular` を返す。
+4. 平均支出が `50` 未満: 信頼度 `0.62` で `At Risk` を返す。
+5. それ以外: 信頼度 `0.55` で `Regular` を返す。
 
-The returned `TopFeatures` array explains the rule inputs, such as total spend,
-frequency, or average spend.
+返される `TopFeatures` 配列は、総支出、頻度、平均支出など、ルールへの入力を示します。
 
-## Four deliberate code smells
+## 意図的な4つのコードスメル
 
-These are intentional demo material for code-review sessions. Do not present
-them as accidental bugs to fix during this demo; use them as examples of what a
-reviewer should notice and explain.
+これらはコードレビューセッション用に意図的に用意したデモ素材です。このデモ中に修正すべき偶発的なバグとして扱わず、レビュー担当者が気付き、説明すべき例として使用してください。
 
-### 1. N+1 query in `RetailAnalyticsService.GetTransactionsWithSegmentsAsync`
+### 1. `RetailAnalyticsService.GetTransactionsWithSegmentsAsync` の N+1 クエリ
 
-What it is: the method loads all transactions, then loops through each
-transaction and calls `PredictSegmentAsync`, which runs another database query
-for that customer.
+**内容:** このメソッドはすべてのトランザクションを読み込んだ後、各トランザクションをループし、その顧客に対する別のデータベースクエリを実行する `PredictSegmentAsync` を呼び出します。
 
-Why it is a problem: the number of queries grows with the number of
-transactions. That is acceptable in tiny seed data, but can become slow and
-expensive against real retail volumes.
+**問題となる理由:** クエリ数がトランザクション数に比例して増加します。少量のシードデータでは許容できますが、実際の小売データ量では処理が遅くなり、コストも高くなる可能性があります。
 
-What a reviewer should say: "This is an N+1 query pattern. Consider batching the
-customer transaction data or calculating segment predictions from data already
-loaded for the request."
+**レビューで指摘すべき内容:** 「これは N+1 クエリパターンです。顧客のトランザクションデータを一括取得するか、リクエストですでに読み込んだデータからセグメント予測を計算することを検討してください。」
 
-### 2. Missing null check in `RetailAnalyticsService.GetTransactionAsync`
+### 2. `RetailAnalyticsService.GetTransactionAsync` の null チェック不足
 
-What it is: the service uses `FindAsync(id)` and suppresses nullable flow with
-`!`, returning `Task<Transaction>` even though the database can return no row.
+**内容:** サービスは `FindAsync(id)` を使用し、`!` で null 許容フローを抑制して、データベースから行が返されない可能性があるにもかかわらず `Task<Transaction>` を返します。
 
-Why it is a problem: callers cannot tell from the signature that `null` is
-possible, and future code could dereference the result before checking it.
+**問題となる理由:** 呼び出し元は、シグネチャから `null` の可能性を判断できません。また、今後追加されるコードが確認前に `null` のメンバーにアクセスする可能性があります。
 
-What a reviewer should say: "The service contract should reflect the not-found
-case, for example by returning `Transaction?` or a result type, and callers
-should handle that explicitly."
+**レビューで指摘すべき内容:** 「サービスの入出力の契約は、`Transaction?` や結果型を返すなどして未検出のケースを表現し、呼び出し元で明示的に処理する必要があります。」
 
-### 3. No input validation in `RetailAnalyticsService.AddTransactionAsync`
+### 3. `RetailAnalyticsService.AddTransactionAsync` の入力検証不足
 
-What it is: the service accepts the supplied `Transaction`, stamps
-`Timestamp = DateTime.UtcNow`, and saves it without checking amount, customer ID,
-category, or store values.
+**内容:** サービスは渡された `Transaction` を受け取り、`Timestamp = DateTime.UtcNow` を設定し、金額、顧客 ID、カテゴリ、店舗の値を確認せずに保存します。
 
-Why it is a problem: `TransactionsController.Create` checks `ModelState`, but
-the service itself can still be called directly by tests, other services, or
-future endpoints. Invalid domain data could bypass controller validation.
+**問題となる理由:** `TransactionsController.Create` は `ModelState` を確認しますが、サービス自体はテスト、他のサービス、将来のエンドポイントから直接呼び出せます。その場合、不正なドメインデータがコントローラーの検証を迂回する可能性があります。
 
-What a reviewer should say: "Do not rely only on controller validation for
-domain invariants. Validate the transaction in the service or centralise the
-rules so every caller gets the same protection."
+**レビューで指摘すべき内容:** 「ドメインの不変条件について、コントローラーの検証だけに依存しないでください。サービス内でトランザクションを検証するか、ルールを一元化し、すべての呼び出し元に同じ保護を適用してください。」
 
-### 4. Hardcoded threshold in `RetailAnalyticsService.PredictSegmentAsync`
+### 4. `RetailAnalyticsService.PredictSegmentAsync` のハードコードされたしきい値
 
-What it is: the high-value rule uses the literal threshold `1000` in code.
+**内容:** High Value のルールで、リテラル値 `1000` をしきい値として使用しています。
 
-Why it is a problem: business thresholds change by market, season, and retailer.
-A magic number hidden in code is hard to audit, tune, or explain to business
-stakeholders.
+**問題となる理由:** ビジネス上のしきい値は、市場、季節、小売業者によって変わります。コード内に隠れたマジックナンバーは、監査、調整、ビジネス関係者への説明が困難です。
 
-What a reviewer should say: "Move the high-value threshold into configuration or
-a policy object, name it clearly, and cover the boundary behaviour in tests."
+**レビューで指摘すべき内容:** 「High Value のしきい値を構成またはポリシーオブジェクトへ移し、明確な名前を付け、境界での動作をテストしてください。」
 
-## Related
+## 関連情報
 
-- [Embedding the Copilot SDK](./01-copilot-sdk-integration.md)
-- [Streaming responses over SSE](./02-sse-streaming.md)
-- [The Blazor front end](./04-blazor-ui.md)
-- Source:
+- [Copilot SDK の組み込み](./01-copilot-sdk-integration.md)
+- [SSE による応答のストリーミング](./02-sse-streaming.md)
+- [Blazor フロントエンド](./04-blazor-ui.md)
+- ソース:
   [`RetailAnalyticsService.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Services/RetailAnalyticsService.cs),
   [`RetailDbContext.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Data/RetailDbContext.cs),
   [`Program.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Program.cs),

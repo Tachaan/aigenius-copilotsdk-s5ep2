@@ -1,15 +1,11 @@
-# Streaming responses over SSE
+# SSE による応答のストリーミング
 
-This walkthrough follows a chat response from the ASP.NET Core API to the
-Blazor WebAssembly browser client. You will learn the exact SSE wire format, why
-flushes matter, and how the client parses streamed chunks.
+このウォークスルーでは、ASP.NET Core API から Blazor WebAssembly ブラウザークライアントまで、チャット応答の流れを追います。SSE の正確なワイヤ形式、フラッシュが重要な理由、クライアントがストリーミングされたチャンクを解析する方法を説明します。
 
-## API entry point
+## API エントリーポイント
 
 [`ChatController.StreamChat`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Controllers/ChatController.cs)
-handles `POST /api/chat/stream`. It accepts a `ChatRequest`, chooses the
-requested model or the `claude-haiku-4.5` default, and configures the response as
-Server-Sent Events:
+は `POST /api/chat/stream` を処理します。`ChatRequest` を受け取り、指定されたモデルまたは既定の `claude-haiku-4.5` を選択し、応答を Server-Sent Events として構成します。
 
 ```csharp
 Response.ContentType = "text/event-stream";
@@ -17,65 +13,54 @@ Response.Headers.CacheControl = "no-cache";
 Response.Headers.Connection = "keep-alive";
 ```
 
-Those headers tell intermediaries and the browser that this is a long-lived
-stream, not a normal JSON response that should be buffered until completion.
+これらのヘッダーは、中継コンポーネントとブラウザーに対して、これが完了までバッファリングすべき通常の JSON 応答ではなく、長時間維持されるストリームであることを示します。
 
-## Wire format
+## ワイヤ形式
 
-For each chunk from
-[`CopilotChatService.ChatStreamAsync`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Services/CopilotChatService.cs),
-the controller serialises a small JSON object and writes one SSE message:
+[`CopilotChatService.ChatStreamAsync`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Services/CopilotChatService.cs)
+からチャンクを受け取るたびに、コントローラーは小さな JSON オブジェクトをシリアライズし、SSE メッセージを1件書き込みます。
 
 ```text
 data: {"content":"..."}
 
 ```
 
-When the stream finishes normally, the endpoint writes a sentinel:
+ストリームが正常に完了すると、エンドポイントはセンチネルを書き込みます。
 
 ```text
 data: [DONE]
 
 ```
 
-If an exception is raised after the stream has started, the controller writes an
-error event in the same SSE data channel:
+ストリームの開始後に例外が発生した場合、コントローラーは HTTP エラー応答へ切り替えるのではなく、同じ SSE ストリーム内にエラーイベントを書き込みます。
 
 ```text
 data: {"error":"..."}
 
 ```
 
-At that point it cannot reliably switch to an HTTP error status. The status code
-and response headers have already been sent, so the only useful way to report a
-late failure is inside the stream payload.
+その時点では、HTTP エラーステータスへ確実に切り替えることはできません。ステータスコードと応答ヘッダーはすでに送信済みなので、後から発生した障害を通知する実用的な方法は、ストリームのペイロードに含めることだけです。
 
-## Flushing each chunk
+## 各チャンクのフラッシュ
 
-After every content chunk, `ChatController.StreamChat` flushes the body:
+`ChatController.StreamChat` は、コンテンツチャンクを書き込むたびに本文をフラッシュします。
 
 ```csharp
 await Response.WriteAsync($"data: {data}\n\n", cancellationToken);
 await Response.Body.FlushAsync(cancellationToken);
 ```
 
-Without `FlushAsync`, the server, host, proxy, or browser can buffer data. The
-SDK may be producing deltas correctly, but the user would see nothing until a
-buffer fills or the request ends, which makes streaming appear broken.
+`FlushAsync` がないと、サーバー、ホスト、プロキシ、ブラウザーのいずれかがデータをバッファリングする可能性があります。SDK が差分を正しく生成していても、バッファーが一杯になるかリクエストが終了するまでユーザーには何も表示されず、ストリーミングが壊れているように見えます。
 
-## Cancellation
+## キャンセル
 
-`StreamChat` accepts the request `CancellationToken` supplied by ASP.NET Core.
-The controller passes it into `CopilotChatService.ChatStreamAsync`, checks
-`IsCancellationRequested` during the loop, and also passes it to `WriteAsync` and
-`FlushAsync`. If the browser tab is closed or the request is abandoned, the API
-has a path to stop writing and unwind the streaming work.
+`StreamChat` は、ASP.NET Core が提供するリクエストの `CancellationToken` を受け取ります。コントローラーはそれを `CopilotChatService.ChatStreamAsync` に渡し、ループ中に `IsCancellationRequested` を確認し、さらに `WriteAsync` と `FlushAsync` にも渡します。ブラウザータブが閉じられた場合やリクエストが破棄された場合、API は書き込みを停止してストリーミング処理を終了できます。
 
-## Browser client
+## ブラウザークライアント
 
-The Blazor client code lives in
-[`ChatService.StreamChatAsync`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Web/Services/ChatService.cs).
-It posts to `/api/chat/stream` with `HttpCompletionOption.ResponseHeadersRead`:
+Blazor クライアントのコードは
+[`ChatService.StreamChatAsync`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Web/Services/ChatService.cs)
+にあります。`HttpCompletionOption.ResponseHeadersRead` を指定して `/api/chat/stream` に POST します。
 
 ```csharp
 using var response = await _http.SendAsync(
@@ -83,32 +68,20 @@ using var response = await _http.SendAsync(
     HttpCompletionOption.ResponseHeadersRead);
 ```
 
-`ResponseHeadersRead` is important because it returns as soon as the response
-headers arrive. The client can then read the body stream line by line instead of
-waiting for the whole response.
+`ResponseHeadersRead` は、応答ヘッダーが到着した時点ですぐに制御を返すため重要です。これによりクライアントは、応答全体を待たずに本文ストリームを1行ずつ読み取れます。
 
-The parser ignores blank lines, looks for `data: ` prefixes, stops on `[DONE]`,
-and parses JSON data events. `content` values are yielded to the UI; `error`
-values become exceptions.
+パーサーは空行を無視し、`data: ` プレフィックスを探し、`[DONE]` で停止して JSON データイベントを解析します。`content` の値は UI に返され、`error` の値は例外になります。
 
-## Retail analytics system prompt
+## 小売分析用のシステムプロンプト
 
-`ChatService.StreamChatAsync` sends a default system message when the caller does
-not provide one. That prompt frames the assistant as a retail analytics assistant
-for a grocery retailer, gives it the demo context, and asks for data-driven
-business insights using markdown tables and bullet points. It also tells the
-assistant not to modify code or suggest code changes.
+呼び出し元がシステムメッセージを指定しない場合、`ChatService.StreamChatAsync` は既定のシステムメッセージを送信します。このプロンプトは、アシスタントを食料品小売業者向けの小売分析アシスタントとして位置付け、デモのコンテキストを提供し、Markdown の表や箇条書きを使ったデータ主導のビジネスインサイトを求めます。また、コードを変更したり、コード変更を提案したりしないよう指示します。
 
 [`Home.razor`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Web/Pages/Home.razor)
-passes the user's prompt and selected model to `ChatService.StreamChatAsync`.
-The default system prompt is therefore applied by the client service before the
-request reaches the API.
+は、ユーザーのプロンプトと選択したモデルを `ChatService.StreamChatAsync` に渡します。そのため、リクエストが API に到達する前に、クライアントサービスによって既定のシステムプロンプトが適用されます。
 
-## Try it with curl
+## curl で試す
 
-Point the request at the port your local API uses. For example, if the API is
-listening on the Web client's default API base address, send a streaming request
-with `curl -N` so curl does not buffer the response:
+ローカル API が使用しているポートにリクエストを送信します。たとえば、API が Web クライアントの既定の API ベースアドレスで待ち受けている場合は、curl が応答をバッファリングしないよう `curl -N` を使ってストリーミングリクエストを送信します。
 
 ```bash
 curl -N -X POST http://localhost:5050/api/chat/stream \
@@ -120,15 +93,14 @@ curl -N -X POST http://localhost:5050/api/chat/stream \
   }'
 ```
 
-You should see multiple `data: {"content":"..."}` messages followed by
-`data: [DONE]`.
+複数の `data: {"content":"..."}` メッセージが表示され、その後に `data: [DONE]` が続きます。
 
-## Related
+## 関連情報
 
-- [Embedding the Copilot SDK](./01-copilot-sdk-integration.md)
-- [The retail domain](./03-retail-analytics.md)
-- [The Blazor front end](./04-blazor-ui.md)
-- Source:
+- [Copilot SDK の組み込み](./01-copilot-sdk-integration.md)
+- [小売ドメイン](./03-retail-analytics.md)
+- [Blazor フロントエンド](./04-blazor-ui.md)
+- ソース:
   [`ChatController.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Controllers/ChatController.cs),
   [`CopilotChatService.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Services/CopilotChatService.cs),
   [`ChatService.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Web/Services/ChatService.cs),

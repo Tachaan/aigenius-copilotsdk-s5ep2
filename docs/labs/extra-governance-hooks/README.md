@@ -1,77 +1,76 @@
-# Extra — Governance hooks
+# 追加ラボ — ガバナンスフック
 
-> **📎 Extra lab — not Copilot SDK.**
-> This covers shell hooks driven by `.github/hooks/`, a **Copilot CLI**
-> feature. The SDK has its own in-process equivalent — see the permissions
-> section of [Lab 03 — Tools](../03-tools/). Optional and independent of the
-> numbered SDK path.
+> **📎 追加ラボ — Copilot SDK の内容ではありません。**
+> ここでは **Copilot CLI** の機能である、`.github/hooks/` で駆動するシェルフックを扱います。
+> SDK には独自のインプロセス版があります。[ラボ 03 — ツール](../03-tools/) の権限に関する
+> セクションを参照してください。オプションであり、番号付きの SDK 学習手順からは独立しています。
 
-**Goal:** make the `preToolUse` security gate genuinely block access to a
-secrets file, watch the audit logger record activity, and learn why a
-misconfigured hook is more dangerous than no hook at all.
+**目標:** `preToolUse` セキュリティゲートでシークレットファイルへのアクセスを実際にブロックし、
+監査ロガーがアクティビティを記録する様子を確認して、誤設定されたまま気付かれないフックが
+フックなしよりも危険な理由を学びます。
 
-**Time:** ~20 minutes
+**所要時間:** 約 20 分
 
-**Prerequisites:** [Extra — Custom agents](../extra-custom-agents/) complete. `jq` installed —
-the hook scripts depend on it.
+**前提条件:** [Extra — カスタムエージェント](../extra-custom-agents/) を完了していること。
+フックスクリプトが依存する `jq` がインストールされていること。
 
-## Step 1 — See how hooks are wired
+## 手順 1 — フックの接続方法を確認する
 
 ```bash
 cat .github/hooks/retail-governance.json
 ls -l .github/hooks/scripts/
 ```
 
-Four lifecycle events, each mapped to a script:
+4 つのライフサイクルイベントが、それぞれスクリプトに対応付けられています。
 
-| Event | Script | Purpose |
+| イベント | スクリプト | 目的 |
 |:------|:-------|:--------|
-| `sessionStart` | `session-init.sh` | Announce policy, start the audit trail |
-| `preToolUse` | `security-gate.sh` | **Allow or deny** a tool call before it runs |
-| `postToolUse` | `audit-logger.sh` | Record what actually happened |
-| `sessionEnd` | `session-end.sh` | Close out and summarise the session |
+| `sessionStart` | `session-init.sh` | ポリシーを通知し、監査証跡を開始する |
+| `preToolUse` | `security-gate.sh` | ツール呼び出しの実行前に**許可または拒否**する |
+| `postToolUse` | `audit-logger.sh` | 実際に起きたことを記録する |
+| `sessionEnd` | `session-end.sh` | セッションを終了して要約する |
 
-Each entry declares a `type`, the `bash` script to run, a working directory,
-and a `timeoutSec`.
+各エントリでは、`type`、実行する `bash` スクリプト、作業ディレクトリ、`timeoutSec` を宣言します。
 
-Only `preToolUse` can *stop* anything. The others observe.
+何かを*停止*できるのは `preToolUse` だけです。他のイベントは監視のみを行います。
 
-## Step 2 — A cautionary tale
+## 手順 2 — 注意すべき事例
 
-This repository shipped for a while with a broken gate. The config pointed at:
+このリポジトリは一時期、壊れたゲートを含んだ状態で公開されていました。構成の参照先は
+次のとおりでした。
 
 ```
 ./.github/hooks/scripts/security-gate-notworking.sh
 ```
 
-…but the file on disk was `security-gate.sh`. The referenced script **did not
-exist**.
+しかし、ディスク上のファイルは `security-gate.sh` でした。参照されたスクリプトは
+**存在しませんでした**。
 
-The gate did not error. It did not warn. It simply never ran — every tool call
-sailed through unchecked, while the repo looked fully governed. The old `.env`
-even carried a comment claiming "the preToolUse hook should BLOCK access to
-this file". It would not have.
+ゲートはエラーも警告も出さず、単に一度も実行されませんでした。リポジトリは完全に統制されて
+いるように見える一方、すべてのツール呼び出しが未検査で通過しました。以前の `.env` には
+「preToolUse フックがこのファイルへのアクセスを BLOCK するはず」とまでコメントされて
+いましたが、実際にはブロックされませんでした。
 
-This has been corrected, and it's the most important lesson in the lab:
+現在は修正されています。ここに、このラボで最も重要な教訓があります。
 
-> ⚠️ **A silently misconfigured control is worse than a missing one**, because
-> it manufactures confidence. Always prove your gate fires.
+> ⚠️ **誤設定されたまま気付かれない制御は、制御がない状態よりも危険です。**
+> 誤った安心感を生み出すためです。ゲートが実際に作動することを必ず確認してください。
 
-Confirm the reference is now correct:
+参照が現在は正しいことを確認します。
 
 ```bash
 grep -o '"bash": "[^"]*"' .github/hooks/retail-governance.json
 ```
 
-Every path listed must exist in `.github/hooks/scripts/`.
+一覧にあるすべてのパスが `.github/hooks/scripts/` に存在する必要があります。
 
-## Step 3 — Read the gate
+## 手順 3 — ゲートを確認する
 
 ```bash
 cat .github/hooks/scripts/security-gate.sh
 ```
 
-The contract is simple — JSON in on stdin, a decision out on stdout:
+規約は単純です。stdin から JSON を受け取り、stdout へ判定を出力します。
 
 ```bash
 INPUT=$(cat)
@@ -79,53 +78,52 @@ TOOL_NAME=$(echo "$INPUT" | jq -r '.toolName')
 TOOL_ARGS=$(echo "$INPUT" | jq -r '.toolArgs')
 ```
 
-It denies in three situations:
+次の 3 つの場合に拒否します。
 
-1. **Destructive bash** — `rm -rf /`, `rm -rf .`, `DROP TABLE`,
-   `DROP DATABASE`, `format `, `mkfs.`, fork-bomb patterns
-2. **Secret access** — commands mentioning `.env`, `credentials`, `secrets`,
-   `.pem`, `.key`, or `password`
-3. **Out-of-bounds writes** — `edit`/`create` outside `src/`, `tests/`,
-   `docs/`, or `.github/`
+1. **破壊的な bash** — `rm -rf /`、`rm -rf .`、`DROP TABLE`、
+  `DROP DATABASE`、`format `、`mkfs.`、fork bomb パターン
+2. **シークレットへのアクセス** — `.env`、`credentials`、`secrets`、`.pem`、`.key`、
+  `password` に言及するコマンド
+3. **範囲外への書き込み** — `src/`、`tests/`、`docs/`、`.github/` の外部に対する
+  `edit`/`create`
 
-And emits one of:
+そして、次のいずれかを出力します。
 
 ```json
 {"permissionDecision":"allow"}
 {"permissionDecision":"deny","permissionDecisionReason":"..."}
 ```
 
-⚠️ Note it exits `0` even when denying. The *decision* travels in the JSON
-payload, not the exit code — a non-zero exit would look like a broken hook
-rather than a deliberate refusal.
+⚠️ 拒否する場合でも終了コードは `0` です。*判定*は終了コードではなく JSON ペイロードで
+伝達されます。0 以外で終了すると、意図的な拒否ではなく壊れたフックに見えてしまいます。
 
-## Step 4 — Prove the gate blocks a secret
+## 手順 4 — ゲートがシークレットをブロックすることを確認する
 
-Make sure the scripts are executable and the log directory exists:
+スクリプトが実行可能で、ログディレクトリが存在することを確認します。
 
 ```bash
 chmod +x .github/hooks/scripts/*.sh
 mkdir -p logs
 ```
 
-Now test it directly by piping in the JSON a real tool call would send:
+実際のツール呼び出しが送信する JSON をパイプし、直接テストします。
 
 ```bash
 echo '{"toolName":"bash","toolArgs":{"command":"cat .env"}}' \
   | ./.github/hooks/scripts/security-gate.sh
 ```
 
-Expected:
+想定される出力:
 
 ```json
 {"permissionDecision":"deny","permissionDecisionReason":"Access to credential/secret files blocked by security policy"}
 ```
 
-That's the gate working — the same check that previously never ran.
+これでゲートが動作していることを確認できます。以前はこのチェック自体が実行されていませんでした。
 
-## Step 5 — Test the other paths
+## 手順 5 — 他の経路をテストする
 
-Destructive command:
+破壊的なコマンド:
 
 ```bash
 echo '{"toolName":"bash","toolArgs":{"command":"rm -rf /"}}' \
@@ -134,7 +132,7 @@ echo '{"toolName":"bash","toolArgs":{"command":"rm -rf /"}}' \
 
 → `"Destructive command blocked by retail governance policy"`
 
-Write outside the allowed directories:
+許可されたディレクトリの外部への書き込み:
 
 ```bash
 echo '{"toolName":"create","toolArgs":{"path":"/etc/hosts"}}' \
@@ -143,7 +141,7 @@ echo '{"toolName":"create","toolArgs":{"path":"/etc/hosts"}}' \
 
 → `"File edits restricted to src/, tests/, docs/, .github/, and top-level project docs"`
 
-A top-level project file, which must pass:
+許可される必要があるトップレベルのプロジェクトファイル:
 
 ```bash
 echo '{"toolName": "create", "toolArgs": {"path": "README.md"}}' \
@@ -152,17 +150,17 @@ echo '{"toolName": "create", "toolArgs": {"path": "README.md"}}' \
 
 → `{"permissionDecision":"allow"}`
 
-The allow-list is matched against the **repo-relative** path, so a lookalike
-outside the repo is still refused:
+許可リストは**リポジトリ相対**パスに対して照合されるため、リポジトリ外にある同名のファイルは
+引き続き拒否されます。
 
 ```bash
 echo '{"toolName": "create", "toolArgs": {"path": "/etc/README.md"}}' \
   | ./.github/hooks/scripts/security-gate.sh
 ```
 
-→ denied. Matching on filename alone would have let that through.
+→ 拒否されます。ファイル名だけで照合していた場合は通過してしまいます。
 
-And a legitimate call, which must pass:
+そして、通過する必要がある正当な呼び出し:
 
 ```bash
 echo '{"toolName":"bash","toolArgs":{"command":"dotnet build"}}' \
@@ -171,31 +169,31 @@ echo '{"toolName":"bash","toolArgs":{"command":"dotnet build"}}' \
 
 → `{"permissionDecision":"allow"}`
 
-⚠️ **Always test the allow case too.** A gate that denies everything passes
-every "did it block?" test while making the repo unusable.
+⚠️ **許可されるケースも必ずテストしてください。** すべてを拒否するゲートは、「ブロックしたか」
+というテストにはすべて合格しますが、リポジトリを使用不能にします。
 
-## Step 6 — Inspect the denial log
+## 手順 6 — 拒否ログを確認する
 
 ```bash
 cat logs/security-denials.log
 ```
 
-Each refusal is appended with a UTC timestamp, the tool, and the reason:
+各拒否について、UTC タイムスタンプ、ツール、理由が追記されます。
 
 ```
 2026-08-10T11:04:35Z DENIED tool=bash reason="Access to credential/secret files blocked by security policy"
 ```
 
-This is the artefact a compliance reviewer asks for: evidence that the control
-exists *and* evidence of it firing.
+これはコンプライアンスレビュアーが求める成果物です。制御が存在する証拠と、実際に作動した
+証拠の両方になります。
 
-## Step 7 — The gate doesn't need the file to exist
+## 手順 7 — ゲートの動作にファイルの存在は不要
 
-No secrets file is committed to this repository — `.env` is gitignored and must
-never be checked in. That doesn't weaken the gate, because it matches on the
-**command text**, not on what's present on disk.
+このリポジトリにはシークレットファイルをコミットしません。`.env` は gitignore の対象であり、
+決してチェックインしてはいけません。それでもゲートの効果は変わりません。ディスク上の
+ファイルではなく、**コマンドテキスト**を照合するためです。
 
-Confirm there is no `.env`, then try to read it anyway:
+`.env` がないことを確認してから、それでも読み取りを試みます。
 
 ```bash
 ls .env 2>/dev/null || echo "no .env present"
@@ -203,66 +201,64 @@ echo '{"toolName":"bash","toolArgs":{"command":"cat .env"}}' \
   | ./.github/hooks/scripts/security-gate.sh
 ```
 
-Still denied. The same holds for the other secret patterns:
+引き続き拒否されます。他のシークレットパターンでも同様です。
 
 ```bash
 echo '{"toolName":"bash","toolArgs":{"command":"cat ~/.ssh/id_rsa.key"}}' \
   | ./.github/hooks/scripts/security-gate.sh
 ```
 
-💡 This cuts both ways. Matching on text means the gate can't be side-stepped
-by a file that doesn't exist yet — but it also means it can be evaded by a
-command that avoids the trigger words (`cat .en''v`, or reading the file via a
-script). Treat it as a guardrail against mistakes, not a defence against a
-determined attacker.
+💡 これには一長一短があります。テキスト照合のため、まだ存在しないファイルを利用してゲートを
+回避することはできません。一方で、トリガー語を避けるコマンド（`cat .en''v` やスクリプト経由の
+読み取り）では回避できます。意図的な攻撃者への防御ではなく、ミスを防ぐガードレールとして
+扱ってください。
 
-## Step 8 — Run a session with hooks active
+## 手順 8 — フックを有効にしてセッションを実行する
 
 ```bash
 copilot -p "List the files in the src directory" --allow-all-tools
 ```
 
-Then check what the audit logger captured:
+次に、監査ロガーが記録した内容を確認します。
 
 ```bash
 ls -la logs/
 tail -20 logs/*.jsonl 2>/dev/null || tail -20 logs/*.log 2>/dev/null
 ```
 
-💡 Hooks are configured per-session by the CLI. If nothing appears, confirm the
-CLI is picking up `.github/hooks/retail-governance.json` for this repository.
+💡 フックは CLI によってセッションごとに構成されます。何も表示されない場合は、CLI がこの
+リポジトリの `.github/hooks/retail-governance.json` を読み込んでいることを確認してください。
 
-## Step 9 — Disabling hooks
+## 手順 9 — フックを無効化する
 
-While developing a hook you'll want it off. Either rename the config:
+フックの開発中は無効にしたい場合があります。構成ファイルの名前を変更するか、
 
 ```bash
 mv .github/hooks/retail-governance.json .github/hooks/retail-governance.json.off
 # restore with the reverse
 ```
 
-…or comment out an individual event by removing its array entry.
+個別イベントの配列エントリを削除してコメントアウトします。
 
-⚠️ Never disable a gate in a shared branch and forget to restore it — that
-recreates exactly the silent-failure situation from Step 2. Consider adding a
-CI check that asserts every `bash` path in the config exists on disk.
+⚠️ 共有ブランチでゲートを無効にしたまま、復元を忘れないでください。手順 2 とまったく同じ、
+気付かれない障害を再現してしまいます。構成内のすべての `bash` パスがディスク上に存在する
+ことを検証する CI チェックの追加を検討してください。
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-- [x] You can name the four hook events and which one can deny
-- [x] You proved the gate blocks secrets, destructive commands, and stray writes
-- [x] You confirmed legitimate calls still pass
-- [x] You found the denial log evidence
-- [x] You can explain why the broken reference was dangerous
+- [x] 4 つのフックイベントと、拒否できるイベントを説明できる
+- [x] ゲートがシークレット、破壊的なコマンド、範囲外への書き込みをブロックすることを確認した
+- [x] 正当な呼び出しが引き続き通過することを確認した
+- [x] 拒否ログの証拠を確認した
+- [x] 壊れた参照が危険だった理由を説明できる
 
-## 💡 Extra credit
+## 💡 発展課題
 
-Add a rule to `security-gate.sh` blocking `git push --force` on `main`. Test
-both that it denies the force push and that an ordinary `git push` still
-passes.
+`main` に対する `git push --force` をブロックするルールを `security-gate.sh` に追加します。
+force push が拒否されることと、通常の `git push` が引き続き通過することの両方をテストします。
 
-## Related
+## 関連項目
 
-- Next: [Extra — Extend the API](../extra-extend-api/)
-- [Breakout: Hooks and governance](../../breakouts/hooks-and-governance.md)
-- [`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md) — repository rules for AI agents
+- 次へ: [Extra — API の拡張](../extra-extend-api/)
+- [補足資料: フックとガバナンス](../../breakouts/hooks-and-governance.md)
+- [`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md) — AI エージェント向けのリポジトリルール

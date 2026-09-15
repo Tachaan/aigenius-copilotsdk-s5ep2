@@ -1,20 +1,20 @@
-# Architecture
+# アーキテクチャ
 
-This page is a system reference for the AI Genius S5E2 Agent HQ demo. It
-summarises the .NET 10 Blazor WebAssembly front end, ASP.NET Core Web API,
-GitHub Copilot SDK integration, and zero-config SQLite analytics store.
+このページは、AI Genius S5E2 Agent HQ デモのシステムリファレンスです。
+.NET 10 Blazor WebAssembly フロントエンド、ASP.NET Core Web API、
+GitHub Copilot SDK 統合、構成不要の SQLite 分析ストアの概要を説明します。
 
-!!! tip "Prefer to explore it?"
+!!! tip "実際に探索してみますか?"
 
-    The [System map](../system-map/) is the same architecture as an interactive
-    diagram — search nodes, trace routes, and play three guided views.
+    [システムマップ](../system-map/)では、同じアーキテクチャを対話型の図として
+    確認できます。ノードの検索、ルートの追跡、3 つのガイド付きビューの再生が可能です。
 
-## Component view
+## コンポーネントビュー
 
-The demo runs as two local processes: the Blazor WebAssembly UI on port 5051
-and the API on port 5050. `Program.cs` in the API registers
-`CopilotChatService` as a singleton and `RetailAnalyticsService` as a scoped
-service backed by `RetailDbContext`.
+デモは、ポート 5051 の Blazor WebAssembly UI とポート 5050 の API という、
+2 つのローカルプロセスとして実行されます。API の `Program.cs` は、
+`CopilotChatService` をシングルトンとして、`RetailAnalyticsService` を
+`RetailDbContext` を使用するスコープ付きサービスとして登録します。
 
 ```mermaid
 graph LR
@@ -65,18 +65,19 @@ graph LR
     DbContext --> SQLite
 ```
 
-Note the two distinct paths to `retail.db`. The REST controllers read and write
-through `RetailDbContext` directly. The *model* reaches the same database only
-through the MCP server, on a connection opened `Mode=ReadOnly`, and only via the
-five domain tools that server publishes. MCP is for the model, not for the
-application talking to its own database.
+`retail.db` への経路が 2 つに分かれている点に注目してください。REST
+コントローラーは `RetailDbContext` を介して直接読み書きします。一方、
+*モデル*が同じデータベースにアクセスする経路は MCP サーバーだけです。
+接続は `Mode=ReadOnly` で開かれ、サーバーが公開する 5 つのドメインツール
+からのみ利用できます。MCP はモデルのためのものであり、アプリケーションが
+自身のデータベースと通信するためのものではありません。
 
-## SSE chat sequence
+## SSE チャットシーケンス
 
-`AgentHQDemo.Web.Services.ChatService.StreamChatAsync` posts to
-`/api/chat/stream` with `HttpCompletionOption.ResponseHeadersRead`. The API
-sets `text/event-stream`, flushes each chunk, and terminates the stream with
-`data: [DONE]`.
+`AgentHQDemo.Web.Services.ChatService.StreamChatAsync` は、
+`HttpCompletionOption.ResponseHeadersRead` を指定して `/api/chat/stream` に
+POST します。API は `text/event-stream` を設定し、チャンクごとにフラッシュして、
+`data: [DONE]` でストリームを終了します。
 
 ```mermaid
 sequenceDiagram
@@ -105,11 +106,11 @@ sequenceDiagram
     Controller-->>WebChat: data: [DONE]
 ```
 
-## Data model
+## データモデル
 
-`RetailDbContext` exposes `Transactions` and `Segments` sets. Segment
-predictions are returned as a record from `RetailAnalyticsService` rather than
-stored in SQLite.
+`RetailDbContext` は `Transactions` セットと `Segments` セットを公開します。
+セグメント予測は SQLite に保存されず、`RetailAnalyticsService` からレコードとして
+返されます。
 
 ```mermaid
 classDiagram
@@ -143,10 +144,10 @@ classDiagram
     CustomerSegment ..> SegmentPrediction : predicted name
 ```
 
-## Repository layout
+## リポジトリ構成
 
-The implementation lives under `src/AgentOrchestrator/` with separate API, UI,
-and test projects.
+実装は `src/AgentOrchestrator/` 以下にあり、API、UI、テストが個別の
+プロジェクトに分かれています。
 
 ```text
 src/AgentOrchestrator/
@@ -167,29 +168,29 @@ src/AgentOrchestrator/
 └── AgentHQDemo.slnx
 ```
 
-## Key design decisions
+## 主な設計判断
 
-- **Singleton Copilot client**:
-  `AgentHQDemo.Api.Services.CopilotChatService` is registered as a singleton
-  and holds one long-lived `CopilotClient`. `EnsureStartedAsync` recreates the
-  client after connection loss.
-- **Channel bridge for streaming**:
-  Copilot SDK callbacks write assistant deltas to an unbounded
-  `Channel<string>`. The API reads the channel as an `IAsyncEnumerable<string>`
-  and turns each item into an SSE frame.
-- **Runtime model discovery**:
-  `CopilotChatService.ListModelsAsync` calls the Copilot SDK at runtime.
-  `ChatController.GetModels` falls back to a static catalogue when the CLI
-  cannot be reached or returns no models.
-- **SQLite for zero-config analytics**:
-  `Program.cs` uses `UseSqlite("Data Source=retail.db")`, calls
-  `EnsureCreatedAsync`, and seeds sample retail data on startup.
+- **シングルトンの Copilot クライアント**:
+    `AgentHQDemo.Api.Services.CopilotChatService` はシングルトンとして登録され、
+    長期間存続する 1 つの `CopilotClient` を保持します。`EnsureStartedAsync` は
+    接続が失われた後にクライアントを再作成します。
+- **ストリーミング用の Channel ブリッジ**:
+    Copilot SDK のコールバックは、アシスタントの差分を容量無制限の
+    `Channel<string>` に書き込みます。API はチャネルを `IAsyncEnumerable<string>`
+    として読み取り、各項目を SSE フレームに変換します。
+- **実行時のモデル検出**:
+    `CopilotChatService.ListModelsAsync` は実行時に Copilot SDK を呼び出します。
+    CLI に接続できない場合やモデルが返されない場合、`ChatController.GetModels` は
+    静的カタログにフォールバックします。
+- **構成不要の分析用 SQLite**:
+    `Program.cs` は `UseSqlite("Data Source=retail.db")` を使用し、
+    `EnsureCreatedAsync` を呼び出して、起動時にサンプルの小売データをシードします。
 
-## Related
+## 関連情報
 
-- [Custom agents](./custom-agents.md)
-- [Hooks and governance](./hooks-and-governance.md)
-- [Troubleshooting](./troubleshooting.md)
+- [カスタムエージェント](./custom-agents.md)
+- [フックとガバナンス](./hooks-and-governance.md)
+- [トラブルシューティング](./troubleshooting.md)
 - [API `Program.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Program.cs)
 - [`CopilotChatService`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Services/CopilotChatService.cs)
 - [Web `ChatService`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Web/Services/ChatService.cs)

@@ -1,16 +1,15 @@
-# Lab 02 — Your first streaming chat
+# ラボ 02 — 最初のストリーミングチャット
 
-**Goal:** follow a single prompt all the way through the stack — browser →
-API → Copilot SDK → model → back — and understand why the model list is
-fetched at runtime rather than hardcoded.
+**目標:** 1つのプロンプトが、ブラウザー → API → Copilot SDK → モデル → ブラウザーという
+スタック全体を通る流れを追跡し、モデル一覧をハードコードせず実行時に取得する理由を理解します。
 
-**Time:** ~20 minutes
+**所要時間:** 約20分
 
-**Prerequisites:** [Lab 01](../01-setup/) complete, both services running.
+**前提条件:** [ラボ 01](../01-setup/)を完了し、両方のサービスが実行中であること。
 
-## Step 1 — Watch the wire format
+## 手順 1 — ワイヤーフォーマットを確認する
 
-Send a prompt and observe the raw Server-Sent Events:
+プロンプトを送信し、生の Server-Sent Events を確認します。
 
 ```bash
 curl -N -X POST http://localhost:5050/api/chat/stream \
@@ -18,7 +17,7 @@ curl -N -X POST http://localhost:5050/api/chat/stream \
   -d '{"prompt":"Name three retail KPIs. One line each.","model":"claude-haiku-4.5"}'
 ```
 
-You'll see many small frames rather than one big response:
+1つの大きな応答ではなく、多数の小さなフレームが表示されます。
 
 ```
 data: {"content":"1. **Average"}
@@ -32,39 +31,35 @@ data: {"content":" transaction count.\n"}
 data: [DONE]
 ```
 
-Three things to notice:
+次の3点に注目してください。
 
-1. Each frame is `data: ` followed by JSON, then a **blank line** — that blank
-   line is what SSE uses to delimit events
-2. Chunks split at arbitrary points, mid-word and mid-sentence. The client must
-   concatenate; it can't assume whole tokens
-3. The stream ends with the sentinel `data: [DONE]`
+1. 各フレームは `data: `、JSON、**空行**の順で構成されます。この空行を SSE がイベントの区切りとして使用します
+2. チャンクは単語や文の途中を含む任意の位置で分割されます。クライアントはチャンクを連結する必要があり、完全なトークンが届くとは想定できません
+3. ストリームは番兵値 `data: [DONE]` で終了します
 
-## Step 2 — Find the server side
+## 手順 2 — サーバー側を確認する
 
-Open [`ChatController.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Controllers/ChatController.cs)
-and locate `StreamChat`. Note in order:
+[`ChatController.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Controllers/ChatController.cs)
+を開き、`StreamChat` を探します。次の点を順番に確認してください。
 
-- `Response.ContentType = "text/event-stream"` plus `no-cache` and keep-alive
-- The `await foreach` over `_chatService.ChatStreamAsync(...)`
-- `await Response.Body.FlushAsync(cancellationToken)` after **every** chunk
-- The trailing `data: [DONE]`
+- `Response.ContentType = "text/event-stream"` と、`no-cache` および keep-alive
+- `_chatService.ChatStreamAsync(...)` を処理する `await foreach`
+- **すべての**チャンクの後にある `await Response.Body.FlushAsync(cancellationToken)`
+- 末尾の `data: [DONE]`
 
-⚠️ **The flush is not optional.** Without it ASP.NET Core buffers the response
-and the client receives everything at once — the stream still "works" but the
-typing effect disappears entirely. This is the single most common mistake when
-building SSE endpoints.
+⚠️ **フラッシュは省略できません。** フラッシュしないと ASP.NET Core が応答をバッファリングし、
+クライアントはすべてを一度に受信します。ストリーム自体は「動作」していても、入力中のように見える効果は
+完全に失われます。これは SSE エンドポイントを構築するときに最もよくある間違いです。
 
-Now look at the `catch` block. Errors are written **into the stream** as
-`data: {"error":"..."}` rather than returned as an HTTP 500. That's forced on
-us: the status line and headers were already sent with the first chunk, so
-there is no status code left to change.
+次に `catch` ブロックを確認します。ストリーム開始後のエラーは HTTP 500 として返されるのではなく、
+`data: {"error":"..."}` として**同じ SSE ストリーム内**に返されます。これは必須の動作です。
+最初のチャンクとともにステータス行とヘッダーがすでに送信されているため、後からステータスコードを変更できません。
 
-## Step 3 — Find the SDK integration
+## 手順 3 — SDK 統合を確認する
 
-Open [`CopilotChatService.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Services/CopilotChatService.cs).
+[`CopilotChatService.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Services/CopilotChatService.cs) を開きます。
 
-`ChatStreamAsync` creates a session and subscribes to events:
+`ChatStreamAsync` はセッションを作成し、イベントを購読します。
 
 ```csharp
 session.On<SessionEvent>(evt =>
@@ -82,23 +77,21 @@ session.On<SessionEvent>(evt =>
 });
 ```
 
-⚠️ **The explicit `<SessionEvent>` matters.** In SDK v1.x the type argument no
-longer infers from the lambda — `session.On(evt => ...)` fails to compile with
-`CS0411`. Older samples written against v0.x still show the non-generic form.
+⚠️ **明示的な `<SessionEvent>` が重要です。** SDK v1.x では、ラムダ式から型引数が
+推論されなくなりました。`session.On(evt => ...)` は `CS0411` でコンパイルに失敗します。
+v0.x 向けに書かれた古いサンプルでは、今も非ジェネリック形式が使われています。
 
-Note also the `Channel<string>`: the SDK session runs inside a background
-`Task`, and completed chunks are pushed onto a channel that the enumerator
-reads from. That indirection exists because C# forbids `yield return` inside a
-`try`/`catch`, and the session work genuinely needs exception handling.
+`Channel<string>` にも注目してください。SDK セッションはバックグラウンドの `Task` 内で実行され、
+完成したチャンクは列挙子が読み取るチャネルへプッシュされます。この間接化が必要なのは、C# では
+`try`/`catch` 内の `yield return` が禁止されており、セッション処理には実際に例外処理が必要だからです。
 
-## Step 4 — Ask the API which models you have
+## 手順 4 — 利用可能なモデルを API に問い合わせる
 
 ```bash
 curl -s http://localhost:5050/api/chat/models | jq -r '.[].id'
 ```
 
-The list comes from **your account**, live. Now try one that almost certainly
-isn't on it:
+一覧は**自分のアカウント**からリアルタイムに取得されます。次に、一覧にはほぼ確実に存在しないモデルを試します。
 
 ```bash
 curl -N -X POST http://localhost:5050/api/chat/stream \
@@ -106,22 +99,21 @@ curl -N -X POST http://localhost:5050/api/chat/stream \
   -d '{"prompt":"hello","model":"gpt-4-turbo-preview"}'
 ```
 
-Expected:
+想定される出力:
 
 ```
 data: {"error":"... Model \"gpt-4-turbo-preview\" is not available."}
 ```
 
-This is exactly why `ChatController.GetModels` calls
-`CopilotChatService.ListModelsAsync()` instead of returning a fixed list. An
-earlier version of this demo shipped six hardcoded model ids; over time five of
-them stopped being valid, and the picker silently offered models that failed on
-use. The static catalogue now exists only as a fallback for when the CLI can't
-be reached.
+これが、`ChatController.GetModels` が固定リストを返さず、
+`CopilotChatService.ListModelsAsync()` を呼び出す理由です。このデモの以前のバージョンでは、
+6つのモデル ID がハードコードされていましたが、時間の経過とともに5つが無効になり、モデル選択欄には
+使用時に失敗するモデルが表示され続けていました。現在、静的カタログは CLI に接続できない場合の
+フォールバックとしてのみ存在します。
 
-## Step 5 — Switch models and compare
+## 手順 5 — モデルを切り替えて比較する
 
-Pick two ids from your live list and ask the same question:
+ライブリストから2つの ID を選び、同じ質問をします。
 
 ```bash
 MODEL=$(curl -s http://localhost:5050/api/chat/models | jq -r '.[0].id')
@@ -132,18 +124,16 @@ curl -N -X POST http://localhost:5050/api/chat/stream \
   -d "{\"prompt\":\"In one sentence, what is customer churn?\",\"model\":\"$MODEL\"}"
 ```
 
-Repeat with a different id and compare latency and tone. In the browser, the
-**Model** dropdown does the same thing — the selection is persisted to
-localStorage by `StorageService`.
+別の ID でも繰り返し、待ち時間と応答の調子を比較します。ブラウザーの **Model** ドロップダウンも
+同じ処理を行い、選択内容は `StorageService` によって localStorage に保存されます。
 
-💡 If a model saved in your browser later disappears from your account,
-`Home.razor` detects the stale value on load and falls back to a valid one
-rather than failing on first send.
+💡 ブラウザーに保存されたモデルが後でアカウントから利用できなくなった場合、`Home.razor` は
+読み込み時に古い値を検出します。最初の送信時に失敗するのではなく、有効なモデルへフォールバックします。
 
-## Step 6 — Shape the response with a system message
+## 手順 6 — システムメッセージで応答を調整する
 
-The API accepts an optional `systemMessage`, applied in **append** mode so it
-supplements rather than replaces the built-in instructions:
+API はオプションの `systemMessage` を受け取ります。組み込みの指示を置き換えず補足するように、
+**append** モードで適用されます。
 
 ```bash
 curl -N -X POST http://localhost:5050/api/chat/stream \
@@ -155,29 +145,29 @@ curl -N -X POST http://localhost:5050/api/chat/stream \
   }'
 ```
 
-Expected — a grounded answer naming **At Risk** at 45%.
+想定されるのは、45% の **At Risk** を挙げる、根拠に基づいた回答です。
 
-Without that context the model has no access to your seed data and will say so.
-Compare by dropping `systemMessage` and re-running. The Blazor client always
-sends a retail-analytics system message, which is why the UI feels
-domain-aware — see `ChatService.StreamChatAsync`.
+このコンテキストがなければ、モデルはシードデータにアクセスできず、その旨を回答します。
+`systemMessage` を削除して再実行し、比較してください。Blazor クライアントは常に小売分析用の
+システムメッセージを送信するため、UI はドメインを理解しているように動作します。
+`ChatService.StreamChatAsync` を参照してください。
 
-This lab fed context through a **system message**. That is static and burns
-tokens on every call. Lab 03 replaces that with a **tool** the model can call
-on demand when it actually needs retail data.
+このラボでは、**システムメッセージ**を通じてコンテキストを渡しました。これは静的であり、呼び出すたびに
+トークンを消費します。ラボ 03 では、実際に小売データが必要なときにモデルがオンデマンドで呼び出せる
+**ツール**に置き換えます。
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-You can now explain:
+ここまでで、次の項目を説明できるようになりました。
 
-- [x] The SSE wire format and why each chunk is flushed
-- [x] Why errors are streamed rather than returned as HTTP status codes
-- [x] Why `On<SessionEvent>` needs its explicit type argument
-- [x] Why models are discovered at runtime
-- [x] How a system message grounds the assistant in the retail domain
+- [x] SSE のワイヤーフォーマットと、各チャンクをフラッシュする理由
+- [x] エラーを HTTP ステータスコードで返さず、ストリーミングする理由
+- [x] `On<SessionEvent>` に明示的な型引数が必要な理由
+- [x] 実行時にモデルを検出する理由
+- [x] システムメッセージによってアシスタントに小売ドメインの根拠を与える方法
 
-## Related
+## 関連資料
 
-- Next: [Lab 03 — Tools](../03-tools/)
-- [Demo: Copilot SDK integration](../../demos/01-copilot-sdk-integration.md)
-- [Demo: SSE streaming](../../demos/02-sse-streaming.md)
+- 次へ: [ラボ 03 — ツール](../03-tools/)
+- [デモ: Copilot SDK の統合](../../demos/01-copilot-sdk-integration.md)
+- [デモ: SSE ストリーミング](../../demos/02-sse-streaming.md)
