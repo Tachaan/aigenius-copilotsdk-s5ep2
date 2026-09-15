@@ -1,35 +1,35 @@
-# Extra — Custom agents and code review
+# 追加ラボ — カスタムエージェントとコードレビュー
 
-> **📎 Extra lab — not Copilot SDK.**
-> This covers `.agent.md` files, a **Copilot CLI** feature, not the Copilot
-> SDK. It's genuinely useful, but optional and independent of the numbered
-> SDK path. Start with [Lab 01](../01-setup/) if you're here for the SDK.
+> **📎 追加ラボ — Copilot SDK の内容ではありません。**
+> ここでは Copilot SDK ではなく、**Copilot CLI** の機能である `.agent.md` ファイルを扱います。
+> 実用的な内容ですが、オプションであり、番号付きの SDK 学習手順からは独立しています。
+> SDK を学ぶ場合は [ラボ 01](../01-setup/) から開始してください。
 
-**Goal:** use the repository's custom agents to discover the four deliberate
-code smells, and understand how agents, instructions, and skills combine to
-encode a team's review standards.
+**目標:** リポジトリのカスタムエージェントを使用して、意図的に残された 4 つのコードスメルを
+検出し、エージェント、instructions、skills を組み合わせてチームのレビュー基準を
+定義する方法を理解します。
 
-**Time:** ~20 minutes
+**所要時間:** 約 20 分
 
-**Prerequisites:** [Lab 02](../02-first-chat/) complete. You need the GitHub
-Copilot CLI signed in, or VS Code with Copilot Chat.
+**前提条件:** [ラボ 02](../02-first-chat/) を完了していること。GitHub Copilot CLI に
+サインインしているか、Copilot Chat を備えた VS Code が必要です。
 
-## ⚠️ Read this first
+## ⚠️ 最初にお読みください
 
-The issues you are about to find are **intentional**. They exist so reviews
-have something real to catch. **Do not fix them** — Lab 05 and the
-review-instructions file both assume they're still present.
+これから検出する問題は**意図的**に残されています。レビューで実際に検出できる対象を用意する
+ためです。**修正しないでください**。ラボ 05 と review-instructions ファイルは、これらが
+残っていることを前提としています。
 
-Your job here is to *detect and describe*, not repair.
+ここで行うのは*検出と説明*であり、修正ではありません。
 
-## Step 1 — Look at what's checked in
+## 手順 1 — チェックインされている内容を確認する
 
 ```bash
 ls .github/agents/
 cat .github/agents/dotnet-reviewer.agent.md
 ```
 
-Each agent is a Markdown file with YAML frontmatter:
+各エージェントは YAML frontmatter を含む Markdown ファイルです。
 
 ```yaml
 ---
@@ -40,24 +40,25 @@ model: claude-sonnet-4.6
 ---
 ```
 
-- **`name`** — how you invoke it
-- **`description`** — tells Copilot *when* to reach for this agent
-- **`tools`** — capabilities it's allowed; these are read-only reviewers, so no
-  `edit` or `bash`
-- **`model`** — optionally pins a specific model
+- **`name`** — 呼び出し時に使用する名前
+- **`description`** — このエージェントを使用する*タイミング*を Copilot に伝える
+- **`tools`** — 使用を許可する機能。これらは read-only のレビュアーなので、`edit` や
+  `bash` は含まれない
+- **`model`** — 必要に応じて特定のモデルを固定する
 
-Four agents ship here:
+ここには 4 つのエージェントが含まれています。
 
-| Agent | Purpose |
+| エージェント | 目的 |
 |:------|:--------|
-| `dotnet-reviewer` | C# best practices, security, performance |
-| `security-scanner` | Vulnerabilities and compliance issues |
-| `pr-summary` | Generates PR descriptions from a diff |
-| `accessibility-auditor` | WCAG compliance for UI code |
+| `dotnet-reviewer` | C# のベストプラクティス、セキュリティ、パフォーマンス |
+| `security-scanner` | 脆弱性とコンプライアンスの問題 |
+| `pr-summary` | 差分から PR の説明を生成 |
+| `accessibility-auditor` | UI コードの WCAG 準拠 |
 
-## Step 2 — Understand the shared context
+## 手順 2 — 共有コンテキストを理解する
 
-Agents don't work in isolation. Two instruction files apply repo-wide:
+エージェントは単独で動作するわけではありません。2 つの instruction ファイルがリポジトリ
+全体に適用されます。
 
 ```bash
 head -40 .github/copilot-instructions.md
@@ -65,42 +66,41 @@ head -30 .github/copilot-review-instructions.md
 ```
 
 - [`copilot-instructions.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/copilot-instructions.md) —
-  coding standards every agent follows (file-scoped namespaces, async
-  conventions, `Result<T>` over exceptions, and so on)
+  すべてのエージェントが従うコーディング規約（ファイルスコープ名前空間、非同期処理の規約、
+  例外より `Result<T>` を優先することなど）
 - [`copilot-review-instructions.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/copilot-review-instructions.md) —
-  review-specific context: the SDK namespace move, the SSE flush requirement,
-  and an explicit list of the intentional smells so reviewers don't report them
-  as new bugs
+  レビュー固有のコンテキスト。SDK 名前空間の移動、SSE の flush 要件、意図的なコードスメルの
+  明示的な一覧を含み、レビュアーが新しいバグとして報告しないようにする
 
-This layering is the point: standards live in version control, so every
-reviewer — human or agent — applies the same ones.
+この階層化が重要です。規約をバージョン管理に格納することで、人間でもエージェントでも、
+すべてのレビュアーが同じ規約を適用します。
 
-## Step 3 — Review the service with an agent
+## 手順 3 — エージェントでサービスをレビューする
 
-Run the .NET reviewer against the file that holds most of the issues:
+問題の大半を含むファイルに対して .NET レビュアーを実行します。
 
 ```bash
 copilot --agent dotnet-reviewer -p "Review src/AgentOrchestrator/AgentHQDemo.Api/Services/RetailAnalyticsService.cs for performance and correctness issues. List each with severity and a suggested fix, but do not modify any files." --allow-all-tools
 ```
 
-In VS Code Copilot Chat the equivalent is:
+VS Code Copilot Chat では、同等の操作は次のとおりです。
 
 ```
 @dotnet-reviewer review RetailAnalyticsService.cs for performance and correctness issues
 ```
 
-## Step 4 — Check the findings against the answer key
+## 手順 4 — 検出結果を解答と照合する
 
-A good review should surface all four. The answer key:
+適切なレビューでは 4 つすべてが検出されます。解答は次のとおりです。
 
-| # | Issue | Where | Why it matters |
+| # | 問題 | 場所 | 重要な理由 |
 |:--|:------|:------|:---------------|
-| 1 | **N+1 query** | `GetTransactionsWithSegmentsAsync` | Loads all transactions, then calls `PredictSegmentAsync` per row — one extra round trip each. Fine for 10 seed rows, fatal at 10 million. |
-| 2 | **Missing null check** | `GetTransactionAsync` | Returns without guarding a missing id, so callers can dereference null. |
-| 3 | **No input validation** | `AddTransactionAsync` | Accepts unvalidated input — negative amounts, empty customer ids, absurd values all persist. |
-| 4 | **Hardcoded threshold** | `PredictSegmentAsync` | A magic number decides segment membership. Changing business rules means a redeploy. |
+| 1 | **N+1 クエリ** | `GetTransactionsWithSegmentsAsync` | 全トランザクションを読み込んだ後、行ごとに `PredictSegmentAsync` を呼び出すため、毎回余分な往復が発生します。シードデータ 10 行なら問題になりませんが、1,000 万行では致命的です。 |
+| 2 | **null チェックの欠落** | `GetTransactionAsync` | 存在しない id を考慮せずに返すため、呼び出し元が `null` のメンバーにアクセスする可能性があります。 |
+| 3 | **入力検証なし** | `AddTransactionAsync` | 検証されていない入力を受け入れるため、負の金額、空の顧客 id、異常な値がすべて永続化されます。 |
+| 4 | **しきい値のハードコード** | `PredictSegmentAsync` | マジックナンバーでセグメント所属を決定しています。ビジネスルールの変更に再デプロイが必要です。 |
 
-The N+1 is visible directly in the source — the comment even flags it:
+N+1 はソースから直接確認でき、コメントでも明示されています。
 
 ```csharp
 foreach (var txn in transactions)
@@ -111,55 +111,54 @@ foreach (var txn in transactions)
 }
 ```
 
-💡 How many did the agent find? Agents are probabilistic — a run that finds
-three of four is normal. That's a useful discussion point: agents accelerate
-review, they don't replace the reviewer.
+💡 エージェントはいくつ検出しましたか？エージェントの動作には確率的な要素があるため、
+1 回の実行で 4 つ中 3 つを検出するのは通常の結果です。ここから得られる重要な教訓は、
+エージェントはレビューを高速化しますが、レビュアーの代わりにはならないということです。
 
-## Step 5 — Chain to the security scanner
+## 手順 5 — security scanner へ連携する
 
-Different agent, different lens. The security scanner should focus on issue 3:
+エージェントが異なれば観点も異なります。security scanner は問題 3 に注目するはずです。
 
 ```bash
 copilot --agent security-scanner -p "Scan src/AgentOrchestrator/AgentHQDemo.Api/Controllers/TransactionsController.cs and the service it calls for input validation and injection risks. Report findings only, make no edits." --allow-all-tools
 ```
 
-Compare the two outputs. The .NET reviewer weighs performance; the security
-scanner weighs trust boundaries. Same code, different priorities — which is
-exactly why they're separate agents rather than one general one.
+2 つの出力を比較してください。.NET reviewer はパフォーマンスを重視し、security scanner は
+信頼境界を重視します。同じコードでも優先事項が異なります。これこそ、1 つの汎用エージェント
+ではなく、別々のエージェントにする理由です。
 
-## Step 6 — Audit the UI for accessibility
+## 手順 6 — UI のアクセシビリティを監査する
 
 ```bash
 copilot --agent accessibility-auditor -p "Audit src/AgentOrchestrator/AgentHQDemo.Web/Components/ChatInput.razor and Header.razor for WCAG issues. Report only." --allow-all-tools
 ```
 
-Look for label associations, keyboard operability, and focus management on the
-streaming message region.
+ラベルの関連付け、キーボード操作性、ストリーミングメッセージ領域のフォーカス管理を確認します。
 
-## Step 7 — Generate a PR summary
+## 手順 7 — PR の概要を生成する
 
-With uncommitted changes present, `pr-summary` drafts a description:
+未コミットの変更がある状態で、`pr-summary` に説明の下書きを作成させます。
 
 ```bash
 copilot --agent pr-summary -p "Summarise the current git diff as a pull request description." --allow-all-tools
 ```
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-- [x] You can explain the `.agent.md` frontmatter fields
-- [x] You found the four intentional issues — **and left them in place**
-- [x] You saw two agents reach different conclusions about the same code
-- [x] You understand how instruction files give every agent shared standards
+- [x] `.agent.md` の frontmatter フィールドを説明できる
+- [x] 意図的な 4 つの問題を検出し、**そのまま残した**
+- [x] 2 つのエージェントが同じコードについて異なる結論を出すことを確認した
+- [x] instruction ファイルがすべてのエージェントに共通規約を与える仕組みを理解した
 
-## 💡 Extra credit
+## 💡 発展課題
 
-Write a fifth agent. Create `.github/agents/test-writer.agent.md` with a
-`description` explaining when it should trigger and `tools: ['read', 'search']`.
-Ask it to propose (not write) tests for `PredictSegmentAsync`.
+5 つ目のエージェントを作成します。起動すべきタイミングを説明する `description` と
+`tools: ['read', 'search']` を指定した `.github/agents/test-writer.agent.md` を作成します。
+`PredictSegmentAsync` のテストを作成するのではなく、提案するよう依頼してください。
 
-## Related
+## 関連項目
 
-- Next: [Extra — Governance hooks](../extra-governance-hooks/)
-- [Breakout: Custom agents](../../breakouts/custom-agents.md)
-- [Breakout: Skills](../../breakouts/skills.md)
-- [Demo: Retail analytics](../../demos/03-retail-analytics.md)
+- 次へ: [Extra — ガバナンスフック](../extra-governance-hooks/)
+- [補足資料: カスタムエージェント](../../breakouts/custom-agents.md)
+- [補足資料: Skills](../../breakouts/skills.md)
+- [デモ: 小売分析](../../demos/03-retail-analytics.md)

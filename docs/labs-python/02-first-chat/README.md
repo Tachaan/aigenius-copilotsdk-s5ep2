@@ -1,44 +1,44 @@
-# Lab 02 — Your first streaming chat
+# ラボ 02 — 最初のストリーミング チャット
 
-**Goal:** follow a single prompt all the way through the Python stack — HTTP
-client → FastAPI → Copilot SDK → model → back — and understand why model
-discovery is runtime data rather than a hardcoded list.
+**目的:** 1 つのプロンプトが Python スタック全体をどのように流れるかを追います。
+経路は HTTP クライアント → FastAPI → Copilot SDK → モデル → 応答です。また、モデルの
+検出にハードコードされた一覧ではなく実行時のデータを使う理由を理解します。
 
-**Time:** ~20 minutes
+**所要時間:** 約20分
 
-**Prerequisites:** [Lab 01](../01-setup/) complete, with the FastAPI server
-running on port 5070.
+**前提条件:** [ラボ 01](../01-setup/) を完了し、FastAPI サーバーがポート 5070 で
+動作していること。
 
-## Step 1 — Start or confirm the server
+## ステップ 1 — サーバーを起動または確認する
 
-From the repository root:
+リポジトリ ルートから実行します。
 
 ```bash
 cd src/AgentOrchestrator-python
 uv run uvicorn app.main:app --port 5070
 ```
 
-Open <http://localhost:5070> if you want to watch the UI later. The same
-process serves both the API and static UI.
+後で UI を確認したい場合は <http://localhost:5070> を開いてください。同じプロセスが
+API と静的 UI の両方を提供します。
 
-Confirm the API is healthy:
+API が正常であることを確認します。
 
 ```bash
 curl http://localhost:5070/api/chat/health
 ```
 
-Expected:
+期待される出力は次のとおりです。
 
 ```json
 {"status":"healthy","service":"CopilotChat","availableModels":["claude-haiku-4.5","gpt-4.1","gpt-5","claude-sonnet-4.5","claude-opus-4.5","gemini-2.5-pro"]}
 ```
 
-That fallback list is deliberately small. The real model picker asks your
-signed-in Copilot account what it can use.
+このフォールバック一覧は意図的に小さくしてあります。実際のモデル選択 UI は、サインイン中の
+Copilot アカウントに対して利用可能なモデルを問い合わせます。
 
-## Step 2 — Watch the wire format
+## ステップ 2 — 通信形式を確認する
 
-Send a prompt and observe the raw Server-Sent Events:
+プロンプトを送信し、加工されていない Server-Sent Events を観察してください。
 
 ```bash
 curl -sN -X POST http://localhost:5070/api/chat/stream \
@@ -46,7 +46,7 @@ curl -sN -X POST http://localhost:5070/api/chat/stream \
     -d '{"prompt":"Reply with exactly: streaming works","model":"claude-haiku-4.5"}'
 ```
 
-Captured output:
+取得される出力は次のようになります。
 
 ```text
 data: {"content": "streaming works"}
@@ -54,43 +54,40 @@ data: {"content": "streaming works"}
 data: [DONE]
 ```
 
-Three things to notice: each frame is `data: ` plus JSON, followed by a
-**blank line**; a longer answer arrives as several frames because chunks can
-split anywhere; and the stream ends with `data: [DONE]`.
+注目すべき点は 3 つあります。各イベントフレームは `data: ` と JSON で構成され、その後に
+**空行**が続きます。長い回答はデータの断片が任意の位置で分割されるため、複数のフレームに分かれます。
+そしてストリームは、完了を示すセンチネル `data: [DONE]` で終了します。
 
-⚠️ The request model is `prompt`, `model`, and optional `systemMessage`. An
-unrecognised key such as `message` is silently ignored — you will get a generic
-greeting back rather than a validation error.
+⚠️ リクエストモデルは `prompt`、`model`、任意の `systemMessage` です。`message` のような
+認識されないキーは黙って無視されるため、検証エラーではなく汎用的なあいさつが返ってきます。
 
-## Step 3 — Find the server side
+## ステップ 3 — サーバー側を見つける
 
-Open
 [`app/routers/chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/chat.py)
-and locate `stream_chat`.
+を開き、`stream_chat` を見つけてください。
 
-`stream_chat` returns a `StreamingResponse` with media type
-`text/event-stream`. Inside `event_stream`, each SDK chunk is serialised as an
-SSE frame:
+`stream_chat` はメディアタイプが `text/event-stream` の `StreamingResponse` を返します。
+`event_stream` の内部では、SDK から届くデータの各断片が SSE フレームとしてシリアライズされます。
 
 ```python
 yield f"data: {json.dumps({'content': chunk})}\n\n"
 ```
 
-The route then writes the `data: [DONE]` terminator.
+その後、このルートは完了を示すセンチネル `data: [DONE]` を書き込みます。
 
-⚠️ The blank line is not decoration. It is the event delimiter. Remove it and
-many SSE clients will keep buffering because they never see a complete event.
+⚠️ 空行は飾りではありません。イベントの区切りです。これを取り除くと、
+多くの SSE クライアントはイベントの完了を認識できず、バッファリングを続けます。
 
-Now look at the `except` block. Errors are written **into the stream** as
-`data: {"error": "..."}`. Once an SSE response has started, the status line and
-headers are already gone, so an HTTP 500 is no longer useful to the client.
+次に `except` ブロックを見てください。エラーは `data: {"error": "..."}` として
+**ストリームの中に**書き込まれます。SSE レスポンスが始まった後では、ステータス行と
+ヘッダーはすでに送信済みなので、HTTP 500 はクライアントにとってもはや有用ではありません。
 
-## Step 4 — Find the SDK integration
+## ステップ 4 — SDK 組み込みを見つける
 
-Open
-[`app/services/copilot_chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/services/copilot_chat.py).
+[`app/services/copilot_chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/services/copilot_chat.py)
+を開いてください。
 
-`CopilotChatService.chat_stream` creates a session with streaming enabled:
+`CopilotChatService.chat_stream` は、ストリーミングを有効にしたセッションを作成します。
 
 ```python
 session = await self._client.create_session(
@@ -102,7 +99,7 @@ session = await self._client.create_session(
 )
 ```
 
-Then it subscribes to events:
+次にイベントを購読します。
 
 ```python
 def on_event(evt: SessionEvent) -> None:
@@ -125,24 +122,23 @@ def on_event(evt: SessionEvent) -> None:
             done.set_exception(RuntimeError(evt.data.message))
 ```
 
-The queue is the bridge between the SDK's callback style and FastAPI's async
-response generator. The callback pushes chunks into `asyncio.Queue`; the route
-awaits the queue and yields SSE frames.
+このキューは、SDK のコールバック方式と FastAPI の非同期レスポンスジェネレーターをつなぐ橋渡しです。
+コールバックはデータの断片を `asyncio.Queue` に積み、ルート側はそのキューを待って SSE フレームを `yield` します。
 
-## Step 5 — Understand Python events
+## ステップ 5 — Python のイベントを理解する
 
-This is the first important Python-vs-.NET difference.
+ここが Python と .NET の最初の重要な違いです。
 
-.NET samples pattern-match event subclasses such as `AssistantMessageDeltaEvent`
-and `SessionIdleEvent`. Python gives you one `SessionEvent` dataclass with
-fields such as:
+.NET のサンプルでは `AssistantMessageDeltaEvent` や `SessionIdleEvent` のような
+イベントのサブクラスをパターンマッチします。Python では、次のようなフィールドを持つ 1 つの
+`SessionEvent` データクラスが渡されます。
 
 - `type`
 - `data`
 - `id`
 - `timestamp`
 
-The `type` field is a `SessionEventType` enum, so Python code branches like this:
+`type` フィールドは `SessionEventType` 列挙型なので、Python コードは次のように分岐します。
 
 ```python
 if evt.type is SessionEventType.ASSISTANT_MESSAGE_DELTA:
@@ -151,37 +147,36 @@ elif evt.type is SessionEventType.SESSION_ERROR:
     ...
 ```
 
-Events are also **push-only callbacks**. `session.on(handler)` returns an
-unsubscribe callable; there is no async iterator to loop over directly.
+イベントは**プッシュ専用のコールバック**でもあります。`session.on(handler)` はハンドラーを登録し、購読解除用の呼び出し可能オブジェクトを返します。
+直接ループできる非同期イテレーターはありません。
 
-The helper in
 [`sdk_labs/_common.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/_common.py)
-uses this pattern to wait until `SESSION_IDLE` or raise on `SESSION_ERROR`.
+のヘルパーはこのパターンを使い、`SESSION_IDLE` まで待機するか、`SESSION_ERROR` で例外を送出します。
 
-## Step 6 — Ask the API which models you have
+## ステップ 6 — API に利用可能なモデルを問い合わせる
 
 ```bash
 curl -s http://localhost:5070/api/chat/models | jq -r '.[].id'
 ```
 
-`/api/chat/models` returns a JSON **list** of objects shaped like:
+`/api/chat/models` は、次のような形式のオブジェクトからなる JSON **一覧**を返します。
 
 ```json
 {"id":"...","name":"...","description":"..."}
 ```
 
-The route first asks `CopilotChatService.list_models()`, which calls
-`await client.list_models()`. That returns `ModelInfo` objects with `.id` and
-`.name` fields.
+このルートは最初に `CopilotChatService.list_models()` を呼び、その中で
+`await client.list_models()` を実行します。これにより `.id` と `.name` フィールドを持つ
+`ModelInfo` オブジェクトが返されます。
 
-⚠️ `list_models()` has a known upstream bug: it can raise
+⚠️ `list_models()` には既知の上流側の不具合があり、
 `ValueError: Missing required field 'multiplier' in ModelBilling`
-(github/copilot-sdk#1302). The router catches broadly and falls back to the
-static catalogue so the UI still has choices.
+を送出することがあります (github/copilot-sdk#1302)。ルーター側は例外をまとめて捕捉し、
+静的カタログに切り替えるため、UI では引き続き選択肢を表示できます。
 
-## Step 7 — Switch models and compare
+## ステップ 7 — モデルを切り替えて比較する
 
-Pick a model id from your live list:
+動的に取得した一覧からモデル ID を 1 つ選んでください。
 
 ```bash
 MODEL=$(curl -s http://localhost:5070/api/chat/models | jq -r '.[0].id')
@@ -192,18 +187,17 @@ curl -sN -X POST http://localhost:5070/api/chat/stream \
   -d "{\"prompt\":\"In one sentence, what is customer churn?\",\"model\":\"$MODEL\"}"
 ```
 
-Repeat with a different id and compare latency, style, and tone.
+別の ID でも繰り返し、応答時間、文体、語調を比較してください。
 
-The sample model picker in
 [`sdk_labs/model_picker.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/model_picker.py)
-uses the same idea: prefer `claude-haiku-4.5`, but fall back to a concrete model
-your account can actually use. You can override samples with `--model <id>`.
+にあるサンプルのモデル選択ロジックも同じ考え方です。`claude-haiku-4.5` を優先しますが、
+最終的にはアカウントで実際に使えるモデルに切り替えます。サンプルは
+`--model <id>` で上書きできます。
 
-## Step 8 — Shape the response with a system message
+## ステップ 8 — システムメッセージで応答を方向付ける
 
-The API accepts optional `systemMessage`. The service sends it in **append** mode
-so it supplements the session's built-in instructions rather than replacing
-them.
+API は任意の `systemMessage` を受け付けます。サービスはこれを**追加**モードで送るため、
+セッションに組み込まれた指示を置き換えるのではなく補足します。
 
 ```bash
 curl -sN -X POST http://localhost:5070/api/chat/stream \
@@ -215,73 +209,69 @@ curl -sN -X POST http://localhost:5070/api/chat/stream \
   }'
 ```
 
-Expected behaviour: a grounded answer naming **At Risk** at 45%. Without that
-context, the model has no direct access to your seed data. Lab 03 replaces
-static context with a tool the model can call only when it needs retail facts.
+期待される挙動は、根拠に基づいて 45% の **At Risk** を挙げる回答です。この文脈がなければ、
+モデルは初期データに直接アクセスできません。ラボ 03 では、この静的な文脈を、
+リテールデータが必要なときだけモデルが呼び出せるツールに置き換えます。
 
-## Step 9 — Know the basic session calls
+## ステップ 9 — 基本的なセッション呼び出しを把握する
 
-The Python SDK objects support `async with`, so samples clean up
-deterministically for both the client and session.
+Python SDK のオブジェクトは `async with` をサポートしているため、サンプルではクライアントとセッションの両方を
+決定的にクリーンアップできます。
 
-For non-streaming one-shot prompts, the SDK also exposes:
+ストリーミングしない単発のプロンプトに対しては、SDK は次の呼び出しも提供します。
 
 ```python
 await session.send_and_wait(prompt, timeout=60.0)
 ```
 
-The FastAPI service uses `send(prompt)` because it processes every delta as it
-arrives.
+FastAPI サービスは、到着した差分を逐次処理するため、`send(prompt)` を使います。
 
-## Step 10 — Try the UI path
+## ステップ 10 — UI 経路を試す
 
-Back in the browser at <http://localhost:5070>, choose a model, ask
-*"Name three retail KPIs. One line each."*, and watch the message render chunk
-by chunk. If the stream fails, inspect the `data: {"error": "..."}` frame.
+ブラウザーで <http://localhost:5070> に戻り、モデルを選んで
+*"Name three retail KPIs. One line each."* と質問し、メッセージがデータの断片ごとに描画される様子を見てください。
+ストリームが失敗した場合は、`data: {"error": "..."}` フレームを確認してください。
 
-The finished exchange looks like this — the same SSE frames you read with `curl`
-above, parsed by `app.js` and rendered as Markdown:
+完了したやり取りは次のようになります。上で `curl` で読んだ SSE フレームを `app.js` が解析し、Markdown として描画したものです。
 
-![The chat UI after asking "Name three retail KPIs. One line each." The
-assistant has replied with a numbered list: Conversion Rate, Average Order Value
-(AOV), and Customer Retention Rate, each with a one-line
-definition.](../../screenshots/python-chat-ui-response.png)
+!["Name three retail KPIs. One line each." と質問した後のチャット UI。assistant は、
+Conversion Rate、Average Order Value (AOV)、Customer Retention Rate を、
+それぞれ 1 行の定義付き番号付きリストで返しています。](../../screenshots/python-chat-ui-response.png)
 
-💡 Mid-stream the assistant bubble shows an animated typing indicator; it is
-replaced by the rendered Markdown once the `[DONE]` sentinel arrives.
+💡 ストリーム途中ではアシスタントの吹き出しにアニメーション付きの入力中インジケーターが表示され、
+完了を示すセンチネル `[DONE]` が到着すると描画済みの Markdown に置き換わります。
 
-⚠️ The static UI posts `{ prompt, model }` from `app/static/app.js`, matching
-`ChatRequest`. An earlier revision sent `message` instead; because Pydantic
-ignores unknown keys rather than rejecting them, the browser streamed a reply to
-an empty prompt and nothing failed loudly. `tests/test_chat_contract.py` now
-asserts the field `app.js` sends is the field the API reads.
+⚠️ 静的 UI は `app/static/app.js` から `{ prompt, model }` を送信し、`ChatRequest` に合わせています。
+以前の版では代わりに `message` を送っていましたが、Pydantic は未知のキーを拒否せず無視するため、
+ブラウザーは空のプロンプトに対する応答をストリーミングし、目立った失敗にはなりませんでした。
+現在は `tests/test_chat_contract.py` で、`app.js` が送るフィールドと API が読むフィールドが一致することを検証しています。
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-You can now explain:
+ここまで理解できていれば、次を説明できるはずです。
 
-- [x] The SSE wire format and why the blank line matters
-- [x] Why errors are streamed rather than returned as HTTP status codes
-- [x] How FastAPI's `StreamingResponse` wraps the SDK stream
-- [x] Why Python branches on `evt.type` instead of event subclasses
-- [x] Why models are discovered at runtime
-- [x] How a system message grounds the assistant in the retail domain
+- [x] SSE の通信形式と、空行が重要な理由
+- [x] なぜエラーを HTTP ステータスコードではなくストリームで返すのか
+- [x] FastAPI の `StreamingResponse` がどのように SDK のストリームを包むのか
+- [x] なぜ Python はイベントのサブクラスではなく `evt.type` で分岐するのか
+- [x] なぜモデルは実行時に検出されるのか
+- [x] システムメッセージがアシスタントを小売ドメインにどう結び付けるのか
 
-## 💡 Extra credit
+## 💡 追加課題
 
-Open `app/services/copilot_chat.py` and temporarily log every event type before
-the `if` chain. Send one short prompt and compare the event sequence with the
-helper sample:
+`app/services/copilot_chat.py` を開き、`if` の連鎖の前で各イベント種別を一時的にログへ出力してください。
+短いプロンプトを 1 つ送信し、そのイベントの順序をヘルパーのサンプルと比較してください。
 
 ```bash
 uv run python -m sdk_labs events
 ```
 
-That deeper event lifecycle sample is
-[`sdk_labs/events_sample.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/events_sample.py).
+より詳しいイベントライフサイクルの例は
+[`sdk_labs/events_sample.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/events_sample.py)
+にあります。
 
-## Related
+## 関連資料
 
-- Previous: [Lab 01 — Setup](../01-setup/)
-- Next: [Lab 03 — Tools](../03-tools/)
-- [Demo: Copilot SDK integration](../../demos-python/01-copilot-sdk-integration.md)
+- 前へ: [ラボ 01 — セットアップ](../01-setup/)
+- 次へ: [ラボ 03 — ツール](../03-tools/)
+- [デモ: Copilot SDK の組み込み](../../demos-python/01-copilot-sdk-integration.md)

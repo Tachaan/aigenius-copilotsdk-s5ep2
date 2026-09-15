@@ -1,66 +1,66 @@
-# System map
+# システムマップ
 
-An interactive map of the retail analytics app, generated from a typed JSON
-source and rendered as a single self-contained HTML file — no external assets,
-no build step.
+型付き JSON ソースから生成され、外部アセットやビルド手順を必要としない、単一の
+自己完結型 HTML ファイルとしてレンダリングされる小売分析アプリの対話型マップです。
 
-Both tracks are behavioural mirrors, so one map covers them: where the stacks
-differ, the node carries both names (`ASP.NET Core · FastAPI`).
+2 つのトラックは機能と動作を揃えているため、1 つのマップで両方を表現します。
+スタックが異なる箇所では、ノードに両方の名前（`ASP.NET Core · FastAPI`）が
+表示されます。
 
 <iframe src="map.html"
-        title="Agent HQ Demo — retail analytics runtime architecture"
+  title="Agent HQ デモ — 小売分析ランタイムアーキテクチャ"
         loading="lazy"
         style="width: 100%; height: 780px; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 4px;">
 </iframe>
 
-Tight on space? [Open the map full screen ↗](map.html){target=_blank rel=noopener}
+表示領域が狭い場合は、[マップを全画面で開く ↗](map.html){target=_blank rel=noopener}
 
-## Guided views
+## ガイド付きビュー
 
-The map ships with three curated views. Each link opens it focused on one
-story:
+マップには、目的別に構成された 3 つのビューがあります。各リンクを開くと、
+それぞれの流れにフォーカスした状態で表示されます。
 
-| View | Shows |
+| ビュー | 表示内容 |
 |:-----|:------|
-| [Chat request path](map.html#view=chat-request-path) | One prompt from the browser to the model and back as streamed tokens |
-| [How the model reads data](map.html#view=model-data-access) | The read-only MCP tool path into SQLite |
-| [REST and persistence](map.html#view=rest-and-persistence) | The application's own read/write path |
+| [チャットリクエストの経路](map.html#view=chat-request-path) | 1 つのプロンプトがブラウザーからモデルへ渡り、応答トークンがストリーミングで返されるまで |
+| [モデルがデータを読み取る仕組み](map.html#view=model-data-access) | SQLite に至る読み取り専用 MCP ツールの経路 |
+| [REST と永続化](map.html#view=rest-and-persistence) | アプリケーション自身の読み書きの経路 |
 
-## Two paths to one database
+## 1 つのデータベースに至る 2 つの経路
 
-The detail worth pausing on is that `retail.db` is reached two different ways,
-with deliberately different privileges:
+注目すべき点は、`retail.db` へのアクセスに、意図的に異なる権限を持たせた
+2 つの経路があることです。
 
-- **The application** reads and writes through `RetailAnalyticsService` —
-  EF Core in .NET, SQLModel in Python.
-- **The model** never touches SQLite directly. It calls five read-only tools on
-  the `retail-analytics` MCP server, which opens SQLite with `mode=ro`. A write
-  is rejected by the driver, so even a prompt-injected instruction to modify
-  data cannot succeed.
+- **アプリケーション**は、`RetailAnalyticsService` を介して読み書きします。
+  .NET では EF Core、Python では SQLModel を使用します。
+- **モデル**が SQLite に直接アクセスすることはありません。SQLite を `mode=ro` で
+  開く `retail-analytics` MCP サーバー上の 5 つの読み取り専用ツールを呼び出します。
+  書き込みはドライバーによって拒否されるため、プロンプトインジェクションでデータの
+  変更を指示されても成功しません。
 
-The tool surface is the security boundary: the model gets
-`get_customer_summary`, not `run_query`, so there is no arbitrary-SQL escape
-hatch to reason about.
+モデルに公開するツールセットがセキュリティ境界です。モデルに提供されるのは
+`run_query` ではなく `get_customer_summary` であるため、任意の SQL を実行できる
+抜け道を考慮する必要がありません。
 
-## Using the viewer
+## ビューアーの使用方法
 
-| Action | Control |
+| 操作 | コントロール |
 |:-------|:--------|
-| Open the diagram guide | `?` |
-| Find and focus a node | `/` |
-| Trace a route between two nodes | `R` or **PATH** |
-| Compare component roles | `L` or **LENS** |
-| Overview radar | `M` or **MAP** |
-| Play the guided story | `P` |
+| 図のガイドを開く | `?` |
+| ノードを検索してフォーカスする | `/` |
+| 2 つのノード間の経路を追跡する | `R` または **PATH** |
+| コンポーネントの役割を比較する | `L` または **LENS** |
+| 全体表示レーダー | `M` または **MAP** |
+| ガイド付きストーリーを再生する | `P` |
 
-Light and dark themes, pan/zoom, and PNG/SVG export are in the top-right menu.
+ライト／ダークテーマ、パン／ズーム、PNG/SVG エクスポートは右上のメニューにあります。
 
-## Regenerating the map
+## マップの再生成
 
-The typed source is
-[`agent-hq-demo.architecture.json`](agent-hq-demo.architecture.json) — edit it
-rather than the HTML, which is generated output. With the generator CLI
-available (see [Credits](#credits)):
+型付きソースは
+[`agent-hq-demo.architecture.json`](agent-hq-demo.architecture.json) です。
+生成物である HTML ではなく、このファイルを編集してください。ジェネレーター CLI が
+利用できる場合は、次のコマンドを実行します（[クレジット](#credits)を参照）。
 
 ```bash
 node bin/archify.mjs validate architecture \
@@ -71,18 +71,20 @@ node bin/archify.mjs deliver architecture \
   docs/system-map/map.html --quality showcase --json
 ```
 
-`deliver` only replaces `map.html` when every check passes, so a broken edit
-leaves the last good map in place.
+`deliver` は、すべてのチェックに合格した場合にのみ `map.html` を置き換えます。
+そのため、編集に問題があっても、最後に正常だったマップが維持されます。
 
-## Related
+## 関連情報
 
-- [Architecture reference](../breakouts/architecture.md) — the written
-  walkthrough, request sequence, and data model
-- [.NET Lab 06 — MCP](../labs/06-mcp/) · [Python Lab 06 — MCP](../labs-python/06-mcp/)
-- [Hooks and governance](../breakouts/hooks-and-governance.md) — the other half
-  of the least-privilege story
+- [アーキテクチャリファレンス](../breakouts/architecture.md) — 文章による
+  ウォークスルー、リクエストのシーケンス、データモデル
+- [.NET ラボ 06 — MCP](../labs/06-mcp/) · [Python ラボ 06 — MCP](../labs-python/06-mcp/)
+- [フックとガバナンス](../breakouts/hooks-and-governance.md) — 最小権限の仕組みを
+  構成するもう一方の要素
 
-## Credits
+<a id="credits"></a>
 
-Map generated with [Archify](https://github.com/tt-a1i/archify), MIT licensed.
-`map.html` embeds its viewer runtime.
+## クレジット
+
+マップは MIT ライセンスの [Archify](https://github.com/tt-a1i/archify) で生成されています。
+`map.html` にはそのビューアーランタイムが埋め込まれています。

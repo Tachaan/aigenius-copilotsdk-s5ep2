@@ -6,121 +6,119 @@
   </p>
 -->
 
-# AI Genius — Season 5, Episode 2
+# AI Genius — シーズン 5、エピソード 2
 
-## 🔥 Agent HQ: Building a Retail Analytics Assistant with the GitHub Copilot SDK
+## 🔥 Agent HQ: GitHub Copilot SDK で小売分析アシスタントを構築する
 
-### Session Description
+### セッション概要
 
-Agents are impressive in a chat window, but the real value shows up when they
-are embedded in an application your team already runs. This session builds a
-retail transaction analytics assistant on the **GitHub Copilot SDK** — a .NET
-10 API that streams model responses over SSE, a Blazor front end that renders
-them live, and the governance scaffolding (custom agents, hooks, audit trails,
-code scanning) that makes it safe to ship.
+チャット画面で動くエージェントも印象的ですが、その真価はチームが日常的に利用する
+アプリケーションへ組み込んだときに発揮されます。このセッションでは、
+**GitHub Copilot SDK** を基盤に小売取引分析アシスタントを構築します。
+モデルのレスポンスを SSE でストリーミングする .NET 10 API、リアルタイムに描画する
+Blazor フロントエンド、安全にリリースするためのガバナンス基盤（カスタムエージェント、
+フック、監査証跡、コードスキャン）を扱います。
 
-### Session Slides
+### セッションスライド
 
-See [`docs/`](docs/) — the "Three Mondays" narrative is captured in
-`Slide1.png` – `Slide3.png`.
+[`docs/`](docs/) を参照してください。「Three Mondays」のストーリーは
+`Slide1.png` ～ `Slide3.png` に収録されています。
 
-### 🧠 Learning Outcomes
+### 🧠 学習目標
 
-By the end of this session, you will be able to:
+このセッションを終えると、次のことができるようになります。
 
-- Embed the GitHub Copilot SDK runtime into an ASP.NET Core application
-- Stream model responses to a browser token-by-token over Server-Sent Events
-- Discover available models at runtime instead of hardcoding a stale list
-- Apply enterprise governance — custom agents, hooks, audit logging, and
-  code scanning — to AI-assisted development
+- GitHub Copilot SDK ランタイムを ASP.NET Core アプリケーションに組み込む
+- Server-Sent Events を使用して、モデルのレスポンスをトークン単位でブラウザーへストリーミングする
+- モデル一覧をハードコードして古くなるリスクを避け、実行時に利用可能なモデルを検出する
+- カスタムエージェント、フック、監査ログ、コードスキャンによるエンタープライズガバナンスを
+  AI 支援開発に適用する
 
-### 💬 Keep Learning with Copilot
+### 💬 Copilot で学習を続ける
 
-Try these prompts with GitHub Copilot to explore the topics from this session.
-Open Copilot Chat in VS Code (`Ctrl+Alt+I` on Windows/Linux, `Cmd+Shift+I` on
-Mac), paste a prompt, and see what you learn. Try connecting the
-[Microsoft Learn MCP Server](#-microsoft-learn-mcp-server) for the latest
-official documentation.
+このセッションのトピックをさらに学ぶには、次のプロンプトを GitHub Copilot で試してください。
+VS Code で Copilot Chat を開き（Windows/Linux は `Ctrl+Alt+I`、Mac は `Cmd+Shift+I`）、
+プロンプトを貼り付けて結果を確認します。最新の公式ドキュメントを参照するには、
+[Microsoft Learn MCP Server](#microsoft-learn-mcp-server)への接続も試してください。
 
-Use these as a starting point — or write your own!
+以下を出発点として使用するか、独自のプロンプトを作成してください。
 
-- *What can I build with the GitHub Copilot SDK?*
-- *How do I stream Copilot SDK responses over Server-Sent Events in ASP.NET Core?*
-- *How do I list the models available to the signed-in Copilot account?*
-- *How do I set up authentication for the Copilot SDK?*
-- *What are Copilot hooks and how do I use them to enforce a security gate?*
+- *GitHub Copilot SDK では何を構築できますか？*
+- *ASP.NET Core で Copilot SDK のレスポンスを Server-Sent Events 経由でストリーミングするにはどうすればよいですか？*
+- *サインインしている Copilot アカウントで利用可能なモデルを一覧表示するにはどうすればよいですか？*
+- *Copilot SDK の認証を設定するにはどうすればよいですか？*
+- *Copilot フックとは何ですか？また、セキュリティゲートの適用にどう利用できますか？*
 
-### 📚 Resources and Next Steps
+### 📚 リソースと次のステップ
 
-| Resource | Description |
+| リソース | 説明 |
 |:---------|:------------|
-| [GitHub Copilot SDK Repo](https://github.com/github/copilot-sdk) | The SDK across all supported languages |
-| [Copilot SDK Getting Started](https://github.com/github/copilot-sdk/blob/main/docs/getting-started.md) | Build your first Copilot-powered app |
-| [Awesome Copilot](https://github.com/github/awesome-copilot) | Custom agents, instructions, skills, hooks, workflows, and plugins |
-| [GitHub Copilot Docs](https://docs.github.com/copilot) | Official product documentation |
+| [GitHub Copilot SDK リポジトリ](https://github.com/github/copilot-sdk) | サポートされるすべての言語向け SDK |
+| [Copilot SDK 入門](https://github.com/github/copilot-sdk/blob/main/docs/getting-started.md) | 最初の Copilot 対応アプリを構築する |
+| [Awesome Copilot](https://github.com/github/awesome-copilot) | カスタムエージェント、指示、スキル、フック、ワークフロー、プラグイン |
+| [GitHub Copilot ドキュメント](https://docs.github.com/copilot) | 公式製品ドキュメント |
 
 ### 🌟 Microsoft Learn MCP Server
 
-The Microsoft Learn MCP Server gives your AI agent direct access to
-Microsoft's official documentation — grounded, up-to-date answers about the
-products and services covered in this session.
+Microsoft Learn MCP Server を使用すると、AI エージェントから Microsoft の公式ドキュメントへ
+直接アクセスでき、このセッションで扱う製品やサービスについて、根拠のある最新の回答を得られます。
 
-**VS Code** — this repo already ships [`.vscode/mcp.json`](.vscode/mcp.json),
-so the server is configured when you open the folder.
+**VS Code** — このリポジトリには [`.vscode/mcp.json`](.vscode/mcp.json) が含まれているため、
+フォルダーを開くとサーバーが構成されます。
 
-**GitHub Copilot CLI** — run this to install the Learn MCP Server as a plugin:
+**GitHub Copilot CLI** — 次を実行して Learn MCP Server をプラグインとしてインストールします。
 
 ```
 /plugin install microsoftdocs/mcp
 ```
 
-For more info, other clients, and to post questions, visit the
-[Learn MCP Server repo](https://aka.ms/learnmcp).
+詳細情報、ほかのクライアント、質問の投稿については、
+[Learn MCP Server リポジトリ](https://aka.ms/learnmcp)を参照してください。
 
 ---
 
-## ✨ What This Demo Shows
+## ✨ このデモで紹介する内容
 
-| Capability | What You'll See |
+| 機能 | 確認できる内容 |
 |------------|-----------------|
-| **Multi-Model AI Chat** | Model list fetched live from the Copilot CLI — always current |
-| **Retail Analytics Domain** | Transaction data, customer segments, segment prediction |
-| **Real-Time Streaming** | Token-by-token SSE responses with batched rendering |
-| **Enterprise Governance** | Audit trails, policy hooks, security gates, code scanning |
+| **マルチモデル AI チャット** | Copilot CLI からリアルタイムに取得する常に最新のモデル一覧 |
+| **小売分析ドメイン** | 取引データ、顧客セグメント、セグメント予測 |
+| **リアルタイムストリーミング** | バッチ描画を伴うトークン単位の SSE レスポンス |
+| **エンタープライズガバナンス** | 監査証跡、ポリシーフック、セキュリティゲート、コードスキャン |
 
-## 🛠️ Tech Stack
+## 🛠️ 技術スタック
 
-The same application is implemented twice — pick whichever language you prefer.
-Both tracks teach identical SDK concepts and expose an identical HTTP contract.
+同じアプリケーションを 2 つの言語で実装しています。好みの言語を選択してください。
+どちらのトラックでも同じ SDK の概念を学び、同じ HTTP コントラクトを公開します。
 
-| Component | .NET track | Python track |
+| コンポーネント | .NET トラック | Python トラック |
 |-----------|------------|--------------|
-| Runtime | .NET 10 LTS | Python 3.11+ ([uv](https://docs.astral.sh/uv/)) |
+| ランタイム | .NET 10 LTS | Python 3.11+ ([uv](https://docs.astral.sh/uv/)) |
 | AI SDK | GitHub Copilot SDK v1.0.9 | `github-copilot-sdk` v1.0.9 |
-| Backend | ASP.NET Core Web API | FastAPI |
-| Frontend | Blazor WebAssembly | Static HTML + vanilla JS |
-| Database | SQLite + EF Core | SQLite + SQLModel |
-| Model data access | MCP (`ModelContextProtocol`) | MCP (`mcp`) |
-| Tests | xUnit (26) | pytest (30) |
+| バックエンド | ASP.NET Core Web API | FastAPI |
+| フロントエンド | Blazor WebAssembly | Static HTML + vanilla JS |
+| データベース | SQLite + EF Core | SQLite + SQLModel |
+| モデルのデータアクセス | MCP (`ModelContextProtocol`) | MCP (`mcp`) |
+| テスト | xUnit (26) | pytest (30) |
 | Lint | Roslyn analysers | Ruff |
-| Ports | 5050 API / 5051 UI | 5070 (API + UI) |
+| ポート | 5050 API / 5051 UI | 5070 (API + UI) |
 
-| Shared | Technology |
+| 共通要素 | 技術 |
 |--------|------------|
 | CI/CD | GitHub Actions |
-| Security | CodeQL, custom agents |
+| セキュリティ | CodeQL、カスタムエージェント |
 
-## 🚀 Quick Start
+## 🚀 クイックスタート
 
-### Prerequisites
+### 前提条件
 
-- [GitHub Copilot CLI](https://docs.github.com/copilot) — signed in with an
-  account that has Copilot access
-- **.NET track:** [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- **Python track:** [Python 3.11+](https://www.python.org/downloads/) and
+- [GitHub Copilot CLI](https://docs.github.com/copilot) — Copilot を利用できるアカウントで
+  サインインしていること
+- **.NET トラック:** [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- **Python トラック:** [Python 3.11+](https://www.python.org/downloads/) と
   [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
-### Run it — .NET
+### 実行 — .NET
 
 ```bash
 dotnet restore src/AgentOrchestrator/AgentHQDemo.slnx
@@ -133,9 +131,9 @@ dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api --urls "http://localh
 dotnet run --project src/AgentOrchestrator/AgentHQDemo.Web --urls "http://localhost:5051"
 ```
 
-Then open <http://localhost:5051>. The API runs on 5050.
+次に <http://localhost:5051> を開きます。API はポート 5050 で実行されます。
 
-### Run it — Python
+### 実行 — Python
 
 ```bash
 cd src/AgentOrchestrator-python
@@ -145,49 +143,48 @@ uv sync
 uv run uvicorn app.main:app --port 5070
 ```
 
-Then open <http://localhost:5070>.
+次に <http://localhost:5070> を開きます。
 
-The ports differ deliberately, so both stacks can run at the same time.
+両方のスタックを同時に実行できるよう、意図的に異なるポートを使用しています。
 
 ### GitHub Codespaces
 
-1. Click **Code** → **Create codespace on main**
-2. Wait for setup (~2 minutes)
-3. Run the commands for whichever track you are following
+1. **Code** → **Create codespace on main** をクリックします
+2. セットアップが完了するまで待ちます（約 2 分）
+3. 選択したトラックのコマンドを実行します
 
-### Copilot CLI binary
+### Copilot CLI バイナリ
 
-The Copilot SDK downloads a matching CLI binary from `registry.npmjs.org`
-during build. If that registry is unreachable (corporate proxy, offline
-machine) the build fails with `MSB3923`.
-[`Directory.Build.props`](Directory.Build.props) works around this by reusing
-a globally installed Copilot CLI when one is present:
+Copilot SDK はビルド時に、対応する CLI バイナリを `registry.npmjs.org` からダウンロードします。
+企業プロキシやオフライン環境などでレジストリに接続できない場合、ビルドは `MSB3923` で失敗します。
+[`Directory.Build.props`](Directory.Build.props) は、グローバルにインストールされた Copilot CLI が
+存在する場合にそれを再利用して、この問題を回避します。
 
 ```bash
 npm install -g @github/copilot
 ```
 
-Override or disable the detection if needed:
+必要に応じて、検出を上書きまたは無効化できます。
 
 ```bash
 dotnet build -p:CopilotCliBinaryPath=/path/to/copilot   # use a specific binary
 dotnet build -p:CopilotUseLocalCli=false                # always download
 ```
 
-## 📡 API Endpoints
+## 📡 API エンドポイント
 
-| Endpoint | Method | Description |
+| エンドポイント | メソッド | 説明 |
 |----------|--------|-------------|
-| `/api/chat/stream` | POST | Streaming chat (SSE) |
-| `/api/chat/models` | GET | Available AI models (live from the Copilot CLI) |
-| `/api/chat/health` | GET | Health check |
-| `/api/transactions` | GET/POST | List or add transactions |
-| `/api/transactions/{id}` | GET/DELETE | Transaction by ID |
-| `/api/segments` | GET | Customer segments |
-| `/api/segments/{id}` | GET | Segment details |
-| `/api/segments/predict/{customerId}` | GET | Predict customer segment |
+| `/api/chat/stream` | POST | ストリーミングチャット（SSE） |
+| `/api/chat/models` | GET | 利用可能な AI モデル（Copilot CLI からリアルタイムに取得） |
+| `/api/chat/health` | GET | 正常性チェック |
+| `/api/transactions` | GET/POST | トランザクションの一覧表示または追加 |
+| `/api/transactions/{id}` | GET/DELETE | ID を指定したトランザクション |
+| `/api/segments` | GET | 顧客セグメント |
+| `/api/segments/{id}` | GET | セグメントの詳細 |
+| `/api/segments/predict/{customerId}` | GET | 顧客セグメントの予測 |
 
-### Example calls
+### 呼び出し例
 
 ```bash
 # Stream a chat response
@@ -203,18 +200,18 @@ curl http://localhost:5050/api/segments/predict/C003
 # → {"customerId":"C003","predictedSegment":"High Value","confidence":0.89,...}
 ```
 
-## 🎯 Available Models
+## 🎯 利用可能なモデル
 
-The model picker is populated at runtime from `GET /api/chat/models`, which
-asks the Copilot CLI which models the signed-in account can actually use. The
-exact list varies by account and changes over time — examples include
-`claude-haiku-4.5` (default), `auto`, `claude-sonnet-*`, `claude-opus-*`,
-`gpt-5.*`, and `gemini-*`.
+モデル選択リストは、実行時に `GET /api/chat/models` から取得されます。このエンドポイントは、
+サインイン中のアカウントが実際に利用できるモデルを Copilot CLI に問い合わせます。
+正確な一覧はアカウントによって異なり、時間とともに変化します。例として、
+`claude-haiku-4.5`（既定）、`auto`、`claude-sonnet-*`、`claude-opus-*`、
+`gpt-5.*`、`gemini-*` があります。
 
-> If the API can't reach the Copilot CLI, both the API and the UI fall back to
-> a small static catalog so the demo still renders.
+> API が Copilot CLI に接続できない場合、API と UI は少数の固定モデル一覧へフォールバックするため、
+> デモの表示は継続できます。
 
-## 🏗️ Architecture
+## 🏗️ アーキテクチャ
 
 ```mermaid
 graph TB
@@ -242,7 +239,7 @@ graph TB
     SDK --> Models[Claude / GPT / Gemini]
 ```
 
-## 📂 Project Structure
+## 📂 プロジェクト構成
 
 ```
 .
@@ -276,85 +273,83 @@ graph TB
 └── Directory.Build.props       # Copilot CLI resolution
 ```
 
-## 🗄️ Seed Data
+## 🗄️ シードデータ
 
-The SQLite database is auto-created on first startup with **10 transactions**
-across 5 customers (C001–C005), 4 categories, and 4 stores, plus:
+SQLite データベースは初回起動時に自動作成されます。5 人の顧客（C001～C005）、
+4 つのカテゴリ、4 つの店舗にわたる **10 件のトランザクション**に加え、次のデータが含まれます。
 
-| Segment | Customers | Avg Spend | Retention |
+| セグメント | 顧客数 | 平均支出額 | 維持率 |
 |---------|-----------|-----------|-----------|
 | High Value | 150 | $850 | 92% |
 | Regular | 3,200 | $180 | 78% |
 | At Risk | 890 | $95 | 45% |
 | New | 420 | $120 | 65% |
 
-## 🤖 Custom Agents
+## 🤖 カスタムエージェント
 
-| Agent | Purpose | Specialty |
+| エージェント | 用途 | 専門分野 |
 |-------|---------|-----------|
-| `dotnet-reviewer` | .NET code review | Security, performance, best practices |
-| `security-scanner` | Vulnerability detection | OWASP Top 10, injection risks |
-| `pr-summary` | PR documentation | Context-aware descriptions |
+| `dotnet-reviewer` | .NET コードレビュー | セキュリティ、パフォーマンス、ベストプラクティス |
+| `security-scanner` | 脆弱性の検出 | OWASP Top 10、インジェクションリスク |
+| `pr-summary` | PR ドキュメント | コンテキストを考慮した説明 |
 
-## 📋 Demo Materials
+## 📋 デモ資料
 
-Full documentation lives in [`docs/`](docs/), grouped by track:
+完全なドキュメントは [`docs/`](docs/) にあり、トラック別に分類されています。
 
-| Track | Labs | Demos |
+| トラック | ラボ | デモ |
 |:------|:-----|:------|
-| **.NET** | [Seven Copilot SDK exercises](docs/labs/) (~2 hours) — start at [Lab 01](docs/labs/01-setup/) | [Walkthroughs](docs/demos/) of the code in `src/AgentOrchestrator/` |
-| **Python** | [The same seven exercises](docs/labs-python/) — start at [Lab 01](docs/labs-python/01-setup/) | [Walkthroughs](docs/demos-python/) of the code in `src/AgentOrchestrator-python/` |
+| **.NET** | [7 つの Copilot SDK 演習](docs/labs/)（約 2 時間）— [ラボ 01](docs/labs/01-setup/)から開始 | `src/AgentOrchestrator/` のコードを解説する[ウォークスルー](docs/demos/) |
+| **Python** | [同じ 7 つの演習](docs/labs-python/) — [ラボ 01](docs/labs-python/01-setup/)から開始 | `src/AgentOrchestrator-python/` のコードを解説する[ウォークスルー](docs/demos-python/) |
 
-Work **one** track, not both — they teach the same material.
+両方ではなく、**どちらか一方**のトラックに取り組んでください。学習内容は同じです。
 
-Everything that belongs to neither track lives in
-[**Breakouts**](docs/breakouts/):
+どちらのトラックにも属さない内容は、
+[**Breakouts**](docs/breakouts/) にまとめています。
 
-| Group | What it is |
+| グループ | 内容 |
 |:------|:-----------|
-| Reference | [Architecture](docs/breakouts/architecture.md), [custom agents](docs/breakouts/custom-agents.md), [hooks](docs/breakouts/hooks-and-governance.md), [skills](docs/breakouts/skills.md), [troubleshooting](docs/breakouts/troubleshooting.md) |
-| Hands-on extras | Copilot CLI labs shared by both tracks — [custom agents](docs/labs/extra-custom-agents/), [governance hooks](docs/labs/extra-governance-hooks/) |
+| リファレンス | [アーキテクチャ](docs/breakouts/architecture.md)、[カスタムエージェント](docs/breakouts/custom-agents.md)、[フック](docs/breakouts/hooks-and-governance.md)、[スキル](docs/breakouts/skills.md)、[トラブルシューティング](docs/breakouts/troubleshooting.md) |
+| 追加ハンズオン | 両トラック共通の Copilot CLI ラボ — [カスタムエージェント](docs/labs/extra-custom-agents/)、[ガバナンスフック](docs/labs/extra-governance-hooks/) |
 
-## 🔐 Security Notes
+## 🔐 セキュリティに関する注意
 
-This demo **intentionally** includes flawed code patterns so they can be found
-live during code review and static analysis demonstrations:
+このデモには、コードレビューや静的解析のデモ中に検出できるよう、問題のあるコードパターンを
+**意図的に**含めています。
 
-| Flaw | .NET | Python |
+| 問題 | .NET | Python |
 |:-----|:-----|:-------|
-| N+1 query (performance review) | `GetTransactionsWithSegmentsAsync` | `get_transactions_with_segments` |
-| Missing null check (static analysis) | `GetTransactionAsync` | `get_transaction` |
-| No input validation (security review) | `AddTransactionAsync` | `add_transaction` |
-| Hardcoded threshold (code smell) | `PredictSegmentAsync` | `predict_segment` |
+| N+1 クエリ（パフォーマンスレビュー） | `GetTransactionsWithSegmentsAsync` | `get_transactions_with_segments` |
+| null チェック不足（静的解析） | `GetTransactionAsync` | `get_transaction` |
+| 入力検証不足（セキュリティレビュー） | `AddTransactionAsync` | `add_transaction` |
+| ハードコードされたしきい値（コードスメル） | `PredictSegmentAsync` | `predict_segment` |
 
-Both implementations carry the same four flaws, so the same answer key applies
-to either track.
+両方の実装に同じ 4 つの問題があるため、どちらのトラックにも同じ解答例を使用できます。
 
-By contrast, the chat's database access is *not* one of the flaws. Both tracks
-expose `retail.db` to the model through a read-only MCP server
-(`AgentHQDemo.McpServer` / `mcp_server/`) that opens SQLite with `Mode=ReadOnly`
-and publishes five specific domain tools rather than a generic query tool. The
-REST API keeps its direct ORM access — MCP is for the model, not for the
-application talking to its own database.
+一方、チャットのデータベースアクセスは問題点ではありません。両トラックとも、
+SQLite を `Mode=ReadOnly` で開く読み取り専用 MCP サーバー
+（`AgentHQDemo.McpServer` / `mcp_server/`）を通じて `retail.db` をモデルに公開し、
+汎用クエリツールではなく 5 つの特定ドメイン向けツールを提供します。REST API は ORM への
+直接アクセスを維持します。MCP はモデル用であり、アプリケーションが自身のデータベースと通信するためのものではありません。
 
-**Do not use in production without addressing these.** See
-[`SECURITY.md`](SECURITY.md).
+**これらの問題に対処せず、本番環境で使用しないでください。**
+[`SECURITY.md`](SECURITY.md) を参照してください。
 
-> **CodeQL note:** analysis is skipped while this repository is private, since
-> code scanning requires GitHub Advanced Security. It runs automatically if the
-> repo becomes public, or set the repository variable `ENABLE_CODEQL=true`.
+> **CodeQL に関する注意:** コードスキャンには GitHub Advanced Security が必要なため、
+> このリポジトリがプライベートである間は解析をスキップします。リポジトリをパブリックにすると
+> 自動的に実行されます。または、リポジトリ変数 `ENABLE_CODEQL=true` を設定してください。
 
-## 🤝 Contributing
+## 🤝 コントリビューション
 
-See [`AGENTS.md`](AGENTS.md) for repository guidelines,
-[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community standards, and
-[`SUPPORT.md`](SUPPORT.md) for how to get help.
+リポジトリのガイドラインは [`AGENTS.md`](AGENTS.md)、コミュニティ標準は
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)、サポートを受ける方法は
+[`SUPPORT.md`](SUPPORT.md) を参照してください。
 
-## 📄 License
+## 📄 ライセンス
 
-- **Code** — [MIT License](LICENSE)
-- **Documentation and content** — [CC BY 4.0](LICENSE-DOCS)
+- **コード** — [MIT License](LICENSE)
+- **ドキュメントとコンテンツ** — [CC BY 4.0](LICENSE-DOCS)
 
 ---
 
-Built with ❤️ using the [GitHub Copilot SDK](https://github.com/github/copilot-sdk)
+[GitHub Copilot SDK](https://github.com/github/copilot-sdk) を使用して ❤️ を込めて構築しました

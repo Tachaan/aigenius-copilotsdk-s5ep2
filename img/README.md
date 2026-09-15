@@ -1,21 +1,20 @@
 # /img
 
-Session branding and banner artwork referenced from the root
-[`README.md`](../README.md).
+ルートの [`README.md`](../README.md) から参照される、セッションのブランド素材とバナー画像です。
 
-## Expected contents
+## 想定される内容
 
-| File | Purpose |
+| ファイル | 用途 |
 |:-----|:--------|
-| `banner.png` | Session banner shown at the top of the README |
+| `banner.png` | README の先頭に表示するセッションバナー |
 
-## Guidelines
+## ガイドライン
 
-- Keep images reasonably sized — this folder is for branding, not screenshots.
-  Application screenshots belong in [`../docs/screenshots/`](../docs/screenshots).
-- No large binaries (videos, recordings, decks). Link to those instead.
-- Only use artwork you have the rights to redistribute.
+- 画像は適切なサイズに保ってください。このフォルダーはブランド素材用であり、スクリーンショット用ではありません。
+  アプリケーションのスクリーンショットは [`../docs/screenshots/`](../docs/screenshots) に配置します。
+- 大きなバイナリ（動画、録画、デッキ）は配置せず、代わりにリンクを掲載します。
+- 再配布する権利を持つアートワークのみを使用してください。
 
-> **Note:** `banner.png` has not been added yet. The README currently renders
-> a text title instead. Drop the banner in here and uncomment the image block
-> at the top of the README to enable it.
+> **注:** `banner.png` はまだ追加されていません。現在の README では、代わりに文字によるタイトルが
+> 表示されます。バナーをこのフォルダーに配置し、README の先頭にある画像ブロックのコメントを解除すると
+> 有効になります。

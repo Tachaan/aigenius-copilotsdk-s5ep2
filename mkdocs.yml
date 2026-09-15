@@ -1,7 +1,7 @@
-site_name: AI Genius S5E2 — Agent HQ Demo
+site_name: AI Genius S5E2 — Agent HQ デモ
 site_description: >-
-  Build a retail analytics assistant with the GitHub Copilot SDK — hands-on
-  labs, code walkthroughs, and reference material.
+  GitHub Copilot SDK を使用して小売分析アシスタントを構築するための
+  ハンズオンラボ、コード解説、リファレンス資料です。
 site_author: Vic Perdana
 repo_url: https://github.com/vicperdana/aigenius-copilotsdk-s5ep2
 repo_name: vicperdana/aigenius-copilotsdk-s5ep2
@@ -12,7 +12,7 @@ site_dir: site
 
 theme:
   name: material
-  language: en
+  language: ja
   icon:
     repo: fontawesome/brands/github
   palette:
@@ -20,21 +20,21 @@ theme:
     - media: "(prefers-color-scheme)"
       toggle:
         icon: material/brightness-auto
-        name: Switch to light mode
+        name: ライトモードに切り替え
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: indigo
       accent: indigo
       toggle:
         icon: material/brightness-7
-        name: Switch to dark mode
+        name: ダークモードに切り替え
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: indigo
       accent: indigo
       toggle:
         icon: material/brightness-4
-        name: Switch to system preference
+        name: システム設定に合わせる
   features:
     - navigation.tabs
     - navigation.sections
@@ -92,63 +92,64 @@ hooks:
 # are attached as section index pages (the navigation.indexes feature), so
 # clicking a section header opens its overview.
 nav:
-  - Home: index.md
+  - ホーム: index.md
   - .NET:
-      - Labs:
+      - ラボ:
           - labs/README.md
-          - 01 — Setup: labs/01-setup/README.md
-          - 02 — First chat: labs/02-first-chat/README.md
-          - 03 — Tools: labs/03-tools/README.md
-          - 04 — Events: labs/04-events/README.md
-          - 05 — Sessions: labs/05-sessions/README.md
+          - 01 — セットアップ: labs/01-setup/README.md
+          - 02 — 最初のチャット: labs/02-first-chat/README.md
+          - 03 — ツール: labs/03-tools/README.md
+          - 04 — イベント: labs/04-events/README.md
+          - 05 — セッション: labs/05-sessions/README.md
           - 06 — MCP: labs/06-mcp/README.md
-          - 07 — Wrap-up: labs/07-wrap-up/README.md
-          - Extra — Extend the API: labs/extra-extend-api/README.md
-      - Demos:
+          - 07 — まとめ: labs/07-wrap-up/README.md
+          - 追加 — API の拡張: labs/extra-extend-api/README.md
+      - デモ:
           - demos/README.md
-          - 01 — Copilot SDK integration: demos/01-copilot-sdk-integration.md
-          - 02 — SSE streaming: demos/02-sse-streaming.md
-          - 03 — Retail analytics: demos/03-retail-analytics.md
+          - 01 — Copilot SDK の統合: demos/01-copilot-sdk-integration.md
+          - 02 — SSE ストリーミング: demos/02-sse-streaming.md
+          - 03 — 小売分析: demos/03-retail-analytics.md
           - 04 — Blazor UI: demos/04-blazor-ui.md
   - Python:
-      - Labs:
+      - ラボ:
           - labs-python/README.md
-          - 01 — Setup: labs-python/01-setup/README.md
-          - 02 — First chat: labs-python/02-first-chat/README.md
-          - 03 — Tools: labs-python/03-tools/README.md
-          - 04 — Events: labs-python/04-events/README.md
-          - 05 — Sessions: labs-python/05-sessions/README.md
+          - 01 — セットアップ: labs-python/01-setup/README.md
+          - 02 — 最初のチャット: labs-python/02-first-chat/README.md
+          - 03 — ツール: labs-python/03-tools/README.md
+          - 04 — イベント: labs-python/04-events/README.md
+          - 05 — セッション: labs-python/05-sessions/README.md
           - 06 — MCP: labs-python/06-mcp/README.md
-          - 07 — Wrap-up: labs-python/07-wrap-up/README.md
-          - Extra — Extend the API: labs-python/extra-extend-api/README.md
-      - Demos:
+          - 07 — まとめ: labs-python/07-wrap-up/README.md
+          - 追加 — API の拡張: labs-python/extra-extend-api/README.md
+      - デモ:
           - demos-python/README.md
-          - 01 — Copilot SDK integration: demos-python/01-copilot-sdk-integration.md
-          - 02 — SSE streaming: demos-python/02-sse-streaming.md
-          - 03 — Retail analytics: demos-python/03-retail-analytics.md
+          - 発表用カンペ: demos-python/presenter-notes.md
+          - 01 — Copilot SDK の統合: demos-python/01-copilot-sdk-integration.md
+          - 02 — SSE ストリーミング: demos-python/02-sse-streaming.md
+          - 03 — 小売分析: demos-python/03-retail-analytics.md
           - 04 — Web UI: demos-python/04-web-ui.md
   # Track-agnostic material: reference pages and the two Copilot CLI labs that
   # apply to both tracks.
-  - Breakouts:
+  - 補足資料:
       - breakouts/README.md
-      - Reference:
-          - Architecture: breakouts/architecture.md
-          - Custom agents: breakouts/custom-agents.md
-          - Hooks and governance: breakouts/hooks-and-governance.md
-          - Skills: breakouts/skills.md
-          - Troubleshooting: breakouts/troubleshooting.md
-      - Hands-on extras:
-          - Custom agents: labs/extra-custom-agents/README.md
-          - Governance hooks: labs/extra-governance-hooks/README.md
+      - リファレンス:
+          - アーキテクチャ: breakouts/architecture.md
+          - カスタムエージェント: breakouts/custom-agents.md
+          - フックとガバナンス: breakouts/hooks-and-governance.md
+          - スキル: breakouts/skills.md
+          - トラブルシューティング: breakouts/troubleshooting.md
+      - 追加ハンズオン:
+          - カスタムエージェント: labs/extra-custom-agents/README.md
+          - ガバナンスフック: labs/extra-governance-hooks/README.md
   # Interactive system diagram. The HTML beside it is generated output; the
   # typed JSON source next to it is what you edit.
-  - System map:
+  - システムマップ:
       - system-map/README.md
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/vicperdana/aigenius-copilotsdk-s5ep2
-      name: Repository
+      name: リポジトリ
 
 copyright: >-
-  Code licensed under MIT · Documentation licensed under CC BY 4.0
+  コードは MIT ライセンス、ドキュメントは CC BY 4.0 ライセンスで提供

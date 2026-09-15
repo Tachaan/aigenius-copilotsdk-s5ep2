@@ -2,27 +2,27 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Agent HQ Demo — Retail Analytics Runtime",
+    "title": "Agent HQ Demo — 小売分析ランタイム",
     "output": "map.html",
     "quality_profile": "showcase",
     "views": [
       {
         "id": "chat-request-path",
-        "label": "Chat request path",
+        "label": "チャットリクエスト経路",
         "focus": ["user", "chatui", "api", "chatsvc", "cli", "model"],
-        "note": "Follow one chat message from the browser to the model and back as a streamed token response."
+        "note": "1 件のチャットメッセージがブラウザーからモデルへ送られ、応答トークンがストリーミングで返されるまでを示します。"
       },
       {
         "id": "model-data-access",
-        "label": "How the model reads data",
+        "label": "モデルがデータを読み取る仕組み",
         "focus": ["cli", "mcp", "db"],
-        "note": "The model never touches SQLite directly; it calls five read-only MCP tools over stdio."
+        "note": "モデルが SQLite に直接アクセスすることはなく、stdio 経由で 5 つの読み取り専用 MCP ツールを呼び出します。"
       },
       {
         "id": "rest-and-persistence",
-        "label": "REST and persistence",
+        "label": "REST と永続化",
         "focus": ["api", "analytics", "db"],
-        "note": "The application keeps its own read/write path to SQLite, separate from the model's."
+        "note": "アプリケーションは、モデルとは別に SQLite への独自の読み書き経路を維持します。"
       }
     ]
   },
@@ -30,23 +30,23 @@
     {
       "id": "user",
       "type": "external",
-      "label": "Attendee",
-      "sublabel": "Browser",
+      "label": "参加者",
+      "sublabel": "ブラウザー",
       "pos": [56, 162],
       "size": [130, 64]
     },
     {
       "id": "chatui",
       "type": "frontend",
-      "label": "Chat UI",
-      "sublabel": "Blazor WASM · static JS",
+      "label": "チャット UI",
+      "sublabel": "Blazor WASM · 静的 JS",
       "pos": [250, 150],
       "size": [168, 84]
     },
     {
       "id": "api",
       "type": "backend",
-      "label": "Retail API",
+      "label": "小売 API",
       "sublabel": "ASP.NET Core · FastAPI",
       "pos": [508, 150],
       "size": [168, 84]
@@ -63,7 +63,7 @@
       "id": "chatsvc",
       "type": "backend",
       "label": "CopilotChatService",
-      "sublabel": "singleton · SSE stream",
+      "sublabel": "シングルトン · SSE ストリーム",
       "pos": [508, 350],
       "size": [168, 84]
     },
@@ -78,7 +78,7 @@
     {
       "id": "model",
       "type": "cloud",
-      "label": "Model",
+      "label": "モデル",
       "sublabel": "claude-haiku-4.5 · gpt-5",
       "pos": [1040, 350],
       "size": [150, 84]
@@ -87,7 +87,7 @@
       "id": "db",
       "type": "database",
       "label": "retail.db",
-      "sublabel": "SQLite · seeded on startup",
+      "sublabel": "SQLite · 起動時に初期データ投入",
       "pos": [250, 550],
       "size": [168, 84]
     },
@@ -95,7 +95,7 @@
       "id": "mcp",
       "type": "security",
       "label": "retail-analytics MCP",
-      "sublabel": "stdio · 5 read-only tools",
+      "sublabel": "stdio · 5 つの読み取り専用ツール",
       "pos": [766, 550],
       "size": [175, 84],
       "tag": "mode=ro"
@@ -104,7 +104,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Local developer machine",
+      "label": "ローカル開発マシン",
       "wraps": ["chatui", "api", "analytics", "chatsvc", "cli", "db", "mcp"]
     }
   ],
@@ -126,20 +126,20 @@
       "id": "api-to-analytics",
       "from": "api",
       "to": "analytics",
-      "label": "query + seed"
+      "label": "クエリ + シード"
     },
     {
       "id": "analytics-sql",
       "from": "analytics",
       "to": "db",
-      "label": "read / write",
+      "label": "読み書き",
       "labelDy": 24
     },
     {
       "id": "api-to-chatsvc",
       "from": "api",
       "to": "chatsvc",
-      "label": "prompt + model id",
+      "label": "プロンプト + モデル ID",
       "labelDy": 24
     },
     {
@@ -153,50 +153,50 @@
       "id": "cli-to-model",
       "from": "cli",
       "to": "model",
-      "label": "streamed turn",
+      "label": "ターンを逐次配信",
       "variant": "emphasis"
     },
     {
       "id": "cli-to-mcp",
       "from": "cli",
       "to": "mcp",
-      "label": "tool calls over stdio",
+      "label": "MCP ツール呼び出し",
       "labelDy": 24
     },
     {
       "id": "mcp-read-only",
       "from": "mcp",
       "to": "db",
-      "label": "SELECT only",
+      "label": "SELECT のみ",
       "variant": "security"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Chat request path",
+      "title": "チャットリクエスト経路",
       "items": [
-        "Chat UI posts a prompt to /api/chat",
-        "CopilotChatService streams deltas back as SSE",
-        "Both tracks speak the same camelCase JSON contract"
+        "チャット UI が /api/chat にプロンプトを POST します",
+        "CopilotChatService が応答の差分を SSE で返します",
+        "両方のトラックが同じ camelCase 形式の JSON コントラクトを共有します"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Two tracks, one shape",
+      "title": "2 つのトラック、1 つの構成",
       "items": [
-        ".NET: API :5050 with a Blazor WebAssembly host on :5051",
-        "Python: FastAPI serves the API and the UI together on :5070",
-        "Mirrored domain tests and SDK labs in each track"
+        ".NET: :5050 の API と :5051 の Blazor WebAssembly ホスト",
+        "Python: FastAPI が :5070 で API と UI をまとめて提供します",
+        "各トラックに同等のドメインテストと SDK ラボがあります"
       ]
     },
     {
       "dot": "rose",
-      "title": "Least privilege for the model",
+      "title": "モデルの最小権限",
       "items": [
-        "The app reads and writes through RetailAnalyticsService",
-        "The model only sees five read-only MCP tools, never raw SQL",
-        "SQLite mode=ro rejects a write at the driver, not just in code"
+        "アプリは RetailAnalyticsService を介して読み書きします",
+        "モデルから見えるのは 5 つの読み取り専用 MCP ツールだけで、生の SQL は見えません",
+        "SQLite mode=ro はコードだけでなくドライバーでも書き込みを拒否します"
       ]
     }
   ]

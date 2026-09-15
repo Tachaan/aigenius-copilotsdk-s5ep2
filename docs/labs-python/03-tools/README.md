@@ -1,35 +1,30 @@
-# Lab 03 — Tools
+# ラボ 03 — ツール
 
-**Goal:** replace static prompt context with a real Python function the model can
-call on demand using `@define_tool`, Pydantic parameter metadata, and
-`client.create_session(..., tools=[...])`.
+**目的:** `@define_tool`、Pydantic のパラメーターメタデータ、
+`client.create_session(..., tools=[...])` を使って、静的なプロンプト コンテキストを
+モデルが必要に応じて呼び出せる実際の Python 関数に置き換えます。
 
-**Time:** ~20 minutes
+**所要時間:** 約20分です。
 
-**Prerequisites:** [Lab 02](../02-first-chat/) complete.
+**前提条件:** [ラボ 02](../02-first-chat/) を完了していること。
 
-## Step 1 — Why tools
+## ステップ 1 — ツールが必要な理由
 
-In Lab 02, you grounded the assistant by sending retail facts in a system
-message. That works for tiny examples, but it has three problems:
+ラボ 02 では、小売データの事実をシステムメッセージに送ることでアシスタントに文脈を与えました。
+この方法は小さな例では機能しますが、問題が 3 つあります。
 
-1. The context is static — it only knows what you pasted in up front
-2. The model has to guess which facts matter
-3. Every fact burns tokens, even when the answer does not need it
+1. コンテキストが静的で、最初に貼り付けた内容しか認識できません。
+2. どの事実が重要かをモデルが推測しなければなりません。
+3. 答えに不要な場合でも、すべての事実がトークンを消費します。
 
-A tool changes the shape of the problem. Instead of hoping the prompt contains
-the right data, you register a Python function. The model decides when it needs
-that function, asks the SDK to call it, receives the result, then writes the
-final answer.
+ツールを使うと、問題の扱い方そのものが変わります。プロンプトに正しいデータが含まれていることを期待する代わりに、Python 関数を登録します。モデルはその関数が必要なタイミングを判断し、SDK に呼び出しを依頼し、結果を受け取ってから最終的な回答を書きます。
 
-## Step 2 — Inspect the tool shape
+## ステップ 2 — ツールの形を確認する
 
-Open
 [`sdk_labs/tools_sample.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/tools_sample.py)
-and find `get_customer_total`.
+を開き、`get_customer_total` を探します。
 
-A Copilot SDK tool starts as an ordinary Python function with a Pydantic params
-model:
+Copilot SDK のツールは、Pydantic のパラメーターモデルを受け取る通常の Python 関数として始まります。
 
 ```python
 class GetCustomerTotalParams(BaseModel):
@@ -55,22 +50,20 @@ def get_customer_total(params: GetCustomerTotalParams, _invocation: ToolInvocati
     return f"{params.customer_id} has {len(matches)} transactions totalling ${total:,.2f}."
 ```
 
-The required signature is
-`(params: SomePydanticModel, _invocation: ToolInvocation) -> str`.
+必要なシグネチャは
+`(params: SomePydanticModel, _invocation: ToolInvocation) -> str` です。
 
-The key teaching difference from C# is metadata. .NET uses
-`[Description]` attributes on the method and parameters. Python uses:
+C# との学習上の重要な違いはメタデータです。.NET ではメソッドとパラメーターに
+`[Description]` 属性を使います。Python では次を使います。
 
-- `@define_tool(description=...)` for the tool description
-- `Field(description=...)` on Pydantic model fields for parameter descriptions
+- ツールの説明には `@define_tool(description=...)` を使います。
+- パラメーターの説明には、Pydantic モデルのフィールドに `Field(description=...)` を使います。
 
-Those descriptions are the model's API documentation. Vague descriptions lead to
-missed tools or wrong arguments, so write them like a public API.
+これらの説明は、モデルにとっての API ドキュメントです。説明が曖昧だとツールが選ばれなかったり引数が誤ったりするため、公開 API のつもりで記述してください。
 
-## Step 3 — Register the tool
+## ステップ 3 — ツールを登録する
 
-The sample creates a client, picks a model, then registers the tool when it
-creates the session:
+このサンプルではクライアントを作成し、モデルを選択してから、セッション作成時にツールを登録します。
 
 ```python
 async with CopilotClient() as client:
@@ -89,43 +82,37 @@ async with CopilotClient() as client:
     )
 ```
 
-That `tools=[get_customer_total]` line is the difference between "the model has
-some textual context" and "the model can ask the host application to do real
-work".
+この `tools=[get_customer_total]` という 1 行が、「モデルが多少のテキスト文脈を持っている」状態と、「モデルがホスト アプリケーションに実際の処理を依頼できる」状態の違いです。
 
-`model_picker` keeps `claude-haiku-4.5` as the preferred model for these labs,
-but falls back to a concrete model available to your account. Override it with:
+`model_picker` は、これらのラボでは `claude-haiku-4.5` を優先モデルとして使いますが、アカウントで利用可能な具体的なモデルへフォールバックします。次のように指定すると上書きできます。
 
 ```bash
 uv run python -m sdk_labs tools --model gpt-5
 ```
 
-## Step 4 — Do not skip the permission handler
+## ステップ 4 — 権限ハンドラーを省略しない
 
-⚠️ This is genuinely different from the .NET sample.
+⚠️ これは .NET のサンプルと本当に異なる点です。
 
-In Python, custom tool calls are denied unless you pass `on_permission_request`
-when creating the session. Without it, the model receives a permission failure
-instead of the tool result and answers with an error.
+Python では、セッション作成時に `on_permission_request` を渡さない限り、カスタムツールの呼び出しは拒否されます。これがないと、モデルはツールの結果ではなく権限エラーを受け取り、エラーとして応答します。
 
-For a lab sample where every request is allowed, use:
+すべてのリクエストを許可するラボ用サンプルでは、次を使います。
 
 ```python
 on_permission_request=PermissionHandler.approve_all
 ```
 
-For production code, provide a policy function instead. Step 8 covers the
-security caveat.
+本番コードでは、代わりにポリシー関数を実装してください。セキュリティ上の注意点はステップ 8 で扱います。
 
-## Step 5 — Run it
+## ステップ 5 — 実行する
 
-From `src/AgentOrchestrator-python`:
+`src/AgentOrchestrator-python` から実行します。
 
 ```bash
 uv run python -m sdk_labs tools
 ```
 
-Expected output:
+想定される出力は次のとおりです。
 
 ```text
 == Lab 03: tools ==
@@ -138,50 +125,37 @@ Prompt: How much has customer C003 spent in total?
 Assistant: Customer C003 has spent a total of **$1,700.00** across 2 transactions.
 ```
 
-⚠️ Notice what is **not** there: unlike the .NET transcript, the Python sample
-has no empty first `Assistant:` line. The first assistant event only carries the
-tool request, so `tools_sample.py` deliberately skips assistant messages whose
-content is empty.
+⚠️ **出力されていないもの**にも注目してください。.NET の実行記録と異なり、この Python サンプルには先頭の空の `Assistant:` 行がありません。最初のアシスタントイベントにはツール要求しか含まれないため、`tools_sample.py` では内容が空のアシスタントメッセージを意図的に無視しています。
 
-## Step 6 — Trace what happened
+## ステップ 6 — 何が起きたかを追う
 
-The run has four moving parts:
+この実行には、4 つの要素があります。
 
-1. The prompt asks for the total spend for customer `C003`
-2. The model decides that the registered tool is the right way to answer
-3. The SDK invokes the Python function, producing the `[tool]` line
-4. The tool result is fed back to the model, which writes the final answer
+1. プロンプトが customer `C003` の合計支出を尋ねます。
+2. モデルが、登録済みツールが答えに適していると判断します。
+3. SDK が Python 関数を呼び出し、その結果として `[tool]` 行が出力されます。
+4. ツール結果がモデルに返され、モデルが最終回答を書きます。
 
-The `[tool] get_customer_total(C003) -> $1,700.00` line is not simulated output.
-It is printed by the real `get_customer_total` function while the SDK is
-handling the model's tool call.
+`[tool] get_customer_total(C003) -> $1,700.00` という行は模擬出力ではありません。SDK がモデルのツール呼び出しを処理している間に、実際の `get_customer_total` 関数が出力しています。
 
-The tool returns a normal string, not a custom SDK result object:
+このツールが返すのは SDK 独自の結果オブジェクトではなく、通常の文字列です。
 
 ```python
 return f"{params.customer_id} has {len(matches)} transactions totalling ${total:,.2f}."
 ```
 
-## Step 7 — Understand event delivery
+## ステップ 7 — イベントの受け渡しを理解する
 
-The sample still uses the event model you saw in Lab 02. Python events are
-push-only callbacks: `session.on(handler)` registers the handler and returns an
-unsubscribe callable. There is no async iterator.
+このサンプルでも、ラボ 02 で見たイベントモデルを使っています。Python のイベントはプッシュ専用のコールバックです。`session.on(handler)` がハンドラーを登録し、購読解除用の呼び出し可能オブジェクトを返します。非同期イテレーターはありません。
 
-`SessionEvent` is one dataclass with fields such as `data`, `id`, `timestamp`,
-and `type`. The `type` is a `SessionEventType` enum, so Python branches on
-`evt.type`. This differs fundamentally from the .NET one-subclass-per-event
-pattern.
+`SessionEvent` は `data`、`id`、`timestamp`、`type` などのフィールドを持つ 1 つのデータクラスです。`type` は `SessionEventType` 列挙型なので、Python では `evt.type` で分岐します。これは、イベントごとに 1 つのサブクラスを使う .NET のパターンと本質的に異なります。
 
-The shared `IdleWaiter` in
 [`sdk_labs/_common.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/_common.py)
-keeps samples from waiting forever if the session never reaches idle.
+にある共通の `IdleWaiter` は、セッションがアイドル状態に到達しない場合にサンプルが無限に待ち続けることを防ぎます。
 
-## Step 8 — Control tool execution with permissions
+## ステップ 8 — 権限によってツール実行を制御する
 
-The SDK exposes an in-process permission hook through `on_permission_request`.
-A custom policy can inspect the request and return one of the decision objects
-from `copilot.rpc`, for example:
+SDK は `on_permission_request` を通じて、プロセス内の権限フックを公開しています。カスタムポリシーはリクエストを調べ、`copilot.rpc` のいずれかの判定オブジェクトを返せます。たとえば次のように使います。
 
 ```python
 from copilot.rpc import PermissionDecisionApproveOnce, PermissionDecisionReject
@@ -190,7 +164,7 @@ from copilot.rpc import PermissionDecisionApproveOnce, PermissionDecisionReject
 from copilot.session import PermissionInvocation
 ```
 
-The reference diagnostic implements:
+参照用の診断コードは次を実装しています。
 
 ```python
 def on_permission_request(
@@ -213,28 +187,21 @@ def on_permission_request(
     return PermissionDecisionApproveOnce()
 ```
 
-Python advantage: there is **no `GHCP001` suppression** step. The .NET project
-must suppress an experimental-API build error to use permission decisions.
-Python exposes them directly from `copilot.rpc` with no opt-in.
+Python の利点は、**`GHCP001` の抑制が不要**なことです。.NET プロジェクトでは権限判定を使うために、試験的 API に関するビルドエラーを抑制する必要があります。Python では `copilot.rpc` から直接公開されており、追加の明示的な有効化は不要です。
 
-⚠️ Permission handler caveat: the handler fires for **custom tools**, and the
-Lab 03 tool needs it. It was **not** observed firing for shell commands. Running
-the permissions diagnostic, the model executed `echo` and reported output with
-no `[permission]` line printed, because the host Copilot CLI already grants
-shell approval.
+⚠️ 権限ハンドラーには注意点があります。このハンドラーは **カスタムツール** に対しては発火し、ラボ 03 のツールでも必要です。一方、シェルコマンドでは発火しないことが確認されています。権限診断を実行すると、モデルは `echo` を実行して出力を返しましたが、`[permission]` 行は表示されませんでした。これはホスト側の Copilot CLI がすでにシェル実行を許可しているためです。
 
-Treat `on_permission_request` as a custom-tool policy hook, not a general
-enforcement point. Verify it fires in **your** environment before relying on it.
+`on_permission_request` は一般的な強制ポイントではなく、カスタムツール用のポリシーフックとして扱ってください。依存する前に、**自分の**環境で本当に発火することを確認してください。
 
-Reference code lives in
-[`sdk_labs/permissions_sample.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/permissions_sample.py).
-For a shell-hook governance alternative, see
-[extra-governance-hooks](../../labs/extra-governance-hooks/).
+参照コードは
+[`sdk_labs/permissions_sample.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/permissions_sample.py)
+にあります。shell hook による governance の代替については、
+[extra-governance-hooks](../../labs/extra-governance-hooks/)
+を参照してください。
 
-## Step 9 — Experiment
+## ステップ 9 — 試してみる
 
-Try a customer that does not exist, for example `C999`. Change the prompt in
-`tools_sample.py` to:
+存在しない顧客、たとえば `C999` を試してください。`tools_sample.py` のプロンプトを次のように変更します。
 
 ```python
 await session.send(
@@ -242,47 +209,43 @@ await session.send(
 )
 ```
 
-Re-run the sample and check that the assistant reports no transactions were
-found.
+サンプルを再実行し、アシスタントが取引を見つけられなかったことを報告するか確認してください。
 
-Then try a prompt that does not need retail data:
+次に、小売データを必要としないプロンプトを試してください。
 
 ```python
 await session.send("In one short sentence, define average order value.")
 ```
 
-The model should answer directly. Because no customer lookup is needed, the
-`[tool]` line should not appear.
+モデルは直接回答するはずです。顧客の検索が不要なので、`[tool]` 行は表示されないはずです。
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-You can now explain:
+ここまでで、次の内容を説明できるようになります。
 
-- [x] Why tools are better than stuffing dynamic data into a system message
-- [x] How `@define_tool(description=...)` describes a Python tool
-- [x] How Pydantic `Field(description=...)` describes tool parameters
-- [x] How `tools=[get_customer_total]` makes the function available to the model
-- [x] Why Python custom tools need `on_permission_request`
-- [x] Why Python events branch on `evt.type`
-- [x] Why permission hooks must be verified in the host you actually run
+- [x] 動的データをシステムメッセージに詰め込むより、ツールのほうが優れている理由
+- [x] `@define_tool(description=...)` が Python のツールをどう説明するか
+- [x] Pydantic の `Field(description=...)` がツール パラメーターをどう説明するか
+- [x] `tools=[get_customer_total]` によって関数がモデルから利用可能になる仕組み
+- [x] Python のカスタムツールに `on_permission_request` が必要な理由
+- [x] Python のイベントが `evt.type` で分岐する理由
+- [x] 実際に動かすホスト上で権限フックを検証しなければならない理由
 
-## 💡 Extra credit
+## 💡 追加課題
 
-Add a second tool that returns the product categories a customer has purchased
-from, such as `Electronics` and `Fashion` for `C003`.
+customer が購入した product category を返す 2 つ目のツールを追加してください。たとえば `C003` なら `Electronics` と `Fashion` です。
 
-Use a second Pydantic params model or reuse `GetCustomerTotalParams`, give the
-tool a precise description, register it beside `get_customer_total`, then ask:
+2 つ目の Pydantic params model を使うか、`GetCustomerTotalParams` を再利用し、ツールに正確な説明を付けて `get_customer_total` と並べて登録したうえで、次のように質問してください。
 
 ```text
 Which categories has customer C003 bought from, and how much have they spent?
 ```
 
-Check whether the model calls one tool, both tools, or answers directly.
+モデルが 1 つのツールだけを呼ぶのか、両方のツールを呼ぶのか、それとも直接回答するのかを確認してください。
 
-## Related
+## 関連資料
 
-- Previous: [Lab 02 — Your first streaming chat](../02-first-chat/)
-- Next: [Lab 04 — Events](../04-events/)
-- [Demo: Copilot SDK integration](../../demos-python/01-copilot-sdk-integration.md)
-- [Extra — Governance hooks](../../labs/extra-governance-hooks/)
+- 前へ: [ラボ 02 — 最初のストリーミング チャット](../02-first-chat/)
+- 次へ: [ラボ 04 — イベント](../04-events/)
+- [デモ: Copilot SDK の組み込み](../../demos-python/01-copilot-sdk-integration.md)
+- [追加ラボ — ガバナンス フック](../../labs/extra-governance-hooks/)

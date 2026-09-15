@@ -1,31 +1,30 @@
-# Lab 06 — Model Context Protocol (MCP)
+# ラボ 06 — Model Context Protocol (MCP)
 
-**Goal:** attach a Model Context Protocol server to a Copilot SDK session so
-an agent gains tools you did not write.
+**目標:** Model Context Protocol サーバーを Copilot SDK セッションに接続し、自分で作成して
+いないツールをエージェントが利用できるようにします。
 
-**Time:** ~20 minutes
+**所要時間:** 約 20 分
 
-**Prerequisites:** [Lab 05](../05-sessions/) complete, plus internet access for
-the HTTP MCP server.
+**前提条件:** [ラボ 05](../05-sessions/) を完了していること、および HTTP MCP サーバーに
+アクセスするためのインターネット接続。
 
-## Step 1 — Understand what MCP adds
+## 手順 1 — MCP によって追加されるものを理解する
 
-In [Lab 03](../03-tools/) you gave the model tools by writing C# functions and
-registering them yourself. That is powerful, but every capability is still code
-you own, test and maintain.
+[ラボ 03](../03-tools/) では、C# 関数を作成して自分で登録することで、モデルにツールを
+提供しました。これは強力ですが、すべての機能が依然として自分で所有、テスト、保守する
+コードです。
 
-MCP changes the shape of the problem. A Model Context Protocol server exposes a
-whole toolset over a standard protocol, and the SDK can attach that server to a
-session. The model then discovers and calls tools from that server as part of
-its normal reasoning loop.
+MCP は問題の構造を変えます。Model Context Protocol サーバーは標準プロトコルを介して
+ツールセット全体を公開し、SDK はそのサーバーをセッションに接続できます。モデルは通常の
+推論ループの一部として、そのサーバーのツールを検出して呼び出します。
 
-For this lab the external toolset is Microsoft Learn. Instead of writing a
-`SearchDocsAsync` function, you connect to the Learn MCP server and let the
-agent consult product documentation directly.
+このラボで使用する外部ツールセットは Microsoft Learn です。`SearchDocsAsync` 関数を
+作成する代わりに、Learn MCP サーバーへ接続し、エージェントが製品ドキュメントを直接
+参照できるようにします。
 
-## Step 2 — Choose the MCP transport
+## 手順 2 — MCP トランスポートを選択する
 
-The SDK has two MCP server config types:
+SDK には 2 種類の MCP サーバー構成型があります。
 
 ```csharp
 McpServers = new Dictionary<string, McpServerConfig>
@@ -37,23 +36,24 @@ McpServers = new Dictionary<string, McpServerConfig>
 };
 ```
 
-Use `McpHttpServerConfig` when the server is already running somewhere and can
-be reached over HTTP. That is the case here: Microsoft Learn hosts the server at
-`https://learn.microsoft.com/api/mcp`, so there is nothing to install locally.
+サーバーがすでにどこかで稼働しており、HTTP 経由で到達できる場合は
+`McpHttpServerConfig` を使用します。今回はこれに該当します。Microsoft Learn が
+`https://learn.microsoft.com/api/mcp` でサーバーをホストしているため、ローカルに
+インストールするものはありません。
 
-Use `McpStdioServerConfig` when the SDK should spawn a local MCP process and
-communicate with it over standard input and output. That shape is common for
-local filesystem tools, database helpers or language-specific MCP servers that
-run as command-line programs on your machine.
+SDK からローカル MCP プロセスを起動し、標準入出力で通信する場合は
+`McpStdioServerConfig` を使用します。この形式は、ローカルファイルシステムツール、
+データベースヘルパー、マシン上でコマンドラインプログラムとして動作する言語固有の
+MCP サーバーでよく使用されます。
 
-Both transports produce the same result from the model's point of view: named
-MCP tools become available inside the session.
+モデルから見れば、どちらのトランスポートでも結果は同じです。名前付き MCP ツールが
+セッション内で利用可能になります。
 
-## Step 3 — Configure and run the sample
+## 手順 3 — サンプルを構成して実行する
 
-Open
+次のファイルを開き、
 [`McpSample.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/samples/SdkLabs/McpSample.cs)
-and find the `SessionConfig`:
+で `SessionConfig` を確認します。
 
 ```csharp
 var modelId = await ModelPicker.PickAsync(client, requestedModelId);
@@ -73,23 +73,21 @@ var config = new SessionConfig
 };
 ```
 
-`SessionConfig.McpServers` is an `IDictionary<string, McpServerConfig>`. The
-keys are the server names, and the values are the transport-specific server
-configuration objects.
+`SessionConfig.McpServers` プロパティの型は `IDictionary<string, McpServerConfig>` です。
+キーはサーバー名、値はトランスポート固有のサーバー構成オブジェクトです。
 
-The sample also sets `OnPermissionRequest = PermissionHandler.ApproveAll`. In
-our runs the host CLI appeared to pre-approve MCP tool use, so that handler was
-not observed firing. Treat it as belt-and-braces rather than proof that this
-line is always required. The permission caveat is similar to the one covered in
-[Lab 03](../03-tools/).
+このサンプルでは `OnPermissionRequest = PermissionHandler.ApproveAll` も設定します。検証時は
+ホスト CLI が MCP ツールの使用を事前承認していたようで、このハンドラーの呼び出しは確認
+できませんでした。この行が常に必須である証拠ではなく、念のための追加策として扱ってください。
+権限に関する注意事項は [ラボ 03](../03-tools/) で扱った内容と同様です。
 
-Run the sample:
+サンプルを実行します。
 
 ```bash
 dotnet run --project src/AgentOrchestrator/samples/SdkLabs -- mcp
 ```
 
-Expected output from a verified run:
+検証済みの実行で想定される出力:
 
 ```
 == Lab 06: mcp ==
@@ -116,35 +114,33 @@ event-driven processing and microservices, scaling automatically.
     its tools were loaded — look for the [mcp] lines above.
 ```
 
-⚠️ **Read that output carefully — this is the whole point of the lab.**
+⚠️ **この出力を注意深く確認してください。ここがこのラボの要点です。**
 
-The answer looks authoritative and even cites Microsoft Learn. It is also
-**not** an MCP result. `SessionMcpServersLoadedEvent` fired, so the server
-config was accepted, but its tools were never offered to the model — so the
-model fell back to the built-in `web_fetch` and produced a plausible answer
-anyway.
+回答は信頼できそうに見え、Microsoft Learn まで引用しています。しかし、これは
+MCP の結果では**ありません**。`SessionMcpServersLoadedEvent` が発生したためサーバー構成は
+受け入れられていますが、サーバーのツールはモデルに提供されていません。そのためモデルは
+組み込みの `web_fetch` にフォールバックし、それでももっともらしい回答を生成しました。
 
-Without the check at the end you would have called this a successful MCP demo.
-That is exactly the false pass this sample exists to prevent, and it is why the
-sample exits **non-zero** here.
+最後のチェックがなければ、誤設定されたまま気付かれず、MCP デモが成功したという誤った安心感を
+持っていたでしょう。このサンプルはまさにその誤判定を防ぐためにあり、そのためここでは終了コードが
+**0 以外**になります。
 
-> **Status in this environment:** the Learn MCP server loads but does not
-> surface tools to the session. Treat the ⚠️ path above as the expected output
-> until that is resolved. If MCP tools *do* load for you, the final line reads
-> `✅ MCP tool(s) invoked: <server>/<tool>` and the exit code is 0.
+> **この環境での状態:** Learn MCP サーバーは読み込まれますが、セッションにツールが公開
+> されません。解決するまでは、上記の ⚠️ の経路を想定される出力として扱ってください。
+> MCP ツールが実際に読み込まれた場合、最終行には
+> `✅ MCP tool(s) invoked: <server>/<tool>` と表示され、終了コードは 0 になります。
 
-## Step 4 — Check that the MCP tools were used
+## 手順 4 — MCP ツールが使用されたことを確認する
 
-The sample subscribes to SDK events and logs the ones that matter:
+サンプルは SDK イベントを購読し、重要なイベントをログに記録します。
 
-- `SessionMcpServersLoadedEvent` — the server configuration was accepted
-- `McpToolsListChangedEvent` — the server published its tool list
-- `ToolExecutionStartEvent` / `ToolExecutionCompleteEvent` — a tool actually ran
+- `SessionMcpServersLoadedEvent` — サーバー構成が受け入れられた
+- `McpToolsListChangedEvent` — サーバーがツール一覧を公開した
+- `ToolExecutionStartEvent` / `ToolExecutionCompleteEvent` — ツールが実際に実行された
 
-The critical detail is how a tool is judged to be *MCP*. `ToolExecutionStartEvent`
-carries an `McpServerName`; only executions where that is set count. A built-in
-such as `web_fetch` has no server name, so it is logged but never counted as
-success:
+重要なのは、ツールを *MCP* と判定する方法です。`ToolExecutionStartEvent` には
+`McpServerName` が含まれ、これが設定されている実行だけを数えます。`web_fetch` のような
+組み込みツールにはサーバー名がないため、ログには記録されますが成功には数えられません。
 
 ```csharp
 if (!string.IsNullOrWhiteSpace(start.Data.McpServerName))
@@ -153,27 +149,26 @@ if (!string.IsNullOrWhiteSpace(start.Data.McpServerName))
 }
 ```
 
-⚠️ An earlier version of this sample counted *any* tool execution and happily
-reported `✅ MCP tool(s) invoked: web_fetch` — success for a tool that has
-nothing to do with MCP. Counting the wrong thing is worse than not checking,
-because it manufactures confidence.
+⚠️ このサンプルの以前のバージョンでは、*すべての*ツール実行を数え、MCP とは無関係な
+ツールを成功として `✅ MCP tool(s) invoked: web_fetch` と報告していました。誤った対象を
+数えることは、確認しないことよりも危険です。誤った安心感を生み出すためです。
 
-If no MCP tool ran, the sample prints:
+MCP ツールが実行されなかった場合、サンプルは次を出力します。
 
 ```text
 ⚠️  No MCP tool was invoked.
     The model used non-MCP tool(s) instead: web_fetch
 ```
 
-and exits non-zero so scripts cannot mistake a plausible model-only answer for
-a successful MCP-backed run. This matters because Azure Container Apps is public
-knowledge, so a model can answer from its own training data even when no MCP
-tool was available.
+そして 0 以外で終了します。これにより、スクリプトがモデル単独のもっともらしい回答を、
+MCP を利用した実行の成功と誤認することを防ぎます。Azure Container Apps は公開情報であり、
+MCP ツールが利用できなくてもモデル自身の学習データから回答できるため、この区別が重要です。
 
-## Step 5 — Compare with the editor MCP configuration
+## 手順 5 — エディターの MCP 構成と比較する
 
-This repository already has the same server configured for VS Code in
-[`.vscode/mcp.json`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.vscode/mcp.json):
+このリポジトリでは、VS Code 用に同じサーバーがすでに
+次の [`.vscode/mcp.json`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.vscode/mcp.json)
+で構成されています。
 
 ```json
 {
@@ -186,35 +181,35 @@ This repository already has the same server configured for VS Code in
 }
 ```
 
-That file is for the editor. `SessionConfig.McpServers` is for the Copilot SDK
-session running inside your app or sample. They are different consumers, but
-they speak to the same server over the same protocol.
+このファイルはエディター用です。`SessionConfig.McpServers` は、アプリまたはサンプル内で
+実行される Copilot SDK セッション用です。利用側は異なりますが、同じプロトコルで同じ
+サーバーと通信します。
 
-That is the point of MCP: one protocol, many clients. The same tool server can
-serve an editor, a CLI, a test harness or an application agent.
+これが MCP の要点です。1 つのプロトコルを多数のクライアントで利用できます。同じツール
+サーバーを、エディター、CLI、テストハーネス、アプリケーションエージェントから利用できます。
 
-## Step 6 — Consuming MCP versus *serving* it
+## 手順 6 — MCP の利用と MCP の*提供*を比較する
 
-Everything so far pointed the session at someone else's server. This repository
-also **implements** one, and it is worth understanding why.
+ここまでは、セッションを外部のサーバーへ接続してきました。このリポジトリでは MCP サーバー
+自体も**実装**しています。その理由を理解することが重要です。
 
-Until now `CopilotChatService` sent your prompt to the model with no access to
-the application's own data. Ask the chat "who are my highest-spending
-customers?" and it could only guess — the retail database was invisible to it.
+これまで `CopilotChatService` は、アプリ自身のデータへアクセスできない状態でプロンプトを
+モデルへ送信していました。チャットで「支出額が最も多い顧客は誰ですか」と尋ねても、モデルは
+推測するしかありません。小売データベースがモデルから見えなかったためです。
 
 [`AgentHQDemo.McpServer`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.McpServer/RetailTools.cs)
-closes that gap with five read-only tools over `retail.db`:
+は、`retail.db` に対する 5 つの read-only ツールでこの隔たりを解消します。
 
-| Tool | Answers |
+| ツール | 回答できる質問 |
 |:-----|:--------|
-| `list_transactions` | "Show me recent purchases for C003" |
-| `get_transaction` | "What was transaction 7?" |
-| `list_segments` | "What segments do we have?" |
-| `get_customer_summary` | "How much has C001 spent in total?" |
-| `predict_segment` | "Which segment does C003 belong to?" |
+| `list_transactions` | 「C003 の最近の購入を表示して」 |
+| `get_transaction` | 「トランザクション 7 の内容は？」 |
+| `list_segments` | 「どのセグメントがありますか？」 |
+| `get_customer_summary` | 「C001 の合計支出額は？」 |
+| `predict_segment` | 「C003 はどのセグメントに属しますか？」 |
 
-The server is a console app built on the `ModelContextProtocol` package, where
-attributes do the registration:
+このサーバーは `ModelContextProtocol` パッケージ上に構築されたコンソールアプリで、
+属性によって登録します。
 
 ```csharp
 builder.Services
@@ -229,8 +224,9 @@ builder.Services
 public static async Task<CustomerSummaryDto> GetCustomerSummaryAsync(...)
 ```
 
-⚠️ **stdio carries the protocol on stdout**, so every log must go to stderr. A
-stray `Console.WriteLine` corrupts the stream and the server appears to hang:
+⚠️ **stdio は stdout でプロトコルを伝送する**ため、すべてのログを stderr に出力する必要が
+あります。意図しない `Console.WriteLine` があるとストリームが破損し、サーバーがハングした
+ように見えます。
 
 ```csharp
 builder.Logging.AddConsole(options =>
@@ -240,7 +236,7 @@ builder.Logging.AddConsole(options =>
 ```
 
 [`CopilotChatService`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Services/CopilotChatService.cs)
-attaches it with the `McpStdioServerConfig` shape from Step 2:
+は、手順 2 の `McpStdioServerConfig` 形式を使用してこのサーバーを接続します。
 
 ```csharp
 McpServers = new Dictionary<string, McpServerConfig>
@@ -254,30 +250,30 @@ McpServers = new Dictionary<string, McpServerConfig>
 };
 ```
 
-Two design decisions are the actual lesson here.
+ここで本当に学ぶべき設計判断は 2 つあります。
 
-**1. Least privilege at the connection, not just in code.** The context is opened
-with `Mode=ReadOnly`, so a write is rejected by SQLite itself:
+**1. コードだけでなく接続でも最小権限を適用する。** コンテキストは `Mode=ReadOnly` で
+開かれるため、書き込みは SQLite 自体によって拒否されます。
 
 ```csharp
 options.UseSqlite($"Data Source={dbPath};Mode=ReadOnly");
 ```
 
-Even an instruction smuggled into a prompt cannot modify data, because the
-capability was never granted. Compare that with "we simply did not write any
-`SaveChangesAsync` calls", which is a convention, not a control.
+プロンプトに命令が紛れ込んでも、そもそも権限が付与されていないためデータを変更できません。
+「単に `SaveChangesAsync` の呼び出しを書かなかった」という方法と比較してください。後者は
+規約であって、制御ではありません。
 
-**2. Domain tools, not raw SQL.** The model gets `get_customer_summary`, not
-`run_query`. A generic SQLite MCP server would have been zero code, but it also
-hands the model an arbitrary-SQL escape hatch. The tool surface *is* the
-security boundary, so keep it small and specific.
+**2. 生の SQL ではなくドメインツールを提供する。** モデルに渡すのは `run_query` ではなく
+`get_customer_summary` です。汎用 SQLite MCP サーバーならコードを追加せずに済みますが、
+モデルに任意の SQL を実行できる抜け道も与えてしまいます。ツールの公開面そのものが
+セキュリティ境界であるため、小さく具体的に保ってください。
 
-Note what did **not** change: the REST API still reads the database directly
-through `RetailAnalyticsService`. MCP is for the *model*, not for an application
-talking to its own database — routing your own CRUD through an LLM tool protocol
-would add a subprocess hop and lose transactions and type safety for nothing.
+変更されて**いない**点にも注目してください。REST API は引き続き `RetailAnalyticsService` を
+介してデータベースを直接読み取ります。MCP は*モデル*のためのものであり、アプリが自身の
+データベースと通信するためのものではありません。自前の CRUD を LLM ツールプロトコル経由に
+すると、利点がないままサブプロセスへの経由が増え、トランザクションと型安全性が失われます。
 
-Try it:
+試してみましょう。
 
 ```bash
 dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api
@@ -289,16 +285,16 @@ curl -s -X POST http://localhost:5050/api/chat \
   -d '{"prompt":"What is customer C003 total spend and which segment are they in?"}'
 ```
 
-Watch the API log for the proof, exactly as in Step 4:
+手順 4 と同様に、証拠となる API ログを確認します。
 
 ```
 MCP tool call: retail-analytics/get_customer_summary
 MCP tool call: retail-analytics/predict_segment
 ```
 
-💡 **The permission handler is scoped, not blanket.** `PermissionHandler.ApproveAll`
-is fine for a console lab, but this service is reachable from a browser, so it
-approves only read-only tools from `retail-analytics`:
+💡 **権限ハンドラーは一律ではなく、範囲を限定しています。** `PermissionHandler.ApproveAll` は
+コンソールラボでは問題ありませんが、このサービスにはブラウザーから到達できるため、
+`retail-analytics` の read-only ツールだけを承認します。
 
 ```csharp
 if (request is PermissionRequestMcp mcp
@@ -309,55 +305,53 @@ if (request is PermissionRequestMcp mcp
 }
 ```
 
-Treat that as defence in depth rather than the primary control — as
-[the permissions diagnostic](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/samples/SdkLabs/PermissionsSample.cs)
-records, the hook was never observed firing when the host CLI has pre-granted
-tool approval. The `Mode=ReadOnly` connection is what actually holds.
+これは主要な制御ではなく、多層防御として扱ってください。
+[権限診断](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/samples/SdkLabs/PermissionsSample.cs)
+の記録どおり、ホスト CLI がツールの承認を事前付与している場合、フックの呼び出しは確認されて
+いません。実際に制約を保証するのは `Mode=ReadOnly` 接続です。
 
-## ⚠️ Traps
+## ⚠️ 注意点
 
-- `McpServers` is not a `Dictionary<string, object>`. It is an
-  `IDictionary<string, McpServerConfig>`, so this common shortcut fails with a
-  compile error such as `CS0266` because the value type cannot be converted.
-- The Learn server is reached over the network. If it is unreachable, the model
-  has no MCP tools and may quietly answer from its own knowledge. The sample now
-  exits non-zero unless it observes a `ToolExecutionStartEvent`.
-- MCP servers are third-party code and can expose powerful capabilities. Vet the
-  server, its permissions and its data access before adding it to an agent that
-  handles real work.
-- A stdio MCP server must never write to stdout. Route all logging to stderr, or
-  the protocol stream is corrupted and the server looks like it is hanging.
-- A read-only *hint* is not a read-only *guarantee*. `ReadOnly = true` tells a
-  host it is safe to auto-approve; what actually stops a write in
-  `AgentHQDemo.McpServer` is the `Mode=ReadOnly` connection string.
+- `McpServers` は `Dictionary<string, object>` ではありません。
+  正しい型は `IDictionary<string, McpServerConfig>` であるため、値の型を変換できず、よくあるこの省略形は
+  `CS0266` などのコンパイルエラーで失敗します。
+- Learn サーバーにはネットワーク経由で接続します。到達できない場合、モデルに MCP ツールは
+  なく、自身の知識から何事もなく回答する可能性があります。このサンプルは現在、
+  `ToolExecutionStartEvent` を確認できない限り 0 以外で終了します。
+- MCP サーバーはサードパーティのコードであり、強力な機能を公開する可能性があります。実務を
+  扱うエージェントへ追加する前に、サーバー、権限、データアクセスを精査してください。
+- stdio MCP サーバーは stdout に一切書き込んではいけません。すべてのログを stderr へ
+  送らないと、プロトコルストリームが破損し、サーバーがハングしたように見えます。
+- read-only の*ヒント*は read-only の*保証*ではありません。`ReadOnly = true` はホストに
+  自動承認しても安全だと伝えますが、`AgentHQDemo.McpServer` で実際に書き込みを防ぐのは
+  `Mode=ReadOnly` 接続文字列です。
 
-## 💡 Extra credit
+## 💡 発展課題
 
-Try one of these after the basic run succeeds:
+基本の実行が成功したら、次のいずれかを試してください。
 
-- Add a second MCP server and compare how the model chooses between toolsets.
-- Add the server name to `DisabledMcpServers`, rerun the same prompt and compare
-  the answer with and without Microsoft Learn tools available.
-- Explore related SDK configuration such as `McpOAuthTokenStorage`,
-  `GitHubMcpToolConfig` and `EnableMcpApps` when you need authenticated or
-  richer MCP scenarios.
+- 2 つ目の MCP サーバーを追加し、モデルがツールセットを選択する方法を比較する。
+- サーバー名を `DisabledMcpServers` に追加して同じプロンプトを再実行し、Microsoft Learn
+  ツールが利用できる場合とできない場合の回答を比較する。
+- 認証が必要な MCP シナリオや、より高度な MCP シナリオが必要な場合に、
+  `McpOAuthTokenStorage`、`GitHubMcpToolConfig`、`EnableMcpApps` などの関連 SDK 構成を調べる。
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-You can now explain:
+これで、次の項目を説明できるようになりました。
 
-- [x] How MCP differs from tools you write directly in C#
-- [x] When to use `McpHttpServerConfig` versus `McpStdioServerConfig`
-- [x] How `SessionConfig.McpServers` attaches a server by name
-- [x] Why a plausible answer is not proof that MCP tools were called
-- [x] How `.vscode/mcp.json` and SDK configuration can target the same server
-- [x] Why this repo *serves* an MCP server as well as consuming one, and why the
-      REST API still talks to the database directly
-- [x] Why `Mode=ReadOnly` is the real control and `ReadOnly = true` is only a hint
+- [x] MCP と C# で直接作成するツールの違い
+- [x] `McpHttpServerConfig` と `McpStdioServerConfig` を使い分ける場面
+- [x] `SessionConfig.McpServers` が名前を使ってサーバーを接続する仕組み
+- [x] もっともらしい回答だけでは MCP ツールが呼び出された証拠にならない理由
+- [x] `.vscode/mcp.json` と SDK 構成で同じサーバーを対象にできる仕組み
+- [x] このリポジトリが MCP サーバーを利用するだけでなく*提供*する理由、および REST API が
+      引き続きデータベースと直接通信する理由
+- [x] `Mode=ReadOnly` が実際の制御であり、`ReadOnly = true` はヒントにすぎない理由
 
-## Related
+## 関連項目
 
-- Previous: [Lab 05 — Sessions](../05-sessions/)
-- Next: [Lab 07 — Wrap-up](../07-wrap-up/)
-- [Demo: Copilot SDK integration](../../demos/01-copilot-sdk-integration.md)
-- [Troubleshooting](../../breakouts/troubleshooting.md)
+- 前へ: [ラボ 05 — セッション](../05-sessions/)
+- 次へ: [ラボ 07 — まとめ](../07-wrap-up/)
+- [デモ: Copilot SDK の統合](../../demos/01-copilot-sdk-integration.md)
+- [トラブルシューティング](../../breakouts/troubleshooting.md)

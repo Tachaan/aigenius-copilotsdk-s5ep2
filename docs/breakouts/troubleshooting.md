@@ -1,85 +1,88 @@
-# Troubleshooting
+# トラブルシューティング
 
-This page is a practical problem, cause, and fix reference for the Agent HQ
-demo. It focuses on issues shown by the repository files rather than generic
-.NET or GitHub Actions behaviour.
+このページは、Agent HQ デモで発生する問題、その原因、修正方法をまとめた実践的な
+リファレンスです。一般的な .NET や GitHub Actions の動作ではなく、リポジトリ内の
+ファイルから確認できる問題に焦点を当てています。
 
 ## `MSB3923: failed to download Copilot CLI`
 
-**Cause**: `GitHub.Copilot.SDK` downloads a matching Copilot CLI binary from
-`registry.npmjs.org` at build time. Corporate proxies or offline development
-machines can block that download.
+**原因**: `GitHub.Copilot.SDK` はビルド時に、対応する Copilot CLI バイナリを
+`registry.npmjs.org` からダウンロードします。企業プロキシやオフラインの
+開発マシンによって、このダウンロードがブロックされることがあります。
 
-**Fix**: Install the CLI globally and let `Directory.Build.props` auto-detect
-it:
+**修正方法**: CLI をグローバルにインストールし、`Directory.Build.props` に
+自動検出させます。
 
 ```bash
 npm install -g @github/copilot
 dotnet build src/AgentOrchestrator/AgentHQDemo.slnx
 ```
 
-Override explicitly if needed:
+必要に応じて、明示的にオーバーライドします。
 
 ```bash
 dotnet build src/AgentOrchestrator/AgentHQDemo.slnx \
   -p:CopilotCliBinaryPath=/path/to/copilot
 ```
 
-Opt out of local detection and return to the SDK's normal download behaviour:
+ローカル検出を無効にし、SDK の通常のダウンロード動作に戻すには、次を実行します。
 
 ```bash
 dotnet build src/AgentOrchestrator/AgentHQDemo.slnx \
   -p:CopilotUseLocalCli=false
 ```
 
-## CodeQL Analysis shows `skipped`
+## CodeQL Analysis に `skipped` と表示される
 
-**Cause**: Expected on private repositories. Uploading code scanning results
-requires GitHub Advanced Security unless the repository is public.
+**原因**: プライベートリポジトリでは想定される動作です。リポジトリがパブリックでない
+場合、コードスキャン結果のアップロードには GitHub Advanced Security が必要です。
 
-**Fix**: Treat the skipped job as intentional, not a repo failure. The workflow
-is guarded by:
+**修正方法**: スキップされたジョブはリポジトリの障害ではなく、意図された動作として
+扱います。ワークフローには次の条件が設定されています。
 
 ```yaml
 if: github.event.repository.visibility == 'public' || vars.ENABLE_CODEQL == 'true'
 ```
 
-Set the repository variable `ENABLE_CODEQL=true` only when the target
-organisation has the required code scanning entitlement.
+対象の組織に必要なコードスキャンの利用資格がある場合にのみ、リポジトリ変数
+`ENABLE_CODEQL=true` を設定してください。
 
 ## `Model ... is not available`
 
-**Cause**: The signed-in Copilot account cannot use that model id, or the id is
-stale.
+**原因**: サインイン中の Copilot アカウントではそのモデル ID を使用できないか、
+ID が古くなっています。
 
-**Fix**: Do not hardcode model ids in new code. The app fetches the live list
-from `/api/chat/models`, which calls `CopilotChatService.ListModelsAsync` and
-falls back to a small static catalogue only if the CLI cannot be reached.
+**修正方法**: 新しいコードにモデル ID をハードコードしないでください。アプリは
+`/api/chat/models` から最新の一覧を取得します。このエンドポイントは
+`CopilotChatService.ListModelsAsync` を呼び出し、CLI に接続できない場合にのみ
+小規模な静的カタログへフォールバックします。
 
-## JSON-RPC or `PingResponse` deserialisation error
+## JSON-RPC または `PingResponse` の逆シリアル化エラー
 
-**Cause**: A Copilot SDK and Copilot CLI version mismatch can produce
-JSON-RPC deserialisation failures.
+**原因**: Copilot SDK と Copilot CLI のバージョンが一致しないと、JSON-RPC の
+逆シリアル化に失敗することがあります。
 
-**Fix**: Upgrade `GitHub.Copilot.SDK` and update the Copilot CLI together.
-This repo uses SDK v1.0.9. Also check for v1.0.0 API changes:
+**修正方法**: `GitHub.Copilot.SDK` のアップグレードと Copilot CLI の更新を同時に
+行います。このリポジトリでは SDK v1.0.9 を使用しています。また、v1.0.0 の
+API 変更も確認してください。
 
-- the namespace moved from `GitHub.Copilot.SDK` to `GitHub.Copilot`
-- `session.On<T>(...)` now needs an explicit type argument
+- 名前空間が `GitHub.Copilot.SDK` から `GitHub.Copilot` に移動しました
+- `session.On<T>(...)` には明示的な型引数が必要になりました
 
 ## Port already in use: 5050 or 5051
 
-**Cause**: Another process is already bound to the API port 5050 or the Blazor
-port 5051. A stale server from an earlier run can silently serve old code.
+**原因**: 別のプロセスが API のポート 5050 または Blazor のポート 5051 にすでに
+バインドされています。以前の実行から残っているサーバーによって、気づかないまま
+古いコードが配信されることがあります。
 
-**Fix**: Find the process and stop it:
+**修正方法**: プロセスを特定して停止します。
 
 ```bash
 lsof -ti:5050
 lsof -ti:5051
 ```
 
-Then stop the returned process id and restart the relevant app:
+次に、返されたプロセス ID を停止し、該当するアプリを再起動します。
 
 ```bash
 kill 12345  # replace 12345 with the process id returned by lsof
@@ -87,29 +90,29 @@ dotnet run --project src/AgentOrchestrator/AgentHQDemo.Api --urls "http://localh
 dotnet run --project src/AgentOrchestrator/AgentHQDemo.Web --urls "http://localhost:5051"
 ```
 
-## Blazor UI shows an old or invalid model
+## Blazor UI に古いモデルまたは無効なモデルが表示される
 
-**Cause**: The selected model is stored in browser localStorage under the web
-app. That value can outlive the available model list.
+**原因**: 選択したモデルは Web アプリのブラウザー localStorage に保存されます。
+モデルが利用できなくなった後も、その値が残ることがあります。
 
-**Fix**: The app resets the stored value in `Home.razor` when the selected
-model no longer appears in the runtime model list. If the UI still looks stale,
-clear site data for `localhost:5051`.
+**修正方法**: 選択したモデルが実行時のモデル一覧に存在しなくなると、アプリは
+`Home.razor` で保存値をリセットします。それでも UI が古い状態に見える場合は、
+`localhost:5051` のサイトデータを消去してください。
 
 ## `GitHub Actions hosted runners are disabled`
 
-**Cause**: Organisation or enterprise policy has disabled hosted runners. This
-is not a repository build or workflow syntax problem.
+**原因**: 組織またはエンタープライズのポリシーでホステッドランナーが無効に
+なっています。これはリポジトリのビルドやワークフロー構文の問題ではありません。
 
-**Fix**: Ask an organisation or enterprise administrator to enable hosted
-runners or provide an approved runner option for this repository.
+**修正方法**: 組織またはエンタープライズの管理者に、ホステッドランナーを有効にするか、
+このリポジトリで承認済みのランナーを用意するよう依頼してください。
 
-## Build succeeds but tests cannot find the solution
+## ビルドは成功するが、テストがソリューションを見つけられない
 
-**Cause**: The solution is not at the repository root. It lives at
-`src/AgentOrchestrator/AgentHQDemo.slnx`.
+**原因**: ソリューションはリポジトリルートにありません。
+`src/AgentOrchestrator/AgentHQDemo.slnx` にあります。
 
-**Fix**: Pass the solution path explicitly:
+**修正方法**: ソリューションのパスを明示的に渡します。
 
 ```bash
 dotnet restore src/AgentOrchestrator/AgentHQDemo.slnx
@@ -117,13 +120,13 @@ dotnet build src/AgentOrchestrator/AgentHQDemo.slnx
 dotnet test src/AgentOrchestrator/AgentHQDemo.slnx
 ```
 
-This is also what `.github/workflows/ci.yml` uses for restore, build, and test.
+`.github/workflows/ci.yml` でも、復元、ビルド、テストにこのパスを使用しています。
 
-## Related
+## 関連情報
 
-- [Architecture](./architecture.md)
-- [Hooks and governance](./hooks-and-governance.md)
+- [アーキテクチャ](./architecture.md)
+- [フックとガバナンス](./hooks-and-governance.md)
 - [`Directory.Build.props`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/Directory.Build.props)
-- [CI workflow](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/workflows/ci.yml)
-- [CodeQL workflow](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/workflows/codeql.yml)
-- [Review instructions](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/copilot-review-instructions.md)
+- [CI ワークフロー](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/workflows/ci.yml)
+- [CodeQL ワークフロー](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/workflows/codeql.yml)
+- [レビュー指示](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/copilot-review-instructions.md)

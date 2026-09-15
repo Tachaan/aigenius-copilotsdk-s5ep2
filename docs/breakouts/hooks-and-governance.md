@@ -1,23 +1,23 @@
-# Hooks and Governance
+# フックとガバナンス
 
-This page documents the governance hooks under `.github/hooks/`. The hooks add
-session logging, a pre-tool security gate, post-tool audit logging, and a
-session summary for the Agent HQ demo.
+このページでは、`.github/hooks/` 以下のガバナンスフックについて説明します。
+これらのフックは Agent HQ デモに、セッションログ、ツール実行前のセキュリティゲート、
+ツール実行後の監査ログ、セッションの要約を追加します。
 
-## `retail-governance.json` schema
+## `retail-governance.json` のスキーマ
 
-`.github/hooks/retail-governance.json` declares a simple hook configuration:
+`.github/hooks/retail-governance.json` は、シンプルなフック構成を宣言します。
 
-- `version`: numeric configuration version, currently `1`.
-- `hooks`: a map where each key is a lifecycle event name.
-- Each event value is an array of command entries.
-- Each command entry contains:
-  - `type`: currently `command`.
-  - `bash`: script path to execute.
-  - `cwd`: working directory for the command.
-  - `timeoutSec`: maximum runtime in seconds.
+- `version`: 数値形式の構成バージョン。現在は `1` です。
+- `hooks`: 各キーがライフサイクルイベント名であるマップです。
+- 各イベントの値はコマンドエントリの配列です。
+- 各コマンドエントリには次の項目があります。
+  - `type`: 現在は `command` です。
+  - `bash`: 実行するスクリプトのパスです。
+  - `cwd`: コマンドの作業ディレクトリです。
+  - `timeoutSec`: 最大実行時間（秒）です。
 
-Illustrative entry:
+エントリの例:
 
 ```json
 {
@@ -28,32 +28,33 @@ Illustrative entry:
 }
 ```
 
-## Lifecycle events
+## ライフサイクルイベント
 
-The governance file wires four lifecycle events to four shell scripts:
+ガバナンスファイルは、4 つのライフサイクルイベントを 4 つのシェルスクリプトに
+関連付けます。
 
-| Event | Script | Purpose |
+| イベント | スクリプト | 目的 |
 |---|---|---|
-| `sessionStart` | `.github/hooks/scripts/session-init.sh` | Initialise session log |
-| `preToolUse` | `.github/hooks/scripts/security-gate.sh` | Allow or deny tool use |
-| `postToolUse` | `.github/hooks/scripts/audit-logger.sh` | Append JSONL audit event |
-| `sessionEnd` | `.github/hooks/scripts/session-end.sh` | Write session summary |
+| `sessionStart` | `.github/hooks/scripts/session-init.sh` | セッションログを初期化する |
+| `preToolUse` | `.github/hooks/scripts/security-gate.sh` | ツールの使用を許可または拒否する |
+| `postToolUse` | `.github/hooks/scripts/audit-logger.sh` | JSONL 監査イベントを追記する |
+| `sessionEnd` | `.github/hooks/scripts/session-end.sh` | セッションの要約を書き込む |
 
-## Script behaviour
+## スクリプトの動作
 
 ### `session-init.sh`
 
-`session-init.sh` reads hook JSON from stdin. It extracts `.source`,
-`.timestamp`, and `.cwd` with `jq`, creates `logs/`, and appends a decorated
-`SESSION START` block to `logs/session.log` with UTC time, source, cwd, and
-the current operating-system user.
+`session-init.sh` は標準入力からフック JSON を読み取ります。`jq` で `.source`、
+`.timestamp`、`.cwd` を抽出し、`logs/` を作成して、UTC 時刻、source、cwd、
+現在の OS ユーザーを含む装飾付きの `SESSION START` ブロックを
+`logs/session.log` に追記します。
 
 ### `security-gate.sh`
 
-`security-gate.sh` is the `preToolUse` gate. It reads JSON on stdin and
-extracts `.toolName` and `.toolArgs` with `jq`.
+`security-gate.sh` は `preToolUse` ゲートです。標準入力から JSON を読み取り、
+`jq` で `.toolName` と `.toolArgs` を抽出します。
 
-For `bash`, it denies commands matching destructive patterns:
+`bash` では、次の破壊的なパターンに一致するコマンドを拒否します。
 
 - `rm -rf /`
 - `rm -rf .`
@@ -61,10 +62,10 @@ For `bash`, it denies commands matching destructive patterns:
 - `DROP DATABASE`
 - `format `
 - `mkfs.`
-- fork-bomb syntax containing `:(){`
+- `:(){` を含む fork bomb 構文
 
-It also denies bash commands that reference credential or secret paths and
-terms:
+また、資格情報やシークレットに関する次のパスや語句を参照する bash コマンドも
+拒否します。
 
 - `.env`
 - `credentials`
@@ -73,23 +74,22 @@ terms:
 - `.key`
 - `password`
 
-For `edit` and `create`, it extracts `.toolArgs.path`. Paths that do not match
-the hook's allow-list expression — `src/`, `tests/`, `docs/`, or `.github/` —
-are denied, except for a short allow-list of top-level project files
-(`README.md`, `AGENTS.md`, `mkdocs.yml`) matched against the **repo-relative**
-path. Anchoring to the repo root is what stops `/etc/README.md` slipping through
-on a filename match alone. Note that `SECURITY.md` and the licence files stay
-outside the allow-list, matching the "do not modify without permission" rule in
-[`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md).
+`edit` と `create` では、`.toolArgs.path` を抽出します。フックの許可リスト式
+（`src/`、`tests/`、`docs/`、`.github/`）に一致しないパスは拒否されます。
+ただし、**リポジトリ相対**パスに対して照合される、トップレベルのプロジェクトファイル
+（`README.md`、`AGENTS.md`、`mkdocs.yml`）の短い許可リストは例外です。
+リポジトリルートを基準にすることで、ファイル名だけが一致する `/etc/README.md` が
+すり抜けるのを防ぎます。`SECURITY.md` とライセンスファイルは許可リストの対象外であり、
+これは [`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md)
+の「許可なく変更しない」というルールに沿っています。
 
-Allowed operations emit:
+許可された操作は次を出力します。
 
 ```json
 {"permissionDecision":"allow"}
 ```
 
-Denied operations append a line to `logs/security-denials.log` and emit this
-shape:
+拒否された操作は `logs/security-denials.log` に 1 行追記し、次の形式を出力します。
 
 ```json
 {"permissionDecision":"deny","permissionDecisionReason":"Access to credential/secret files blocked by security policy"}
@@ -97,23 +97,23 @@ shape:
 
 ### `audit-logger.sh`
 
-`audit-logger.sh` is the `postToolUse` hook. It reads `.toolName`,
-`.toolArgs`, `.timestamp`, and `.cwd`, truncates the stringified tool arguments
-to 500 characters, categorises the operation, creates `logs/`, and appends one
-JSON object per line to `logs/agent-audit.jsonl`.
+`audit-logger.sh` は `postToolUse` フックです。`.toolName`、`.toolArgs`、
+`.timestamp`、`.cwd` を読み取り、文字列化したツール引数を 500 文字に切り詰め、
+操作を分類し、`logs/` を作成して、`logs/agent-audit.jsonl` に 1 行につき
+1 つの JSON オブジェクトを追記します。
 
-Categories are:
+カテゴリは次のとおりです。
 
-| Tool name | Category |
+| ツール名 | カテゴリ |
 |---|---|
 | `bash` | `command-execution` |
 | `edit` | `code-edit` |
 | `create` | `file-creation` |
 | `view` | `code-read` |
 | `grep`, `glob` | `code-search` |
-| anything else | `other` |
+| その他 | `other` |
 
-The audit record format is:
+監査レコードの形式は次のとおりです。
 
 ```json
 {
@@ -128,52 +128,53 @@ The audit record format is:
 
 ### `session-end.sh`
 
-`session-end.sh` reads `.reason` from stdin, counts lines in
-`logs/agent-audit.jsonl` and `logs/security-denials.log` when those files
-exist, then appends a decorated `SESSION END` block to `logs/session.log`.
+`session-end.sh` は標準入力から `.reason` を読み取り、
+`logs/agent-audit.jsonl` と `logs/security-denials.log` が存在する場合は
+それぞれの行数を数えた後、装飾付きの `SESSION END` ブロックを
+`logs/session.log` に追記します。
 
-## Fixed: `preToolUse` was never running
+## 修正済み: `preToolUse` が一度も実行されていなかった
 
-`retail-governance.json` previously pointed `preToolUse` at
-`./.github/hooks/scripts/security-gate-notworking.sh`, which does not exist on
-disk. The real script is `security-gate.sh`, so the gate silently never
-executed. This has been corrected.
+以前の `retail-governance.json` では、`preToolUse` がディスク上に存在しない
+`./.github/hooks/scripts/security-gate-notworking.sh` を参照していました。
+実際のスクリプトは `security-gate.sh` であったため、エラーが表面化しないままゲートは一度も
+実行されていませんでした。この問題は修正済みです。
 
-The lesson is that hook misconfiguration can fail silently. Always verify that
-a gate actually fires, especially for deny paths that are meant to enforce
-security controls.
+ここから得られる教訓は、フックの構成ミスではエラーが表面化しないことがあるという点です。
+特にセキュリティ制御を適用する拒否パスについては、ゲートが実際に発火することを
+必ず確認してください。
 
-## Manual hook tests
+## フックの手動テスト
 
-Run a script directly by piping representative hook JSON into it from the repo
-root:
+リポジトリルートから、代表的なフック JSON をパイプで渡してスクリプトを直接
+実行します。
 
 ```bash
 echo '{"toolName":"bash","toolArgs":{"command":"cat .env"}}' | \
   ./.github/hooks/scripts/security-gate.sh
 ```
 
-Expected result: a denial JSON object and a new line in
-`logs/security-denials.log`.
+想定される結果は、拒否を示す JSON オブジェクトと、
+`logs/security-denials.log` に追加された新しい 1 行です。
 
-You can test an allowed path the same way:
+許可されるパスも同じ方法でテストできます。
 
 ```bash
 echo '{"toolName":"create","toolArgs":{"path":"docs/example.md"}}' | \
   ./.github/hooks/scripts/security-gate.sh
 ```
 
-## Temporarily disabling hooks
+## フックの一時的な無効化
 
-For a short local experiment, remove the relevant event entry or set that event
-array to `[]` in `.github/hooks/retail-governance.json`, then restore it before
-committing. Prefer disabling the smallest hook possible; for example, empty
-only `preToolUse` if you are testing the security gate configuration.
+短時間のローカル実験では、`.github/hooks/retail-governance.json` から該当する
+イベントエントリを削除するか、そのイベントの配列を `[]` に設定し、コミット前に
+元に戻します。無効化する範囲は可能な限り小さくしてください。たとえば、
+セキュリティゲートの構成をテストする場合は `preToolUse` だけを空にします。
 
-## Related
+## 関連情報
 
-- [Architecture](./architecture.md)
-- [Troubleshooting](./troubleshooting.md)
-- [Governance config](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/hooks/retail-governance.json)
-- [Hook scripts](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/.github/hooks/scripts)
-- [Repository agent guidelines](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md)
+- [アーキテクチャ](./architecture.md)
+- [トラブルシューティング](./troubleshooting.md)
+- [ガバナンス構成](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/.github/hooks/retail-governance.json)
+- [フックスクリプト](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/.github/hooks/scripts)
+- [リポジトリエージェントのガイドライン](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md)
