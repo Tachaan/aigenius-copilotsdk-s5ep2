@@ -79,3 +79,5 @@ if ($state.calls | Where-Object {
 }
 Write-Host 'PASS: private refusal, explicit Pages opt-in, and fail-closed deployment.'
 Remove-Variable PublicReleaseTest -Scope Global
+# The last scenario deliberately simulates gh exiting with code 1.
+$global:LASTEXITCODE = 0
