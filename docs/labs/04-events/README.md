@@ -1,22 +1,22 @@
-# Lab 04 — Events
+# ラボ 04 — イベント
 
-**Goal:** understand the Copilot SDK session event lifecycle: what the SDK
-actually emits, the order events arrive in, and which events matter for common
-jobs such as streaming, telemetry, completion, and errors.
+**目標:** Copilot SDK セッションイベントのライフサイクルを理解します。SDK が実際に発行する内容、
+イベントが到着する順序、およびストリーミング、テレメトリ、完了、エラーなどの一般的な処理で
+重要となるイベントを確認します。
 
-**Time:** ~20 minutes
+**所要時間:** 約20分
 
-**Prerequisites:** [Lab 03](../03-tools/) complete.
+**前提条件:** [ラボ 03](../03-tools/)を完了していること。
 
-## Step 1 — Run the event sample
+## 手順 1 — イベントサンプルを実行する
 
-From the repository root, run the SDK lab sample:
+リポジトリルートから SDK ラボのサンプルを実行します。
 
 ```bash
 dotnet run --project src/AgentOrchestrator/samples/SdkLabs -- events
 ```
 
-Expected output:
+想定される出力:
 
 ```
 == Lab 04: events ==
@@ -68,53 +68,49 @@ Prompt: Name two retail KPIs. One line each.
 Total delta events: 3
 ```
 
-The important surprise is the volume. A simple one-prompt exchange emits far
-more than "user message, assistant message, done".
+注目すべき点はイベントの多さです。1つのプロンプトによる単純なやり取りでも、
+「ユーザーメッセージ、アシスタントメッセージ、完了」よりはるかに多くのイベントが発行されます。
 
-⚠️ The sample counts `AssistantMessageDeltaEvent` separately and suppresses
-printing those events. That is why `Total delta events: 3` appears even though
-many `AssistantStreamingDeltaEvent` entries are visible in the event list.
+⚠️ サンプルは `AssistantMessageDeltaEvent` を別に数え、それらのイベントを出力しません。
+イベント一覧に多数の `AssistantStreamingDeltaEvent` が表示されていても、
+`Total delta events: 3` と表示されるのはこのためです。
 
-⚠️ **The numbers above are one observed run, not a contract.** The list shows
-38 *printed* events; three more were received and suppressed, so 41 arrived in
-total. Exact counts and ordering vary by model, prompt and SDK version — read
-the sequence for its shape, not as a fixed specification.
+⚠️ **上記の数値は1回の実行で観測された結果であり、入出力の契約ではありません。** 一覧には
+*出力された*イベントが38件あります。さらに3件を受信しましたが出力を抑制したため、到着した
+イベントは合計41件です。正確な件数と順序はモデル、プロンプト、SDK バージョンによって異なります。
+この並びは固定仕様ではなく、全体の流れを理解するために使用してください。
 
-## Step 2 — Walk the lifecycle phases
+## 手順 2 — ライフサイクルの各フェーズを確認する
 
-The event stream is easier to remember if you group it by phase:
+イベントストリームは、次のフェーズに分けると理解しやすくなります。
 
-1. **Session setup (1–6)** — the session starts, managed settings resolve,
-   pending messages and skills load, the system message appears, and tools are
-   announced with `SessionToolsUpdatedEvent`
-2. **User turn (7–10)** — the user message is accepted, hook events run
-   in-band, and the session title can change
-3. **Assistant turn start (11–13)** — the assistant turn starts, usage
-   information surfaces, and the model call begins
-4. **Streaming (14–29)** — streaming and reasoning deltas arrive, followed by
-   `AssistantMessageStartEvent`
-5. **Completion (30–33)** — assistant usage is reported, the final assistant
-   message arrives, reasoning is finalised, and the assistant turn ends
-6. **Teardown and idle (34–38)** — another hook pair runs, usage is
-   checkpointed, the assistant becomes idle, then the whole session becomes
-   idle
+1. **セッションのセットアップ (1〜6)** — セッションが開始し、管理対象の設定が解決され、
+    保留中のメッセージとスキルが読み込まれます。システムメッセージが現れ、
+    `SessionToolsUpdatedEvent` でツールが通知されます
+2. **ユーザーターン (7〜10)** — ユーザーメッセージが受理され、フックイベントが
+    同じイベントストリーム内（インバンド）で実行されます。セッションタイトルが変更されることもあります
+3. **アシスタントターンの開始 (11〜13)** — アシスタントターンが開始し、使用量情報が公開され、
+    モデル呼び出しが始まります
+4. **ストリーミング (14〜29)** — ストリーミングと推論の差分が到着し、
+    続いて `AssistantMessageStartEvent` が発行されます
+5. **完了 (30〜33)** — アシスタントの使用量が報告され、最終アシスタントメッセージが到着し、
+    推論が確定して、アシスタントターンが終了します
+6. **終了処理とアイドル (34〜38)** — もう1組のフックが実行され、使用量のチェックポイントが記録されます。
+    アシスタントがアイドル状態になり、続いてセッション全体がアイドル状態になります
 
-Hook events are part of the same ordered stream. If you are exploring
-governance hooks, that ordering matters because `HookStartEvent` and
-`HookEndEvent` appear around the work rather than in a separate side channel.
-See [Extra — Governance hooks](../extra-governance-hooks/) and
-[hooks and governance](../../breakouts/hooks-and-governance.md) for the
-related demo material.
+フックイベントは、同じ順序付きストリームの一部です。ガバナンスフックを調べる場合、この順序が重要です。
+`HookStartEvent` と `HookEndEvent` は別のサイドチャネルではなく、処理を挟む形で現れます。
+関連するデモ資料については、[追加 — ガバナンスフック](../extra-governance-hooks/)と
+[フックとガバナンス](../../breakouts/hooks-and-governance.md)を参照してください。
 
-Usage also has its own events: `SessionUsageInfoEvent`,
-`AssistantUsageEvent`, and `SessionUsageCheckpointEvent`. Those are the events
-to inspect when you want token and cost telemetry rather than text content.
+使用量にも固有のイベントがあります。`SessionUsageInfoEvent`、`AssistantUsageEvent`、
+`SessionUsageCheckpointEvent` です。テキスト内容ではなくトークンやコストのテレメトリを
+確認する場合は、これらのイベントを調べます。
 
-## Step 3 — Subscribe with the v1 pattern
+## 手順 3 — v1 パターンで購読する
 
-Open
 [`EventsSample.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/samples/SdkLabs/EventsSample.cs)
-and find the subscription:
+を開き、購読処理を探します。
 
 ```csharp
 session.On<SessionEvent>(evt =>
@@ -123,31 +119,30 @@ session.On<SessionEvent>(evt =>
 });
 ```
 
-⚠️ **The explicit `<SessionEvent>` matters.** With GitHub Copilot SDK v1.x,
-the non-generic form no longer infers the type argument:
+⚠️ **明示的な `<SessionEvent>` が重要です。** GitHub Copilot SDK v1.x では、
+非ジェネリック形式から型引数が推論されなくなりました。
 
 ```csharp
 session.On(evt => { });
 ```
 
-That older v0.x shape fails with `CS0411` in v1.x. If you copy an old sample
-and see that compiler error, add the explicit type argument.
+この古い v0.x の形式は、v1.x では `CS0411` で失敗します。古いサンプルをコピーして
+このコンパイラエラーが表示された場合は、明示的な型引数を追加してください。
 
-Also check the namespace when moving older code forward. SDK v1.0.0 moved from
-`GitHub.Copilot.SDK` to:
+古いコードを更新する場合は、名前空間も確認してください。SDK v1.0.0 では
+`GitHub.Copilot.SDK` から次の名前空間へ移動しました。
 
 ```csharp
 using GitHub.Copilot;
 ```
 
-## Step 4 — Compare with what the app handles
+## 手順 4 — アプリが処理するイベントと比較する
 
-The sample logs almost everything so you can learn the lifecycle. The real app
-does not need all of that.
+ライフサイクルを学べるように、サンプルはほぼすべてをログに記録します。実際のアプリでは、
+そのすべてを処理する必要はありません。
 
-Open
 [`CopilotChatService.cs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator/AgentHQDemo.Api/Services/CopilotChatService.cs)
-and look at the event switch. It handles only four event types:
+を開き、イベントの `switch` を確認します。処理するイベント型は次の4つだけです。
 
 ```csharp
 case AssistantMessageDeltaEvent delta:
@@ -165,22 +160,20 @@ case SessionErrorEvent error:
     break;
 ```
 
-That is a reasonable production choice. For browser streaming, the app needs
-text chunks, final-message logging, a completion signal, and an error path. It
-does not need to switch on every setup, hook, reasoning, or telemetry event.
+これは妥当な運用環境向けの選択です。ブラウザーへのストリーミングに必要なのは、テキストチャンク、
+最終メッセージのログ、完了シグナル、エラーパスです。セットアップ、フック、推論、テレメトリの
+すべてのイベントを `switch` で処理する必要はありません。
 
-⚠️ There are two different delta event families:
-`AssistantStreamingDeltaEvent` and `AssistantMessageDeltaEvent`. In this run,
-many `AssistantStreamingDeltaEvent` entries appeared, while the sample counted
-only two `AssistantMessageDeltaEvent` values. If you subscribe to the wrong one
-for your job, you may see far fewer chunks than expected. Prefer measuring what
-your scenario actually emits before assuming the names mean the same thing.
+⚠️ 差分イベントには、`AssistantStreamingDeltaEvent` と `AssistantMessageDeltaEvent` という
+異なる2つの系統があります。この実行では多数の `AssistantStreamingDeltaEvent` が現れましたが、
+サンプルが数えた `AssistantMessageDeltaEvent` は2件だけでした。目的に合わないイベントを購読すると、
+想定よりはるかに少ないチャンクしか得られない可能性があります。名前が同じ意味だと想定する前に、
+実際のシナリオで何が発行されるかを測定してください。
 
-## Step 5 — Complete on idle, fail on error
+## 手順 5 — アイドル時に完了し、エラー時に失敗させる
 
-`SessionIdleEvent` is the completion signal used by the samples and the app.
-The usual pattern is a `TaskCompletionSource` that is resolved when the session
-becomes idle:
+`SessionIdleEvent` は、サンプルとアプリが使用する完了シグナルです。一般的なパターンでは、
+セッションがアイドル状態になったときに `TaskCompletionSource` を完了させます。
 
 ```csharp
 var done = new TaskCompletionSource();
@@ -202,52 +195,49 @@ await session.SendAsync(new MessageOptions { Prompt = prompt });
 await done.Task;
 ```
 
-⚠️ Always handle `SessionErrorEvent`. If the session fails and you never set
-the exception on the `TaskCompletionSource`, `await done.Task` can wait
-forever. That failure mode is easy to miss because the happy path works
-perfectly.
+⚠️ `SessionErrorEvent` は必ず処理してください。セッションが失敗したときに
+`TaskCompletionSource` へ例外を設定しないと、`await done.Task` が永遠に待機する可能性があります。
+正常系は問題なく動作するため、この障害モードは見落としやすい点に注意してください。
 
-## ⚠️ Traps
+## ⚠️ 注意点
 
-- `session.On(evt => ...)` is the old shape; use
-  `session.On<SessionEvent>(evt => ...)` with SDK v1.x
-- Old namespaces using `GitHub.Copilot.SDK` must become `GitHub.Copilot`
-- `AssistantStreamingDeltaEvent` and `AssistantMessageDeltaEvent` are distinct
-  event types; do not treat them as interchangeable without measuring
-- Logging every event is useful for learning but noisy for app code
-- Waiting only for an assistant message is not enough; complete the operation
-  on `SessionIdleEvent`
-- Ignoring `SessionErrorEvent` can leave your caller hanging forever
+- `session.On(evt => ...)` は古い形式です。SDK v1.x では
+  `session.On<SessionEvent>(evt => ...)` を使用します
+- `GitHub.Copilot.SDK` を使用する古い名前空間は `GitHub.Copilot` に変更する必要があります
+- `AssistantStreamingDeltaEvent` と `AssistantMessageDeltaEvent` は異なるイベント型です。
+  測定せずに同じものとして扱わないでください
+- すべてのイベントのログは学習には有用ですが、アプリコードでは大量の出力になります
+- アシスタントメッセージを待つだけでは不十分です。`SessionIdleEvent` で処理を完了してください
+- `SessionErrorEvent` を無視すると、呼び出し元が永遠に待機する可能性があります
 
-## 💡 Extra credit
+## 💡 発展課題
 
-Try one of these small experiments:
+次の小さな実験のいずれかを試してください。
 
-1. Change the sample to print only tool-related events, such as event names
-   containing `Tool` or hook events that surround tool work
-2. Measure time-to-first-token by starting a `Stopwatch` before
-   `SendAsync(...)` and stopping it on the first delta event you care about
-3. Count usage-related events separately and log where they appear in the
-   lifecycle
-4. Add a filter that groups events into the six lifecycle phases above instead
-   of printing a flat numbered list
+1. イベント名に `Tool` を含むものや、ツール処理を挟むフックイベントなど、ツール関連のイベントだけを
+    出力するようにサンプルを変更する
+2. `SendAsync(...)` の前に `Stopwatch` を開始し、対象とする最初の差分イベントで停止して、
+    最初のトークンが到着するまでの時間を測定する
+3. 使用量関連のイベントを別に数え、ライフサイクルのどこに現れるかをログに記録する
+4. 番号付きの平坦な一覧を出力する代わりに、イベントを上記6つのライフサイクルフェーズにまとめる
+    フィルターを追加する
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-You can now explain:
+ここまでで、次の項目を説明できるようになりました。
 
-- [x] The ordered session lifecycle emitted by the SDK
-- [x] Why `On<SessionEvent>` needs the explicit type argument in v1.x
-- [x] Why real apps usually handle a small subset of all emitted events
-- [x] The difference between observing all events and streaming useful chunks
-- [x] Why `SessionIdleEvent` completes the operation
-- [x] Why `SessionErrorEvent` must fail the waiting task
-- [x] Where hook and usage events appear in the lifecycle
+- [x] SDK が発行する順序付きセッションライフサイクル
+- [x] v1.x で `On<SessionEvent>` に明示的な型引数が必要な理由
+- [x] 実際のアプリが通常、発行される全イベントの一部だけを処理する理由
+- [x] すべてのイベントを観測することと、有用なチャンクをストリーミングすることの違い
+- [x] `SessionIdleEvent` が処理を完了させる理由
+- [x] `SessionErrorEvent` によって待機中のタスクを失敗させる必要がある理由
+- [x] ライフサイクル内でフックイベントと使用量イベントが現れる位置
 
-## Related
+## 関連資料
 
-- Previous: [Lab 03 — Tools](../03-tools/)
-- Next: [Lab 05 — Sessions](../05-sessions/)
-- [Demo: Copilot SDK integration](../../demos/01-copilot-sdk-integration.md)
-- [Hooks and governance](../../breakouts/hooks-and-governance.md)
-- [Troubleshooting](../../breakouts/troubleshooting.md)
+- 前へ: [ラボ 03 — ツール](../03-tools/)
+- 次へ: [ラボ 05 — セッション](../05-sessions/)
+- [デモ: Copilot SDK の統合](../../demos/01-copilot-sdk-integration.md)
+- [フックとガバナンス](../../breakouts/hooks-and-governance.md)
+- [トラブルシューティング](../../breakouts/troubleshooting.md)

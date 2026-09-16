@@ -1,36 +1,31 @@
-# Lab 05 — Sessions
+# ラボ 05 — セッション
 
-**Goal:** give a conversation a stable identity so it survives process
-restarts, and understand what session persistence does and does not buy you.
+**目的:** 会話に安定した識別子を与えてプロセスの再起動後も維持できるようにし、セッションの永続化によって何が得られ、何は得られないのかを理解します。
 
-**Time:** ~20 minutes
+**所要時間:** 約20分です。
 
-**Prerequisites:** [Lab 04](../04-events/) complete.
+**前提条件:** [ラボ 04](../04-events/) を完了していること。
 
-## Step 1 — The problem
+## ステップ 1 — 問題を理解する
 
-Everything so far has been stateless. Each run creates a fresh session, sends a
-prompt, and throws the context away. Restart the process and the model has no
-idea what you talked about.
+ここまではすべて状態を保持しない処理でした。各実行は新しいセッションを作成し、プロンプトを送り、その文脈を破棄します。プロセスを再起動すると、モデルは何を話していたかをまったく覚えていません。
 
-That is fine for a one-shot sample and useless for a real assistant. A retail
-analyst who asks three follow-up questions expects the fourth to still be about
-the same customer.
+これは単発のサンプルとしては問題ありませんが、実際のアシスタントとしては役に立ちません。3 回続けて質問したリテールアナリストは、4 回目の質問でも同じ顧客の話が続いていることを期待します。
 
-## Step 2 — Run the sessions sample
+## ステップ 2 — セッションのサンプルを実行する
 
 ```bash
 cd src/AgentOrchestrator-python
 uv run python -m sdk_labs sessions
 ```
 
-Add `--model <id>` to override the model:
+モデルを上書きするには `--model <id>` を付けます。
 
 ```bash
 uv run python -m sdk_labs sessions --model gpt-5-mini
 ```
 
-Verified output:
+確認済みの出力は次のとおりです。
 
 ```text
 == Lab 05: sessions ==
@@ -52,18 +47,14 @@ Assistant: Your favourite retail segment is 'At Risk'.
   id=sdklabs-75e6b8f216d0451b metadata retrieved
 ```
 
-The session id is random per run, so yours will differ. The important proof is
-not the id value — it is that turn 2 remembered `'At Risk'` *after the first
-session had been closed*.
+セッション ID は実行ごとにランダムなので、あなたの値は異なります。重要なのは ID の値そのものではなく、*最初のセッションを閉じたあとでも* 2 回目のやり取りで `'At Risk'` を覚えていたことです。
 
-This run proves resume-after-disposal inside one process. It does not, by
-itself, prove cross-device hand-off or restart recovery.
+この実行で確認できるのは、1 つのプロセス内で、破棄したセッションを再開できることです。これだけでは、デバイス間の引き継ぎや再起動後の復旧までは確認できません。
 
-## Step 3 — Give the session an id
+## ステップ 3 — セッションに ID を与える
 
-Open
-[`sessions_sample.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/sessions_sample.py).
-The first turn passes an explicit `session_id`:
+[`sessions_sample.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/sessions_sample.py)
+を開いてください。最初のやり取りでは明示的な `session_id` を渡しています。
 
 ```python
 session_id = f"sdklabs-{uuid.uuid4().hex}"[:24]
@@ -80,15 +71,13 @@ async with session:
     )
 ```
 
-That id is the key to everything else in this lab. Without it the SDK still
-creates a session, but you have no handle to come back to.
+この ID が、このラボの残りすべての鍵になります。これがなくても SDK はセッションを作成しますが、あとから戻るための手掛かりがありません。
 
-The `async with session:` block then closes the session. The next turn is not a
-continuation of a live object — it is a genuine resume of a closed one.
+その後、`async with session:` ブロックがセッションを閉じます。次のやり取りは、実行中のオブジェクトを継続するのではなく、閉じたセッションを実際に再開するものです。
 
-## Step 4 — Resume the session
+## ステップ 4 — セッションを再開する
 
-The second turn uses the same id and a different SDK call:
+2 回目のターンでは、同じ ID を別の SDK 呼び出しに渡します。
 
 ```python
 resumed = await client.resume_session(session_id, model=model_id, streaming=False)
@@ -96,10 +85,7 @@ async with resumed:
     await send_and_print(resumed, "Which retail segment did I say was my favourite?")
 ```
 
-💡 **This is simpler than the .NET equivalent.** In C# you must construct a
-`ResumeSessionConfig` and pass it as a required second argument; omitting it is
-a compile error. Python has no `ResumeSessionConfig`; it takes the same settings
-as ordinary keyword arguments, and `session_id` is the only positional one:
+💡 **これは .NET の同等処理よりも単純です。** C# では `ResumeSessionConfig` を構築し、必須の第 2 引数として渡す必要があります。省略するとコンパイルエラーになります。Python には `ResumeSessionConfig` がなく、通常のキーワード引数として同じ設定を渡せます。位置引数なのは `session_id` だけです。
 
 ```python
 await client.resume_session(session_id)                       # valid
@@ -107,32 +93,25 @@ await client.resume_session(session_id, model="gpt-5")        # valid
 await client.resume_session(session_id, streaming=False)      # valid
 ```
 
-⚠️ **`session_id` is positional here, but a keyword on create.** Note the
-asymmetry: `create_session(session_id=...)` versus
-`resume_session(session_id)`. Everything after the session id in
-`resume_session` is keyword-only.
+⚠️ **ここでは `session_id` は位置引数ですが、作成時にはキーワード引数です。** `create_session(session_id=...)` と `resume_session(session_id)` の非対称性に注意してください。`resume_session` では、セッション ID の後ろはすべてキーワード専用です。
 
-To make the proof stronger, run the resume path in a **second process** using
-the id printed by the first run:
+この確認をより確かなものにするには、最初の実行で表示された ID を使って、**2 つ目のプロセス**で再開処理を実行してください。
 
 ```bash
 uv run python -m sdk_labs sessions --resume sdklabs-75e6b8f216d0451b
 ```
 
-That genuinely crosses a process boundary. Resuming from another machine
-additionally requires access to the same session persistence store, a
-compatible runtime, and proper authorisation.
+これで実際にプロセス境界をまたぐことになります。別のマシンから再開するには、さらに同じセッション永続化ストアへのアクセス、互換性のある実行環境、そして適切な認可が必要です。
 
-## Step 5 — Discover stored sessions
+## ステップ 5 — 保存済みセッションを見つける
 
-The sample also asks the SDK for metadata:
+このサンプルでは、SDK にメタデータも問い合わせています。
 
 ```python
 metadata = await client.get_session_metadata(session_id)
 ```
 
-It returns `SessionMetadata | None` — `None` when no stored session matches, so
-check before using it:
+戻り値は `SessionMetadata | None` です。一致する保存済みセッションがない場合は `None` になるため、使う前に確認してください。
 
 ```python
 print(
@@ -142,69 +121,48 @@ print(
 )
 ```
 
-To browse stored sessions instead of starting from a known id, use
-`list_sessions`:
+既知の ID から始める代わりに、保存済みセッションを一覧したい場合は `list_sessions` を使います。
 
 ```python
 sessions = await client.list_sessions()          # -> list[SessionMetadata]
 ```
 
-A common pattern is:
+よくあるパターンは次のとおりです。
 
-1. List sessions for the signed-in user
-2. Let the user choose one, or select the most recent
-3. Pass that id to `resume_session(id, ...)`
+1. サインインしているユーザーのセッションを一覧します。
+2. ユーザーに 1 つ選んでもらうか、最新のものを選択します。
+3. その ID を `resume_session(id, ...)` に渡します。
 
-## Step 6 — Connect it to the architecture
+## ステップ 6 — アーキテクチャと結び付ける
 
-Session persistence enables:
+セッションの永続化によって、次が可能になります。
 
-- **Hand-off across devices and clients** — start in one place, continue in
-  another
-- **Crash recovery** — resume after a process restart instead of rebuilding
-  context from scratch
-- **Auditability** — stable ids make it easier to inspect, organise, and trace
-  conversations
+- **デバイスやクライアントをまたぐ引き継ぎ** — ある場所で開始し、別の場所で続きを行えます。
+- **クラッシュからの復旧** — プロセスの再起動後に、文脈をゼロから作り直さず再開できます。
+- **監査可能性** — 安定した ID があることで、会話の調査、整理、追跡がしやすくなります。
 
-In the demo app today, the browser keeps chat history in `localStorage` (see
-[`app.js`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/static/app.js)).
-That works for one browser on one device, but it cannot move the conversation
-elsewhere. Open the app on a phone and the history is gone.
+現在のデモアプリでは、ブラウザーがチャット履歴を `localStorage` に保持しています（[`app.js`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/static/app.js) を参照）。これは 1 台のデバイス上の 1 つのブラウザーでは機能しますが、会話を別の場所へ持ち出すことはできません。スマートフォンでアプリを開くと、履歴はありません。
 
-SDK sessions are the fix. The UI can store a session id instead of the whole
-conversation, and an authorised client using the same session store can resume
-the same server-side session.
+この問題を解決するのが SDK セッションです。UI は会話全体ではなくセッション ID を保存でき、同じセッションストアを使う認可済みクライアントなら、同じサーバー側セッションを再開できます。
 
-⚠️ **A session id is not an access control.** Treat ids as identifiers, not
-secrets or capabilities. Your app still needs normal user authentication and
-authorisation before resuming a stored conversation.
+⚠️ **セッション ID はアクセス制御ではありません。** ID は秘密情報や権限そのものではなく、識別子として扱ってください。保存済みの会話を再開する前に、アプリ側では通常どおりユーザー認証と認可が必要です。
 
-The Python track uses PyPI `github-copilot-sdk` **1.0.9**, imported as
-`copilot`, and requires Python 3.11 or later. You can see those requirements in
-[`pyproject.toml`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/pyproject.toml).
+Python トラックでは、PyPI の `github-copilot-sdk` **1.0.9** にバージョンを固定し、`copilot` としてインポートしています。また、Python 3.11 以降が必要です。これらの要件は [`pyproject.toml`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/pyproject.toml) で確認できます。
 
-## ⚠️ Traps
+## ⚠️ 落とし穴
 
-- **Id collisions:** the session id is your key. Reusing an id resumes the old
-  conversation instead of creating a clean one.
-- **Opaque ids:** random ids work for demos, but real systems should be able to
-  map ids back to users, cases, or workflows.
-- **Ids are not permissions:** knowing or guessing an id must not be enough to
-  access a conversation; enforce authorisation separately.
-- **Confidential data in ids:** never put tokens, email addresses, or customer
-  details in a session id.
-- **Assuming metadata exists:** `get_session_metadata` returns `None` for an
-  unknown id; guard before dereferencing it.
-- **Forgetting to close:** the sample uses `async with` so turn 1 is genuinely
-  closed before turn 2 resumes. Skip that and you have not proved anything.
+- **ID の衝突:** セッション ID はキーです。同じ ID を再利用すると、新しい会話が作られるのではなく、古い会話が再開されます。
+- **不透明な ID:** ランダムな ID はデモには向いていますが、実システムではユーザー、案件、ワークフローに対応付けられる必要があります。
+- **ID は権限ではありません:** ID を知っている、または推測できるだけで会話にアクセスできてはいけません。認可は別に実装してください。
+- **ID に機密データを含めないでください:** セッション ID にトークン、メールアドレス、顧客情報を入れてはいけません。
+- **メタデータが必ずあると思わないでください:** `get_session_metadata` は未知の ID に対して `None` を返すため、参照前に確認してください。
+- **クローズを忘れないでください:** このサンプルでは `async with` を使っているため、1 回目のやり取りは 2 回目で再開する前に確実に閉じられています。これを省くと、何も確認できません。
 
-## 💡 Extra credit
+## 💡 追加課題
 
-1. Add a third turn after the metadata call, resuming the same id again and
-   asking another question about the original `'At Risk'` message
-2. Run the `--resume` path from a second terminal to prove cross-process resume
-   for yourself
-3. List stored sessions and resume the most recent one:
+1. メタデータの取得後に 3 回目のやり取りを追加し、同じ ID で再開して、元の `'At Risk'` メッセージについて別の質問をしてください。
+2. 2 つ目のターミナルから `--resume` の処理を実行し、自分でプロセスをまたいだ再開を確認してください。
+3. 保存済みセッションを一覧し、最新のものを再開してください。
 
    ```python
    sessions = await client.list_sessions()
@@ -212,26 +170,22 @@ The Python track uses PyPI `github-copilot-sdk` **1.0.9**, imported as
        resumed = await client.resume_session(sessions[0].id, model=model_id)
    ```
 
-4. Change the id to a stable string such as `"analyst-demo"` and observe that
-   re-running the sample now continues one long-lived conversation
+4. ID を `"analyst-demo"` のような安定した文字列に変更し、サンプルを再実行すると 1 つの会話が長期間継続されることを観察してください。
 
-## ✅ Checkpoint
+## ✅ チェックポイント
 
-You can now explain:
+ここまでで、次の内容を説明できるようになります。
 
-- [x] Why process restarts lose context without persistence
-- [x] How `create_session(session_id=...)` gives your app a stable key
-- [x] That `resume_session(id, ...)` takes plain keyword arguments in Python,
-      with no separate config object as .NET requires
-- [x] How `get_session_metadata` and `list_sessions` help discover stored
-      sessions, and that metadata can be `None`
-- [x] Why SDK sessions are the right foundation for cross-device chat history
-- [x] Why cross-process and cross-device resume also depend on shared storage,
-      compatible runtime behaviour, and authorisation
+- [x] 永続化しないとプロセスの再起動で文脈が失われる理由
+- [x] `create_session(session_id=...)` がアプリに安定したキーを与える仕組み
+- [x] Python の `resume_session(id, ...)` は .NET のような別個の設定オブジェクトを必要とせず、通常のキーワード引数を受け取ること
+- [x] `get_session_metadata` と `list_sessions` が保存済みセッションの発見にどう役立つか、そしてメタデータが `None` になりうること
+- [x] SDK セッションがデバイス間でチャット履歴を引き継ぐための適切な基盤である理由
+- [x] プロセス間やデバイス間での再開が、共有ストレージ、互換性のある実行時動作、認可にも依存する理由
 
-## Related
+## 関連資料
 
-- Previous: [Lab 04 — Events](../04-events/)
-- Next: [Lab 06 — MCP](../06-mcp/)
-- [Demo: Copilot SDK integration](../../demos-python/01-copilot-sdk-integration.md)
-- [Troubleshooting](../../breakouts/troubleshooting.md)
+- 前へ: [ラボ 04 — イベント](../04-events/)
+- 次へ: [Lab 06 — MCP](../06-mcp/)
+- [デモ: Copilot SDK の組み込み](../../demos-python/01-copilot-sdk-integration.md)
+- [トラブルシューティング](../../breakouts/troubleshooting.md)

@@ -1,60 +1,56 @@
-# Lab 07 — Wrap-up
+# ラボ 07 — まとめ
 
-**Goal:** consolidate what you built, tidy your machine, and choose a sensible
-next step.
+**目標:** 構築した内容を整理し、マシンをクリーンアップして、適切な次のステップを選択します。
 
-**Time:** ~10 minutes
+**所要時間:** 約 10 分
 
-## What you covered
+## 学習した内容
 
-| Lab | Capability |
+| ラボ | 習得した機能 |
 |:----|:-----------|
-| [01](../01-setup/) | Built the app and smoke-tested the SDK samples project |
-| [02](../02-first-chat/) | Traced a streaming chat turn and discovered models at runtime |
-| [03](../03-tools/) | Replaced static context with `CopilotTool.DefineTool` tools |
-| [04](../04-events/) | Observed the session event lifecycle and completion signals |
-| [05](../05-sessions/) | Persisted and resumed SDK sessions across process restarts |
-| [06](../06-mcp/) | Connected MCP servers to extend the agent with external tools |
+| [01](../01-setup/) | アプリをビルドし、SDK サンプルプロジェクトをスモークテストした |
+| [02](../02-first-chat/) | ストリーミングチャットのターンを追跡し、実行時にモデルを検出した |
+| [03](../03-tools/) | 静的コンテキストを `CopilotTool.DefineTool` ツールに置き換えた |
+| [04](../04-events/) | セッションイベントのライフサイクルと完了シグナルを観察した |
+| [05](../05-sessions/) | プロセス再起動をまたいで SDK セッションを永続化し、再開した |
+| [06](../06-mcp/) | MCP サーバーを接続し、外部ツールでエージェントを拡張した |
 
-The optional `extra-*` labs now sit outside the main SDK path. Use them when
-you want CLI custom agents, governance hooks, or ASP.NET/EF Core extension
-practice, but they are not required for the SDK sequence.
+オプションの `extra-*` ラボは、メインの SDK 学習手順には含まれません。CLI のカスタム
+エージェント、ガバナンスフック、ASP.NET/EF Core の拡張を練習する場合に使用してください。
+SDK の一連の学習には必須ではありません。
 
-## The ideas worth keeping
+## 覚えておくべき考え方
 
-1. **Embedding beats chatting.** The SDK turns an agent into a component of
-   your application, subject to your auth, your logging, and your deployment
-   pipeline.
+1. **チャットするだけでなく組み込む。** SDK はエージェントをアプリケーションのコンポーネントに
+   変え、独自の認証、ログ記録、デプロイパイプラインの管理下に置きます。
 
-2. **Discover capabilities; don't hardcode them.** Models come from
-   `ListModelsAsync()`. This demo once shipped six hardcoded model ids and
-   quietly degraded to one working option.
+2. **機能をハードコードせず、検出する。** モデルは `ListModelsAsync()` から取得します。この
+   デモでは以前、6 個のモデル id をハードコードしていましたが、いつの間にか動作する選択肢が
+   1 つだけになっていました。
 
-3. **Tools beat context-stuffing.** `CopilotTool.DefineTool` lets the model
-   fetch what it needs instead of pre-loading every turn with guesses that burn
-   tokens whether they are useful or not.
+3. **コンテキストを詰め込むよりツールを使う。** `CopilotTool.DefineTool` により、使うかどうか
+   分からない情報を毎ターン事前読み込みしてトークンを消費せず、モデルが必要な情報だけを
+   必要な時点で取得できます。
 
-4. **The event stream is richer than you think.** A single observed turn printed 33
-   events in testing. Most apps handle four, and that is fine, but know what is
-   available before you throw the rest away.
+4. **イベントストリームは想像以上に豊富である。** テストで 1 回のターンを観察したところ、
+   33 個のイベントが出力されました。多くのアプリは 4 種類だけを処理し、それでも問題は
+   ありませんが、残りを破棄する前に利用可能なものを把握してください。
 
-5. **Sessions make the agent portable.** `SessionId` plus
-   `ResumeSessionAsync` survives process restarts. The demo app's
-   browser-localStorage history is convenient, but it cannot move between
-   devices.
+5. **セッションによりエージェントを移動可能にする。** `SessionId` と `ResumeSessionAsync` を
+   組み合わせると、プロセスの再起動後も継続できます。デモアプリのブラウザー localStorage
+   履歴は便利ですが、デバイス間で移動できません。
 
-6. **MCP extends reach.** MCP gives the agent tools you did not write, over a
-   standard protocol, without baking every integration into your app.
+6. **MCP で接続範囲を拡張する。** MCP は、すべての統合をアプリへ組み込むことなく、標準
+   プロトコルを介して自分で作成していないツールをエージェントに提供します。
 
-7. **Verify permission controls in your environment.** `OnPermissionRequest`
-   exists, but in our testing it was never invoked because the host CLI had
-   pre-granted approval. Even a reject-everything handler let commands through.
-   Before relying on it as a control, prove it fires for your setup. Revisit
-   [Lab 03](../03-tools/) for the tool-permission sample.
+7. **自分の環境で権限制御を検証する。** `OnPermissionRequest` は存在しますが、検証時はホスト
+   CLI が承認を事前付与していたため、一度も呼び出されませんでした。すべてを拒否する
+   ハンドラーでもコマンドが通りました。制御として依存する前に、自分の構成で呼び出されることを
+   確認してください。ツール権限のサンプルについては [ラボ 03](../03-tools/) を再確認してください。
 
-## Clean up
+## クリーンアップ
 
-Stop the services (`Ctrl+C` in each terminal), or if they were detached:
+サービスを停止します（各ターミナルで `Ctrl+C`）。デタッチしている場合は次を実行します。
 
 ```bash
 lsof -ti:5050        # prints a PID if still listening
@@ -63,81 +59,79 @@ lsof -ti:5051
 kill <PID>
 ```
 
-Remove local artefacts:
+ローカルの成果物を削除します。
 
 ```bash
 rm -f src/AgentOrchestrator/AgentHQDemo.Api/retail.db*   # SQLite DB + WAL files
 rm -f logs/*                                             # sample and audit logs
 ```
 
-⚠️ If a file is still open on macOS, the remove command may appear to succeed
-while a service recreates it. Stop the service first, then remove the artefact.
+⚠️ macOS でファイルがまだ開かれている場合、削除コマンドが成功したように見えても、サービスが
+ファイルを再作成することがあります。先にサービスを停止してから成果物を削除してください。
 
 ```bash
 git status --short
 ```
 
-Expected: no output, or only the lab files you intentionally edited. If you
-want to discard local lab work and return to a clean checkout:
+想定結果は、出力がないか、意図的に編集したラボファイルだけが表示されることです。ローカルの
+ラボ作業を破棄してクリーンなチェックアウトへ戻す場合は、次を実行します。
 
 ```bash
 git status
 git checkout -- .        # discards uncommitted changes — irreversible
 ```
 
-## Check your understanding
+## 理解度を確認する
 
-1. Why does `session.On(...)` fail to compile without a type argument?
-2. Why does `ResumeSessionAsync` need a second argument?
-3. Why are `[Description]` attributes on tool parameters important?
-4. What signals that a turn is complete?
+1. 型引数なしの `session.On(...)` がコンパイルに失敗するのはなぜですか？
+2. `ResumeSessionAsync` に 2 つ目の引数が必要なのはなぜですか？
+3. ツールパラメーターの `[Description]` 属性が重要なのはなぜですか？
+4. ターンの完了を示すシグナルは何ですか？
 
 <details>
-<summary>Answers</summary>
+<summary>解答</summary>
 
-1. `CS0411` — the type argument cannot be inferred. SDK v1.x requires
-   `On<SessionEvent>(...)`; the namespace also moved from
-   `GitHub.Copilot.SDK` to `GitHub.Copilot` in v1.0.0.
-2. Resume needs configuration as well as the id. Pass a `ResumeSessionConfig`,
-   not `SessionConfig`; omitting it produces `CS7036`.
-3. They are the model's only API documentation for the tool. Without clear
-   descriptions, the model has to guess what arguments mean and when to use
-   them.
-4. `SessionIdleEvent` means the turn is complete. `SessionErrorEvent` must set
-   the exception path too, otherwise your caller can wait forever.
+1. `CS0411` — 型引数を推論できないためです。SDK v1.x では `On<SessionEvent>(...)` が必要です。
+   また、v1.0.0 で名前空間が `GitHub.Copilot.SDK` から `GitHub.Copilot` へ移動しました。
+2. 再開には id だけでなく構成も必要です。`SessionConfig` ではなく `ResumeSessionConfig` を
+   渡してください。省略すると `CS7036` が発生します。
+3. これらが、モデルに提供されるツールの唯一の API ドキュメントだからです。明確な説明が
+   なければ、モデルは引数の意味と使用するタイミングを推測する必要があります。
+4. `SessionIdleEvent` はターンの完了を示します。`SessionErrorEvent` でも例外経路を設定する
+   必要があります。設定しないと、呼び出し元が永遠に待機する可能性があります。
 
 </details>
 
-## Where to go next
+## 次のステップ
 
-| Direction | Start here |
+| 目的 | 開始場所 |
 |:----------|:-----------|
-| Re-run a focused SDK sample | [`SdkLabs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator/samples/SdkLabs) |
-| Understand the demo code in depth | [Demos](../../demos/) |
-| Reference troubleshooting and architecture | [Breakouts](../../breakouts/) |
-| Build your own agent app | [Copilot SDK repo](https://github.com/github/copilot-sdk) |
-| Extend Copilot with external tools | [Model Context Protocol](https://modelcontextprotocol.io/) |
+| 特定の SDK サンプルを再実行する | [`SdkLabs`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/tree/main/src/AgentOrchestrator/samples/SdkLabs) |
+| デモコードを詳しく理解する | [デモ](../../demos/) |
+| トラブルシューティングとアーキテクチャを参照する | [補足資料](../../breakouts/) |
+| 独自のエージェントアプリを構築する | [Copilot SDK リポジトリ](https://github.com/github/copilot-sdk) |
+| 外部ツールで Copilot を拡張する | [Model Context Protocol](https://modelcontextprotocol.io/) |
 
-### Ideas to take further
+### 発展させるためのアイデア
 
-- **Promote a sample into the app.** Move one `SdkLabs` command into a real API
-  endpoint and add user-facing progress.
-- **Persist conversations server-side.** Replace browser localStorage with
-  SQLite-backed session metadata so history survives across devices.
-- **Add a second MCP server.** Keep credentials out of source, document the
-  required environment variables, and prove the tools appear at runtime.
-- **Tighten observability.** Log the event types you ignore today so production
-  debugging has enough context without storing full prompts.
+- **サンプルをアプリに組み込む。** `SdkLabs` コマンドの 1 つを実際の API エンドポイントへ
+   移し、ユーザー向けの進行状況を追加する。
+- **会話をサーバー側で永続化する。** ブラウザーの localStorage を SQLite ベースの
+   セッションメタデータに置き換え、デバイスをまたいで履歴を保持する。
+- **2 つ目の MCP サーバーを追加する。** 資格情報をソースに含めず、必要な環境変数を文書化し、
+   実行時にツールが表示されることを確認する。
+- **可観測性を強化する。** 現在無視しているイベント型をログに記録し、完全なプロンプトを
+   保存しなくても本番環境のデバッグに十分なコンテキストを確保する。
 
-## ✅ Final checkpoint
+## ✅ 最終チェックポイント
 
-- [x] All seven SDK labs complete
-- [x] Services stopped, local artefacts cleaned up
-- [x] `git status --short` is clean, or only intentional lab edits remain
-- [x] You can answer the four questions above
+- [x] 7 つの SDK ラボをすべて完了した
+- [x] サービスを停止し、ローカルの成果物をクリーンアップした
+- [x] `git status --short` がクリーンであるか、意図的なラボの編集だけが残っている
+- [x] 上記 4 つの質問に回答できる
 
-## Related
+## 関連項目
 
-- [Labs index](../README.md)
-- [Root README](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/README.md)
+- [ラボ一覧](../README.md)
+- [ルート README](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/README.md)
 - [`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md)

@@ -1,12 +1,12 @@
-# The retail domain
+# 小売ドメイン
 
-This walkthrough documents the Python retail analytics data model, SQLite setup, seed data, REST endpoints, validation behaviour, and deliberate code smells used by the demo.
+このウォークスルーでは、Python 版小売分析アプリのデータモデル、SQLite の設定、初期データ、REST エンドポイント、検証時の動作、そしてデモ用に意図的に残してあるコードスメルを説明します。
 
-## Domain models
+## ドメインモデル
 
-The API models live in [`app/models.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/models.py). They use SQLModel for persistence and Pydantic for request/response validation.
+API モデルは [`app/models.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/models.py) にあります。永続化には SQLModel を、リクエストとレスポンスの検証には Pydantic を使っています。
 
-`TransactionBase` contains the constrained retail purchase fields:
+`TransactionBase` には、制約付きのリテール購買フィールドが含まれています。
 
 ```python
 class TransactionBase(SQLModel):
@@ -20,20 +20,20 @@ class TransactionBase(SQLModel):
     store_id: str = Field(min_length=1, max_length=50)
 ```
 
-`Transaction` is the table model with `id`, `timestamp`, and `is_flagged`. `CustomerSegment` stores segment metadata. `SegmentPrediction` returns `customerId`, `predictedSegment`, `confidence`, and `topFeatures`.
+`Transaction` は `id`、`timestamp`、`is_flagged` を持つテーブルモデルです。`CustomerSegment` はセグメントのメタデータを保持します。`SegmentPrediction` は `customerId`、`predictedSegment`、`confidence`、`topFeatures` を返します。
 
-## CamelCase JSON and validation
+## CamelCase JSON とバリデーション
 
-The Python models keep snake_case internally but serialise as camelCase on the wire, deliberately preserving the .NET contract:
+Python モデルは内部では snake_case を維持しつつ、通信時には camelCase にシリアライズされるため、.NET の契約を意図的に保っています。
 
 ```python
 #: Serialize as camelCase but still accept snake_case when constructing in Python.
 CAMEL_CONFIG = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 ```
 
-That is why API JSON uses `customerId`, `productCategory`, and `isFlagged`.
+そのため、API の JSON では `customerId`、`productCategory`、`isFlagged` が使われます。
 
-⚠️ SQLModel skips validation on `table=True` classes. The constrained fields therefore live on `TransactionBase`, inherited by both `Transaction` and `TransactionCreate`. FastAPI validates `TransactionCreate` before the router calls the service and returns HTTP 422 on invalid request bodies:
+⚠️ SQLModel は `table=True` のクラスでは検証を実行しません。そのため、制約付きフィールドは `TransactionBase` に置かれ、`Transaction` と `TransactionCreate` の両方がそれを継承しています。FastAPI はルーターがサービスを呼ぶ前に `TransactionCreate` を検証し、不正なリクエスト本文に対して HTTP 422 を返します。
 
 ```python
 class TransactionCreate(TransactionBase):
@@ -44,9 +44,9 @@ class TransactionCreate(TransactionBase):
     """
 ```
 
-## Database and startup seeding
+## データベースと起動時の初期データ投入
 
-[`app/database.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/database.py) creates the SQLite engine and per-request session dependency:
+[`app/database.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/database.py) は、SQLite エンジンと、リクエストごとのセッション依存関係を作成します。
 
 ```python
 DATABASE_URL = "sqlite:///retail.db"
@@ -54,7 +54,7 @@ DATABASE_URL = "sqlite:///retail.db"
 engine = create_engine(DATABASE_URL, echo=False)
 ```
 
-[`app/main.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/main.py) seeds during the FastAPI lifespan handler:
+[`app/main.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/main.py) は、FastAPI のライフスパンハンドラー内で初期データを投入します。
 
 ```python
 @asynccontextmanager
@@ -65,52 +65,52 @@ async def lifespan(app: FastAPI):
         await RetailAnalyticsService(session).seed_data()
 ```
 
-The seed method returns immediately when transactions already exist, so normal demo restarts are idempotent.
+取引データがすでに存在する場合、初期データ投入メソッドはすぐに処理を終えるため、デモを何度再起動しても同じ状態になります。
 
-## Seed data
+## 初期データ
 
-The fixture contains 10 transactions across customers `C001` to `C005`:
+このテストデータには、顧客 `C001` から `C005` にまたがる 10 件の取引が含まれています。
 
-| Customer | Seeded pattern |
+| 顧客 | 投入される購入パターン |
 | --- | --- |
-| `C001` | Grocery and Electronics purchases totalling 335.49 |
-| `C002` | Grocery and Health purchases totalling 47.50 |
-| `C003` | Electronics and Fashion purchases totalling 1,700.00 |
-| `C004` | Two low-value Grocery purchases totalling 21.49 |
-| `C005` | Electronics and Fashion purchases totalling 995.00 |
+| `C001` | Grocery と Electronics の購買が合計 335.49 |
+| `C002` | Grocery と Health の購買が合計 47.50 |
+| `C003` | Electronics と Fashion の購買が合計 1,700.00 |
+| `C004` | 少額の Grocery 購買 2 件で合計 21.49 |
+| `C005` | Electronics と Fashion の購買が合計 995.00 |
 
-It also creates four customer segments: High Value, Regular, At Risk, and New.
+あわせて、High Value、Regular、At Risk、New の 4 つの顧客セグメントも作成されます。
 
-## REST endpoints
+## REST エンドポイント
 
-[`app/routers/transactions.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/transactions.py) exposes transaction read, create, and delete endpoints:
+[`app/routers/transactions.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/transactions.py) は、取引の取得、作成、削除を行う各エンドポイントを公開しています。
 
-| Endpoint | Returns |
+| エンドポイント | 戻り値 |
 | --- | --- |
-| `GET /api/transactions` | All `Transaction` records. |
-| `GET /api/transactions/{id}` | One `Transaction`, or `404` if not found. |
-| `POST /api/transactions` | Creates a transaction and returns `201 Created` with the saved record. |
-| `DELETE /api/transactions/{id}` | `204 No Content` when deleted, or `404` when not found. |
+| `GET /api/transactions` | すべての `Transaction` レコード。 |
+| `GET /api/transactions/{id}` | 1 件の `Transaction`。見つからない場合は `404`。 |
+| `POST /api/transactions` | 取引を作成し、保存済みレコードとともに `201 Created` を返します。 |
+| `DELETE /api/transactions/{id}` | 削除時は `204 No Content`、見つからない場合は `404`。 |
 
-[`app/routers/segments.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/segments.py) exposes `GET /api/segments`, `GET /api/segments/{segment_id}`, and `GET /api/segments/predict/{customer_id}`.
+[`app/routers/segments.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/segments.py) は、`GET /api/segments`、`GET /api/segments/{segment_id}`、`GET /api/segments/predict/{customer_id}` を公開しています。
 
-The chat endpoints are covered in [Streaming responses over SSE](./02-sse-streaming.md), because they belong to the Copilot streaming path rather than the retail data API.
+チャットエンドポイントは、リテールデータ API ではなく Copilot のストリーミング経路に属するため、[SSE によるストリーミング応答](./02-sse-streaming.md) で扱っています。
 
-## Segment prediction logic
+## セグメント予測のロジック
 
-[`RetailAnalyticsService.predict_segment`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/services/retail_analytics.py) loads all transactions for a customer and derives total spend, average spend, and purchase frequency. It then applies these rules in order:
+[`RetailAnalyticsService.predict_segment`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/services/retail_analytics.py) は、ある顧客の全取引を読み込み、総支出、平均支出、購買頻度を算出します。そのうえで、次のルールをこの順番で適用します。
 
-1. No transactions: return `New` with confidence `0.5` and `no_history`.
-2. Total spend above `1000`: return `High Value` with confidence `0.89`.
-3. Frequency of three or more: return `Regular` with confidence `0.75`.
-4. Average spend below `50`: return `At Risk` with confidence `0.62`.
-5. Otherwise: return `Regular` with confidence `0.55`.
+1. 取引がない場合: 信頼度 `0.5` と `no_history` を添えて `New` を返します。
+2. 総支出が `1000` を超える場合: 信頼度 `0.89` で `High Value` を返します。
+3. 頻度が 3 回以上の場合: 信頼度 `0.75` で `Regular` を返します。
+4. 平均支出が `50` 未満の場合: 信頼度 `0.62` で `At Risk` を返します。
+5. それ以外: 信頼度 `0.55` で `Regular` を返します。
 
-The returned `topFeatures` array explains the rule inputs, such as total spend, frequency, or average spend.
+返される `topFeatures` 配列は、総支出、頻度、平均支出など、どのルール入力が効いたかを説明します。
 
-## Try it with curl
+## curl で試す
 
-Real verified outputs:
+実際に確認した出力は次のとおりです。
 
 ```bash
 $ curl http://localhost:5070/api/segments/predict/C003
@@ -123,25 +123,24 @@ $ curl http://localhost:5070/api/transactions/1
 {"productCategory":"Grocery","customerId":"C001","amount":245.5,"isFlagged":false,"storeId":"S001","id":1,"timestamp":"2026-07-14T03:58:08.543810"}
 ```
 
-`GET /api/transactions` returns 10 rows. `GET /api/segments` returns 4 rows. `GET /api/transactions/999` returns HTTP 404.
+`GET /api/transactions` は 10 行を返します。`GET /api/segments` は 4 行を返します。`GET /api/transactions/999` は HTTP 404 を返します。
 
-## Tests
+## テスト
 
-The pytest suite mirrors the .NET xUnit tests, plus four Python-only contract
-tests guarding the browser/API request shape. Real verified test result:
+pytest スイートは .NET の xUnit テストと対応しており、さらにブラウザーと API 間のリクエスト形式を守る Python 専用のコントラクトテストが 4 本あります。実際に確認したテスト結果は次のとおりです。
 
 ```bash
 $ uv run pytest
 18 passed
 ```
 
-## Four deliberate code smells
+## 意図的に残してある 4 つのコードスメル
 
-These are intentional demo material for code-review sessions. Do not present them as accidental bugs to fix during this demo; use them as examples of what a reviewer should notice and explain. They mirror the .NET versions so the same answer key applies.
+これらはコードレビュー セッション用に意図的に用意されたデモ素材です。このデモの中で、うっかり入ったバグとして修正対象にしないでください。レビュアーが気づき、説明すべきポイントの例として使います。.NET 版と対応しているため、同じ解答例を使えます。
 
-### 1. N+1 query in `get_transactions_with_segments`
+### 1. `get_transactions_with_segments` の N+1 クエリ
 
-What it is: the method loads all transactions, then loops through each transaction and calls `predict_segment`, which runs another database query for that customer.
+**内容:** このメソッドは全取引を読み込んだ後、各取引を順に処理して `predict_segment` を呼び出します。これにより、その顧客に対する追加のデータベースクエリが実行されます。
 
 ```python
 for txn in transactions:
@@ -149,22 +148,22 @@ for txn in transactions:
     segment = await self.predict_segment(txn.customer_id)
 ```
 
-Why it is a problem: query count grows with transaction count. A reviewer should recommend batching customer transaction data or calculating predictions from data already loaded for the request.
+**問題となる理由:** クエリ数が取引件数に応じて増加します。レビュアーは、顧客の取引データをまとめて処理するか、そのリクエストのためにすでに読み込んだデータから予測を計算するよう提案すべきです。
 
-### 2. Missing null check in `get_transaction`
+### 2. `get_transaction` の `None` チェック不足
 
-What it is: the service returns the result of `self._db.get(...)` even though the database can return no row.
+**内容:** データベースが行を返さない可能性があるにもかかわらず、サービスは `self._db.get(...)` の結果をそのまま返しています。
 
 ```python
 # Missing null check: will return None if not found
 return self._db.get(Transaction, transaction_id)
 ```
 
-Why it is a problem: callers cannot tell from the signature that `None` is possible. A reviewer should ask for `Transaction | None` or a result type, with explicit caller handling.
+**問題となる理由:** 呼び出し側は、シグネチャから `None` があり得ることを判断できません。レビュアーは、`Transaction | None` もしくは結果型を要求し、呼び出し側で明示的に処理させるべきです。
 
-### 3. No input validation in `add_transaction`
+### 3. `add_transaction` の入力検証不足
 
-What it is: the service accepts the supplied `Transaction`, stamps the timestamp, and saves it without checking amount, customer ID, category, or store values.
+**内容:** このサービスは渡された `Transaction` を受け取り、タイムスタンプを付与して、金額、顧客 ID、カテゴリー、店舗の値を確認せずに保存します。
 
 ```python
 # No validation: negative amounts and empty customer_id are allowed
@@ -172,22 +171,22 @@ transaction.timestamp = datetime.now(UTC)
 self._db.add(transaction)
 ```
 
-Why it is a problem: FastAPI validates `TransactionCreate`, but tests, other services, or future endpoints could call the service directly. A reviewer should recommend centralising domain invariants in the service or a policy.
+**問題となる理由:** FastAPI は `TransactionCreate` を検証しますが、テスト、他のサービス、将来のエンドポイントがこのサービスを直接呼ぶ可能性があります。レビュアーは、ドメインの不変条件をサービスかポリシーに集約するよう提案すべきです。
 
-### 4. Hardcoded threshold in `predict_segment`
+### 4. `predict_segment` のハードコードされた閾値
 
-What it is: the high-value rule uses the literal threshold `1000` in code.
+**内容:** high-value ルールが、コード中でリテラルの閾値 `1000` を使っています。
 
 ```python
 # BUG: Hardcoded magic number — should be configurable
 if total_spend > 1000:
 ```
 
-Why it is a problem: thresholds change by market, season, and retailer. A reviewer should move the threshold into configuration or a named policy object and cover the boundary behaviour in tests.
+**問題となる理由:** 閾値は市場、季節、小売業者によって変わります。レビュアーは、この閾値を設定値または名前付きのポリシーオブジェクトに移し、境界値の挙動をテストでカバーするよう求めるべきです。
 
-## Related
+## 関連項目
 
-- [Embedding the Copilot SDK](./01-copilot-sdk-integration.md)
-- [Streaming responses over SSE](./02-sse-streaming.md)
-- [The web UI](./04-web-ui.md)
-- Source: [`retail_analytics.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/services/retail_analytics.py), [`models.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/models.py), [`database.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/database.py), [`main.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/main.py), [`transactions.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/transactions.py), [`segments.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/segments.py), [`conftest.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/tests/conftest.py), [`test_retail_analytics.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/tests/test_retail_analytics.py), [`test_transaction_validation.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/tests/test_transaction_validation.py)
+- [Copilot SDK の組み込み](./01-copilot-sdk-integration.md)
+- [SSE によるストリーミング応答](./02-sse-streaming.md)
+- [ブラウザー UI](./04-web-ui.md)
+- ソース: [`retail_analytics.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/services/retail_analytics.py), [`models.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/models.py), [`database.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/database.py), [`main.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/main.py), [`transactions.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/transactions.py), [`segments.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/segments.py), [`conftest.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/tests/conftest.py), [`test_retail_analytics.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/tests/test_retail_analytics.py), [`test_transaction_validation.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/tests/test_transaction_validation.py)

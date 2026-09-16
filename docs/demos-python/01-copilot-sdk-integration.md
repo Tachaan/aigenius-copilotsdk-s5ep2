@@ -1,16 +1,16 @@
-# Embedding the Copilot SDK
+# Copilot SDK の組み込み
 
-This walkthrough explains how the FastAPI app embeds the GitHub Copilot SDK and turns a Copilot session into an application service. You will see how the app starts the SDK client, creates streaming sessions, listens for session events, bridges callbacks into an async generator, and avoids stale model catalogues.
+このウォークスルーでは、FastAPI アプリが GitHub Copilot SDK をどのように組み込み、Copilot セッションをアプリケーションサービスとして扱っているかを説明します。SDK クライアントの起動、ストリーミングセッションの作成、セッションイベントの監視、コールバックから非同期ジェネレーターへの橋渡し、古いモデルカタログを避ける方法を順に確認します。
 
-## Where the SDK is used
+## SDK を使っている場所
 
-The main integration point is [`app/services/copilot_chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/services/copilot_chat.py). It imports the SDK with:
+主な統合箇所は [`app/services/copilot_chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/services/copilot_chat.py) です。このファイルでは、次のように SDK をインポートしています。
 
 ```python
 from copilot import CopilotClient, SessionEvent, SessionEventType
 ```
 
-The PyPI package is `github-copilot-sdk`, pinned to **1.0.9** in [`pyproject.toml`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/pyproject.toml), but the import root is `copilot`:
+PyPI パッケージ名は `github-copilot-sdk` で、[`pyproject.toml`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/pyproject.toml) では **1.0.9** に固定されていますが、インポート時のルート名は `copilot` です。
 
 ```python
 requires-python = ">=3.11"
@@ -18,17 +18,17 @@ dependencies = [
     "github-copilot-sdk==1.0.9",
 ```
 
-Python 3.11 or later is required.
+Python 3.11 以降が必要です。
 
-## One long-lived service
+## 継続利用する単一サービス
 
-[`app/main.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/main.py) creates one chat service for the FastAPI app lifetime:
+[`app/main.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/main.py) では、FastAPI アプリのライフタイム全体で使うチャットサービスを 1 つ作成します。
 
 ```python
 app.state.chat_service = CopilotChatService()
 ```
 
-The service connects lazily. `ensure_started()` is guarded by an `asyncio.Lock`, so concurrent HTTP requests cannot race to start two transports:
+このサービスは必要になった時点で接続します。`ensure_started()` は `asyncio.Lock` で保護されているため、複数の HTTP リクエストが同時に到着しても、競合して 2 つのトランスポートを起動することはありません。
 
 ```python
 self._lock = asyncio.Lock()
@@ -40,7 +40,7 @@ async with self._lock:
         return
 ```
 
-Startup and shutdown are explicit:
+起動と停止は明示的に行われます。
 
 ```python
 self._client = CopilotClient()
@@ -53,11 +53,11 @@ if self._client is not None:
     await self._client.stop()
 ```
 
-The SDK also supports `async with CopilotClient()` for short-lived scripts; the lab samples use that form when the client only lives for one command.
+SDK は短命なスクリプト向けに `async with CopilotClient()` もサポートしています。ラボのサンプルでは、クライアントが 1 つのコマンド実行中だけ存在すればよい場合にこの形式を使っています。
 
-## Creating a streaming session
+## ストリーミングセッションの作成
 
-`CopilotChatService.chat_stream()` creates a new SDK session for each prompt:
+`CopilotChatService.chat_stream()` は、各プロンプトごとに新しい SDK セッションを作成します。
 
 ```python
 session = await self._client.create_session(
@@ -69,24 +69,24 @@ session = await self._client.create_session(
 )
 ```
 
-`create_session(...)` is keyword-only. The important parameters are `model`, `streaming`, `system_message`, `tools`, `mcp_servers`, `session_id`, and `on_permission_request`.
+`create_session(...)` の引数はキーワード専用です。重要なパラメーターは `model`、`streaming`、`system_message`、`tools`、`mcp_servers`、`session_id`、`on_permission_request` です。
 
-`system_message` is a TypedDict union:
+`system_message` は複数の `TypedDict` 型を組み合わせたユニオン型です。
 
 ```python
 {"mode": "append", "content": "..."}
 {"mode": "replace", "content": "..."}
 ```
 
-The demo uses append mode so application context is added without replacing the base Copilot behaviour.
+このデモでは追加モードを使い、Copilot の基本動作を置き換えずにアプリケーション側の文脈を加えています。
 
-⚠️ Python custom tools require `on_permission_request` or the call is denied. The .NET sample needs no handler for the same simple tool flow. Python also needs no `GHCP001` experimental-API suppression to use permission decisions from `copilot.rpc`.
+⚠️ Python のカスタムツールでは `on_permission_request` が必須で、これがないと呼び出しは拒否されます。.NET サンプルでは、同じ単純なツールの処理にこのハンドラーは不要です。また Python では、`copilot.rpc` の権限判定を使うために `GHCP001` の試験的 API に関する警告を抑制する必要もありません。
 
-## Session events
+## セッションイベント
 
-The central architectural point: Python SDK events are **push-only callbacks**. `session.on(handler)` registers a handler and returns an unsubscribe callable; there is no async iterator.
+アーキテクチャ上の要点は、Python SDK のイベントが **プッシュ専用のコールバック** であることです。`session.on(handler)` はハンドラーを登録し、購読解除用の呼び出し可能オブジェクトを返します。非同期イテレーターはありません。
 
-Unlike the C# SDK, Python exposes **one** `SessionEvent` dataclass. You branch on `evt.type`, a `SessionEventType` enum, instead of pattern-matching one subclass per event. This is the real handler:
+C# SDK とは異なり、Python で公開される `SessionEvent` データクラスは **1 種類だけ**です。イベントごとにサブクラスをパターンマッチするのではなく、`SessionEventType` 列挙型である `evt.type` で分岐します。実際のハンドラーは次のとおりです。
 
 ```python
 def on_event(evt: SessionEvent) -> None:
@@ -109,11 +109,11 @@ def on_event(evt: SessionEvent) -> None:
             done.set_exception(RuntimeError(evt.data.message))
 ```
 
-`ASSISTANT_MESSAGE_DELTA` carries streamed text, `ASSISTANT_MESSAGE` marks the complete answer, `SESSION_IDLE` completes the turn wait, and `SESSION_ERROR` surfaces a failure.
+`ASSISTANT_MESSAGE_DELTA` はストリーム中のテキストを運び、`ASSISTANT_MESSAGE` は応答全体の完了を示します。`SESSION_IDLE` は `Future` を完了させて待機を終え、`SESSION_ERROR` は失敗を表面化させます。
 
-## Bridging callbacks to an async generator
+## コールバックを非同期ジェネレーターに橋渡しする
 
-FastAPI streaming wants an async iterator, but the SDK calls a handler. The service bridges callbacks into an `asyncio.Queue` and drains it from `chat_stream()`:
+FastAPI のストリーミングには非同期イテレーターが必要ですが、SDK はハンドラーを呼び出す方式です。そのため、このサービスではコールバックから `asyncio.Queue` へデータを渡し、`chat_stream()` で取り出しています。
 
 ```python
 queue: asyncio.Queue[object] = asyncio.Queue()
@@ -129,7 +129,7 @@ if isinstance(item, BaseException):
 yield item  # type: ignore[misc]
 ```
 
-`_DONE` is a sentinel object, not a content value:
+`_DONE` はコンテンツの値ではなく、完了を示すセンチネルオブジェクトです。
 
 ```python
 # Sentinel pushed onto the queue when the session goes idle.
@@ -140,11 +140,11 @@ _DONE = object()
 queue.put_nowait(_DONE)
 ```
 
-A queue is needed because the event callback cannot `yield` to the HTTP response. This is the direct analogue of the C# service writing into a `System.Threading.Channels` channel.
+キューが必要なのは、イベントコールバックから HTTP レスポンスへ直接 `yield` できないためです。これは、C# サービスが `System.Threading.Channels` のチャネルに書き込む構成に対応しています。
 
-## Reconnect behaviour
+## 再接続の挙動
 
-If the SDK transport is lost, the service marks the client unhealthy and passes the exception through the queue:
+SDK のトランスポートが失われた場合、サービスはクライアントを異常状態として扱い、その例外をキュー経由で渡します。
 
 ```python
 except (ConnectionError, OSError) as ex:
@@ -153,20 +153,20 @@ except (ConnectionError, OSError) as ex:
     queue.put_nowait(ex)
 ```
 
-The current request fails, and the next request calls `ensure_started()` again. Since `_is_started` is false, the old client is stopped and a fresh transport is established.
+処理中のリクエストは失敗し、次のリクエストで再び `ensure_started()` が呼ばれます。`_is_started` が false であるため、古いクライアントは停止され、新しいトランスポートが確立されます。
 
-## Listing live models
+## 利用可能なモデルの動的な一覧取得
 
-`CopilotChatService.list_models()` asks the connected Copilot CLI what the signed-in account can use:
+`CopilotChatService.list_models()` は、接続済みの Copilot CLI に対して、サインイン中のアカウントで利用可能なモデルを問い合わせます。
 
 ```python
 models = await self._client.list_models()
 return [(m.id, m.name or m.id) for m in models or [] if m.id]
 ```
 
-The SDK returns `ModelInfo` objects with `.id` and `.name`. Hardcoding model IDs is a trap because availability changes by account and rollout.
+SDK は `.id` と `.name` を持つ `ModelInfo` オブジェクトを返します。利用可能性はアカウントやロールアウト状況によって変わるため、モデル ID をハードコードするのは危険です。
 
-There is one known upstream bug: `list_models()` can raise `ValueError: Missing required field 'multiplier' in ModelBilling` ([github/copilot-sdk#1302](https://github.com/github/copilot-sdk/issues/1302)). [`app/routers/chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/chat.py) catches broadly and falls back to a static catalogue of six models:
+既知の上流側の不具合が 1 つあります。`list_models()` は `ValueError: Missing required field 'multiplier' in ModelBilling` を送出することがあります（[github/copilot-sdk#1302](https://github.com/github/copilot-sdk/issues/1302)）。[`app/routers/chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/chat.py) では例外をまとめて捕捉し、6 つのモデルから成る静的カタログにフォールバックします。
 
 ```python
 except Exception:
@@ -179,11 +179,11 @@ except Exception:
 return list(AVAILABLE_MODELS.values())
 ```
 
-That keeps the model picker usable even when live discovery is temporarily broken.
+これにより、ライブ検出が一時的に壊れていてもモデル選択 UI を利用可能な状態に保てます。
 
-## Related
+## 関連項目
 
-- [Streaming responses over SSE](./02-sse-streaming.md)
-- [The retail domain](./03-retail-analytics.md)
-- [The web UI](./04-web-ui.md)
-- Source: [`copilot_chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/services/copilot_chat.py), [`chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/chat.py), [`main.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/main.py), [`events_sample.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/events_sample.py), [`tools_sample.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/tools_sample.py), [`pyproject.toml`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/pyproject.toml)
+- [SSE によるストリーミング応答](./02-sse-streaming.md)
+- [小売ドメイン](./03-retail-analytics.md)
+- [ブラウザー UI](./04-web-ui.md)
+- ソース: [`copilot_chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/services/copilot_chat.py), [`chat.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/routers/chat.py), [`main.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/app/main.py), [`events_sample.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/events_sample.py), [`tools_sample.py`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/sdk_labs/tools_sample.py), [`pyproject.toml`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/src/AgentOrchestrator-python/pyproject.toml)

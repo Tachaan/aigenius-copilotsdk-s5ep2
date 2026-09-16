@@ -1,47 +1,48 @@
-# Breakouts
+# ブレイクアウト
 
-Track-agnostic material: reference pages you look things up in and the two
-Copilot CLI labs that apply equally to .NET and Python.
+.NET と Python の両方で使える共通資料です。リファレンスページと、
+2 つの Copilot CLI ラボを収録しています。
 
-## Reference
+## リファレンス
 
-| Doc | Use it when |
+| ドキュメント | 用途 |
 |:----|:------------|
-| [Architecture](architecture.md) | You need the system diagram, request sequence, or data model |
-| [System map](../system-map/) | You want to explore that architecture interactively |
-| [Custom agents](custom-agents.md) | You're writing or invoking an `.agent.md` |
-| [Hooks and governance](hooks-and-governance.md) | You're configuring `preToolUse` gates or reading the audit trail |
-| [Skills](skills.md) | You want to know what the five skills do and when Copilot picks them |
-| [Troubleshooting](troubleshooting.md) | **Something broke** — start here |
+| [アーキテクチャ](architecture.md) | システム図、リクエストのシーケンス、またはデータモデルを確認したいとき |
+| [システムマップ](../system-map/) | アーキテクチャを対話的に探索したいとき |
+| [カスタムエージェント](custom-agents.md) | `.agent.md` を作成または呼び出すとき |
+| [フックとガバナンス](hooks-and-governance.md) | `preToolUse` ゲートを設定したり、監査証跡を確認したりするとき |
+| [スキル](skills.md) | 5 つのスキルの機能と Copilot がそれらを選ぶタイミングを知りたいとき |
+| [トラブルシューティング](troubleshooting.md) | **問題が発生したとき**。まずここを確認してください |
 
-## Hands-on extras
+## 追加ハンズオン
 
-Optional labs covering **Copilot CLI** rather than the SDK. They're
-language-agnostic, so they sit here instead of inside a track — do them from
-either the [.NET](../labs/) or the [Python](../labs-python/) path.
+SDK ではなく **Copilot CLI** を扱う任意のラボです。言語に依存しないため、
+各トラック内ではなくここに配置されています。[.NET](../labs/) と
+[Python](../labs-python/) のどちらのパスからでも実施できます。
 
-| Lab | Covers | Time |
+| ラボ | 内容 | 所要時間 |
 |:----|:-------|:-----|
-| [Custom agents](../labs/extra-custom-agents/) | `.agent.md` files, agent-assisted review of the intentional code smells | ~20 min |
-| [Governance hooks](../labs/extra-governance-hooks/) | Shell hooks, the security gate, the audit log | ~20 min |
+| [カスタムエージェント](../labs/extra-custom-agents/) | `.agent.md` ファイル、意図的なコードスメルのエージェント支援レビュー | 約 20 分 |
+| [ガバナンスフック](../labs/extra-governance-hooks/) | シェルフック、セキュリティゲート、監査ログ | 約 20 分 |
 
-The SDK equivalent of hook-style control is tool definition — see
-[.NET Lab 03](../labs/03-tools/) or [Python Lab 03](../labs-python/03-tools/).
+フック形式の制御に相当する SDK の機能はツール定義です。
+[.NET ラボ 03](../labs/03-tools/) または [Python ラボ 03](../labs-python/03-tools/)
+を参照してください。
 
-## Common problems, fast
+## よくある問題の早見表
 
-| Symptom | See |
+| 症状 | 参照先 |
 |:--------|:----|
-| `MSB3923` — can't download the Copilot CLI | [Troubleshooting](troubleshooting.md) |
-| CodeQL job shows "skipped" | [Troubleshooting](troubleshooting.md) — expected on private repos |
-| `Model "..." is not available` | [Troubleshooting](troubleshooting.md) |
-| Port 5050/5051 already in use | [Troubleshooting](troubleshooting.md) |
-| `MSB1003` — no project or solution found | The solution is at `src/AgentOrchestrator/AgentHQDemo.slnx` |
-| A hook doesn't seem to run | [Hooks and governance](hooks-and-governance.md) |
+| `MSB3923` — can't download the Copilot CLI | [トラブルシューティング](troubleshooting.md) |
+| CodeQL ジョブに "skipped" と表示される | [トラブルシューティング](troubleshooting.md) — プライベートリポジトリでは想定どおりです |
+| `Model "..." is not available` | [トラブルシューティング](troubleshooting.md) |
+| ポート 5050/5051 がすでに使用されている | [トラブルシューティング](troubleshooting.md) |
+| `MSB1003` — no project or solution found | ソリューションは `src/AgentOrchestrator/AgentHQDemo.slnx` にあります |
+| フックが実行されていないように見える | [フックとガバナンス](hooks-and-governance.md) |
 
-## Related
+## 関連情報
 
-- [.NET labs](../labs/) · [.NET demos](../demos/)
-- [Python labs](../labs-python/) · [Python demos](../demos-python/)
-- [Root README](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/README.md) — quick start and endpoint reference
-- [`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md) — repository rules for AI agents
+- [.NET ラボ](../labs/) · [.NET デモ](../demos/)
+- [Python ラボ](../labs-python/) · [Python デモ](../demos-python/)
+- [ルート README](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/README.md) — クイックスタートとエンドポイントのリファレンス
+- [`AGENTS.md`](https://github.com/vicperdana/aigenius-copilotsdk-s5ep2/blob/main/AGENTS.md) — AI エージェント向けのリポジトリルール

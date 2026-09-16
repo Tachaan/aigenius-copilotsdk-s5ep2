@@ -1,33 +1,32 @@
-# AgentHQ Demo — Python
+# AgentHQ デモ — Python
 
-Python version of the AI Genius S5E2 retail analytics stack. It mirrors the
-.NET project in [`../AgentOrchestrator`](../AgentOrchestrator) feature for
-feature: same API contract, same seed data, same deliberate code smells, and
-the same runnable Copilot SDK samples behind the labs.
+AI Genius S5E2 小売分析スタックの Python 版です。
+[`../AgentOrchestrator`](../AgentOrchestrator) の .NET プロジェクトと機能ごとに対応しており、
+同じ API コントラクト、同じシードデータ、同じ意図的なコードスメル、
+同じ実行可能な Copilot SDK ラボサンプルを備えています。
 
-Work either track — you do not need both.
+どちらか一方のトラックに取り組めばよく、両方を行う必要はありません。
 
 | | .NET | Python |
 |:--|:--|:--|
-| Web framework | ASP.NET Core | FastAPI |
+| Web フレームワーク | ASP.NET Core | FastAPI |
 | ORM | EF Core | SQLModel |
 | UI | Blazor WebAssembly | Static HTML + vanilla JS |
-| Tests | xUnit (26) | pytest (30) |
-| Packaging | `dotnet` | `uv` |
-| Ports | 5050 API + 5051 UI | 5070 (API and UI together) |
+| テスト | xUnit (26) | pytest (30) |
+| パッケージ管理 | `dotnet` | `uv` |
+| ポート | 5050 API + 5051 UI | 5070（API と UI を同時に提供） |
 
-Both stacks can run at the same time — the ports do not overlap.
+ポートが重複しないため、両方のスタックを同時に実行できます。
 
-## Prerequisites
+## 前提条件
 
-- **Python 3.11 or later**
-- **[uv](https://docs.astral.sh/uv/getting-started/installation/)** — installs
-  Python and dependencies
-- **[GitHub Copilot CLI](https://github.com/github/copilot-cli)**, signed in.
-  The SDK talks to this; without it the chat endpoints fail but the data
-  endpoints and tests still work.
+- **Python 3.11 以降**
+- **[uv](https://docs.astral.sh/uv/getting-started/installation/)** — Python と依存関係をインストールします
+- **[GitHub Copilot CLI](https://github.com/github/copilot-cli)** — サインイン済みである必要があります。
+  SDK は Copilot CLI と通信します。Copilot CLI がなくてもデータエンドポイントとテストは動作しますが、
+  チャットエンドポイントは失敗します。
 
-## Quick start
+## クイックスタート
 
 ```bash
 cd src/AgentOrchestrator-python
@@ -36,25 +35,25 @@ uv sync                                        # install dependencies
 uv run uvicorn app.main:app --port 5070        # start API + UI
 ```
 
-Open <http://localhost:5070>. The database is created and seeded on first run.
+<http://localhost:5070> を開きます。初回実行時にデータベースが作成され、シードデータが投入されます。
 
-`--reload` gives you hot reload while editing:
+`--reload` を指定すると、編集中にホットリロードが有効になります。
 
 ```bash
 uv run uvicorn app.main:app --port 5070 --reload
 ```
 
-## Tests and linting
+## テストと lint
 
 ```bash
 uv run pytest          # 30 tests (14 domain + 12 MCP + 4 contract)
 uv run ruff check .    # lint
 ```
 
-## SDK lab samples
+## SDK ラボサンプル
 
-Each subcommand backs one lab in
-[`docs/labs-python/`](../../docs/labs-python/README.md):
+各サブコマンドは、
+[`docs/labs-python/`](../../docs/labs-python/README.md) の対応するラボで使用します。
 
 ```bash
 uv run python -m sdk_labs tools       # Lab 03 — define a tool
@@ -63,45 +62,44 @@ uv run python -m sdk_labs sessions    # Lab 05 — persist and resume
 uv run python -m sdk_labs mcp         # Lab 06 — attach an MCP server
 ```
 
-Add `--model <id>` to pick a model, for example
-`uv run python -m sdk_labs tools --model gpt-5`. Without it, the sample asks
-your account which models are available and prefers `claude-haiku-4.5`.
+モデルを選択するには `--model <id>` を追加します。たとえば、
+`uv run python -m sdk_labs tools --model gpt-5` と指定します。省略した場合、サンプルは
+アカウントで利用可能なモデルを確認し、`claude-haiku-4.5` を優先します。
 
-There is also a `permissions` subcommand. It is **reference code, not a lab** —
-the handler fires for custom tools but was not observed firing for shell
-commands, because the host Copilot CLI already grants shell approval. See
-[Lab 03](../../docs/labs-python/03-tools/README.md) for the full caveat.
+`permissions` サブコマンドもあります。これは**ラボではなくリファレンスコード**です。
+カスタムツールではハンドラーが呼び出されますが、ホストの Copilot CLI がすでにシェル実行を承認するため、
+シェルコマンドでは呼び出しを確認できませんでした。注意事項の詳細は
+[ラボ 03](../../docs/labs-python/03-tools/README.md)を参照してください。
 
-`SDKLABS_TRACE_EVENTS=1` prints every event the MCP sample sees, which is the
-quickest way to diagnose a server that will not connect.
+`SDKLABS_TRACE_EVENTS=1` を設定すると、MCP サンプルが受信するすべてのイベントが出力されます。
+サーバーに接続できない場合の最も簡単な診断方法です。
 
-## API endpoints
+## API エンドポイント
 
-Identical paths to the .NET API, so every `curl` in the labs works against
-either stack.
+.NET API と同じパスを使用するため、ラボ内のすべての `curl` はどちらのスタックでも動作します。
 
-| Method | Path | Purpose |
+| メソッド | パス | 用途 |
 |:--|:--|:--|
-| `POST` | `/api/chat` | Chat, buffered response |
-| `POST` | `/api/chat/stream` | Chat, streamed as Server-Sent Events |
-| `GET` | `/api/chat/models` | Models this account can use |
-| `GET` | `/api/chat/health` | Health probe |
-| `GET` | `/api/transactions` | All transactions |
-| `GET` | `/api/transactions/{id}` | One transaction |
-| `POST` | `/api/transactions` | Create a transaction |
-| `DELETE` | `/api/transactions/{id}` | Delete a transaction |
-| `GET` | `/api/segments` | All customer segments |
-| `GET` | `/api/segments/{id}` | One segment |
-| `GET` | `/api/segments/predict/{customerId}` | Predict a customer's segment |
+| `POST` | `/api/chat` | チャット（バッファリングされたレスポンス） |
+| `POST` | `/api/chat/stream` | チャット（Server-Sent Events によるストリーミング） |
+| `GET` | `/api/chat/models` | このアカウントで利用可能なモデル |
+| `GET` | `/api/chat/health` | 正常性プローブ |
+| `GET` | `/api/transactions` | すべてのトランザクション |
+| `GET` | `/api/transactions/{id}` | 1 件のトランザクション |
+| `POST` | `/api/transactions` | トランザクションの作成 |
+| `DELETE` | `/api/transactions/{id}` | トランザクションの削除 |
+| `GET` | `/api/segments` | すべての顧客セグメント |
+| `GET` | `/api/segments/{id}` | 1 件のセグメント |
+| `GET` | `/api/segments/predict/{customerId}` | 顧客セグメントの予測 |
 
-JSON is camelCase (`customerId`, not `customer_id`) to match the .NET contract.
+JSON は .NET のコントラクトに合わせて camelCase（`customer_id` ではなく `customerId`）を使用します。
 
 ```bash
 curl http://localhost:5070/api/transactions
 curl http://localhost:5070/api/segments/predict/C003
 ```
 
-## Layout
+## ディレクトリ構成
 
 ```
 src/AgentOrchestrator-python/
@@ -118,34 +116,32 @@ src/AgentOrchestrator-python/
 └── tests/                          # pytest suite
 ```
 
-## Security notes
+## セキュリティに関する注意
 
-`app/services/retail_analytics.py` contains **four deliberate issues** used by
-the code review and agent labs. Do not fix them casually — they are the demo:
+`app/services/retail_analytics.py` には、コードレビューとエージェントのラボで使用する
+**4 つの意図的な問題**があります。デモの一部であるため、安易に修正しないでください。
 
-1. **N+1 query** in `get_transactions_with_segments`
-2. **Missing null check** in `get_transaction`
-3. **No input validation** in `add_transaction`
-4. **Hardcoded threshold** in `predict_segment`
+1. `get_transactions_with_segments` の **N+1 クエリ**
+2. `get_transaction` の **`None` チェック不足**
+3. `add_transaction` の **入力検証不足**
+4. `predict_segment` の **ハードコードされたしきい値**
 
-These mirror the .NET versions exactly, so the same answer key applies to both
-tracks.
+これらは .NET 版と正確に対応しているため、どちらのトラックにも同じ解答例を使用できます。
 
-## Python-specific notes
+## Python 固有の注意事項
 
-Two places where the Python SDK differs from .NET in ways worth understanding:
+Python SDK と .NET の相違点として理解しておくべき事項があります。
 
-- **Events are a single type, not a hierarchy.** .NET pattern-matches on event
-  subclasses; Python gives you one `SessionEvent` and you branch on
-  `evt.type`, a `SessionEventType` enum.
-- **No experimental-API opt-in.** The .NET samples must suppress the `GHCP001`
-  build error to use permission decisions. Python exposes the same decisions
-  from `copilot.rpc` with no equivalent step.
-- **Custom tools need a permission handler.** `create_session(...)` must be
-  given `on_permission_request` or a custom tool call is denied. The .NET
-  sample needs no such handler.
+- **イベントは階層ではなく単一の型です。** .NET ではイベントのサブクラスをパターンマッチしますが、
+  Python では 1 つの `SessionEvent` を受け取り、`SessionEventType` 列挙型の
+  `evt.type` で分岐します。
+- **試験的 API のオプトインは不要です。** .NET サンプルでは権限判定を使用するために `GHCP001`
+  ビルドエラーを抑制する必要があります。Python では同じ判定が `copilot.rpc` から公開され、
+  同等の手順は不要です。
+- **カスタムツールには権限ハンドラーが必要です。** `create_session(...)` に
+  `on_permission_request` を渡さないと、カスタムツールの呼び出しは拒否されます。
+  .NET サンプルでは、このハンドラーは不要です。
 
-Because SDK events arrive as push callbacks with no async iterator,
-`copilot_chat.py` bridges `session.on(...)` into an `asyncio.Queue` and drains
-it as an async generator — the same idea as the C# service writing into a
-`Channel`.
+SDK イベントは非同期イテレーターではなくプッシュコールバックとして届くため、
+`copilot_chat.py` は `session.on(...)` で受け取ったイベントを `asyncio.Queue` に橋渡しし、
+非同期ジェネレーターがキューから順次取り出します。これは、C# サービスが `Channel` に書き込む方法と同じ考え方です。
