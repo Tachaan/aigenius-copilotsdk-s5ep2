@@ -10,6 +10,9 @@ on:
       - scripts/build_index.py
       - scripts/check_mermaid.py
       - scripts/rewrite_doc_links.py
+      - scripts/check_public_site.py
+      - scripts/test_public_site.py
+      - .github/workflows/public-release.yml
       - README.md
       - .github/workflows/docs.yml
   pull_request:
@@ -20,6 +23,9 @@ on:
       - scripts/build_index.py
       - scripts/check_mermaid.py
       - scripts/rewrite_doc_links.py
+      - scripts/check_public_site.py
+      - scripts/test_public_site.py
+      - .github/workflows/public-release.yml
       - README.md
       - .github/workflows/docs.yml
   workflow_dispatch:
@@ -32,12 +38,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  guard:
+    uses: ./.github/workflows/public-release.yml
+
   build:
     name: Build site
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -62,16 +73,20 @@ jobs:
       - name: Build
         run: mkdocs build --strict
 
+      - name: Check public artifact boundary
+        run: python3 scripts/check_public_site.py
+
       - name: Upload Pages artifact
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && github.event.repository.visibility == 'public' && vars.ENABLE_PAGES == 'true'
         uses: actions/upload-pages-artifact@v5
         with:
           path: site
+          retention-days: 1
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [build, guard]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && github.event.repository.visibility == 'public' && vars.ENABLE_PAGES == 'true'
     runs-on: ubuntu-latest
     permissions:
       pages: write

@@ -3,8 +3,9 @@ site_description: >-
   GitHub Copilot SDK を使用して小売分析アシスタントを構築するための
   ハンズオンラボ、コード解説、リファレンス資料です。
 site_author: Vic Perdana
-repo_url: https://github.com/vicperdana/aigenius-copilotsdk-s5ep2
-repo_name: vicperdana/aigenius-copilotsdk-s5ep2
+site_url: https://Tachaan.github.io/aigenius-copilotsdk-s5ep2/
+repo_url: https://github.com/Tachaan/aigenius-copilotsdk-s5ep2
+repo_name: Tachaan/aigenius-copilotsdk-s5ep2
 edit_uri: edit/main/docs/
 
 docs_dir: docs
@@ -147,7 +148,7 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/vicperdana/aigenius-copilotsdk-s5ep2
+      link: https://github.com/Tachaan/aigenius-copilotsdk-s5ep2
       name: リポジトリ
 
 copyright: >-

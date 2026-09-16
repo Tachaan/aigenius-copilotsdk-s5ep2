@@ -24,14 +24,16 @@ import sys
 from pathlib import Path
 from urllib.parse import quote, unquote, urlsplit
 
-REPO = "https://github.com/vicperdana/aigenius-copilotsdk-s5ep2"
+REPO = "https://github.com/Tachaan/aigenius-copilotsdk-s5ep2"
 BLOB = f"{REPO}/blob/main"
 TREE = f"{REPO}/tree/main"
 
 GITHUB_HOST = "github.com"
-GITHUB_REPO_PATH = "/vicperdana/aigenius-copilotsdk-s5ep2"
-GITHUB_BLOB_PREFIX = f"{GITHUB_REPO_PATH}/blob/main/"
-GITHUB_TREE_PREFIX = f"{GITHUB_REPO_PATH}/tree/main/"
+GITHUB_REPO_PATH = "/Tachaan/aigenius-copilotsdk-s5ep2"
+GITHUB_REPO_PATHS = (
+    GITHUB_REPO_PATH,
+    "/vicperdana/aigenius-copilotsdk-s5ep2",
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
@@ -77,10 +79,11 @@ def repo_url_target(destination: str) -> tuple[str, str] | None:
         return None
 
     path = unquote(parsed.path)
-    if path.startswith(GITHUB_BLOB_PREFIX):
-        return "blob", path[len(GITHUB_BLOB_PREFIX) :]
-    if path.startswith(GITHUB_TREE_PREFIX):
-        return "tree", path[len(GITHUB_TREE_PREFIX) :]
+    for repo_path in GITHUB_REPO_PATHS:
+        for kind in ("blob", "tree"):
+            prefix = f"{repo_path}/{kind}/main/"
+            if path.startswith(prefix):
+                return kind, path[len(prefix) :]
     return None
 
 

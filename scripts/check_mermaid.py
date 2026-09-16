@@ -37,9 +37,10 @@ PUPPETEER_CONFIG = Path(__file__).resolve().parent / "puppeteer-config.json"
 
 
 def main() -> int:
-    if shutil.which("npx") is None:
-        print("npx not found — skipping mermaid validation")
-        return 0
+    npx = shutil.which("npx")
+    if npx is None:
+        print("npx not found — install Node.js to validate Mermaid diagrams")
+        return 1
 
     blocks: list[tuple[Path, int, str]] = []
     for page in sorted(DOCS.rglob("*.md")):
@@ -58,7 +59,7 @@ def main() -> int:
             src.write_text(source, encoding="utf-8")
             result = subprocess.run(
                 [
-                    "npx",
+                    npx,
                     "-y",
                     MERMAID_CLI,
                     "-p",

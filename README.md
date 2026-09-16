@@ -110,6 +110,45 @@ Microsoft Learn MCP Server を使用すると、AI エージェントから Micr
 
 ## 🚀 クイックスタート
 
+### 閲覧用の公開と GitHub Pages
+
+このリポジトリは、所有者と許可された共同編集者が更新する閲覧用資料として運用します。
+外部からの変更提案は受け付けず、Issues・Pull requests・Wiki・Discussions は無効にします。
+Public にしても外部閲覧者へ書き込み権限は付与されませんが、ソースと Git 履歴は公開され、
+第三者による clone・fork・再配布を技術的に禁止することはできません。
+コードと資料のライセンスは従来どおりです。
+
+Pages の公開対象は MkDocs が `docs/` とこの README から生成する **`site/` のみ**です。
+`site/` は生成物のためコミットせず、直接編集もしません。
+図・画像・システムマップ・検索インデックスも公開対象に含まれます。
+API・チャット・SQLite データベースを Pages 上で動かす構成ではありません。
+Private の間は GitHub のアクセス権を持つ人がリポジトリを閲覧でき、
+Pages 公開後のサイトは誰でも閲覧できます。
+
+公開前に、Git 履歴を含むシークレット検査に加え、文章・画像・ログ・個人情報・内部情報を
+目視確認してください。`Public release guard` は履歴の Gitleaks 検査、
+`Docs site` は strict ビルドと生成物の拡張子・パス検査を行います。
+これらは機密情報が一切ないことを保証せず、push 後の CI は Public 化前の確認の代わりにはなりません。
+
+**公開は明示的な操作が必要です。現在の visibility を自動変更する処理はありません。**
+
+1. この変更を `main` に反映し、`Public release guard` と `Docs site` の成功を確認します。
+   現在の Private / Free 構成では Pages・ブランチ保護の有効化は保留です。
+2. 公開判断後、所有者が GitHub で visibility を Public に変更します。
+3. `pwsh -File scripts/configure_public_release.ps1` を実行し、Secret scanning / Push protection、
+   main の削除・force push 防止、外部 fork の Actions 実行承認を設定します。
+   スクリプトは Public 以外では変更せず停止します。
+4. サイトの公開内容を確認後、同じスクリプトを `-EnablePages` 付きで実行します。
+   Pages の Actions ソースと `github-pages` 環境の main 限定設定が成功した場合だけ
+   `ENABLE_PAGES=true` を設定します。その後 `Docs site` を main に対して手動実行します。
+5. 公開先 `https://Tachaan.github.io/aigenius-copilotsdk-s5ep2/` の表示を確認します。
+
+`ENABLE_PAGES` の既定は無効です。Public 化だけではデプロイされません。
+再び `false` にすると今後のデプロイは止まりますが、公開済みサイトは削除されません。
+公開停止は GitHub の Pages 設定で別途行ってください。
+デモ用 Issue 作成ワークフローも自動実行しません。必要な場合に限り Issues を有効化し、
+`ENABLE_DEMO_SETUP=true` を設定して手動実行します。
+
 ### 前提条件
 
 - [GitHub Copilot CLI](https://docs.github.com/copilot) — Copilot を利用できるアカウントで

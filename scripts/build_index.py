@@ -21,7 +21,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-REPO = "https://github.com/vicperdana/aigenius-copilotsdk-s5ep2"
+REPO = "https://github.com/Tachaan/aigenius-copilotsdk-s5ep2"
 BLOB = f"{REPO}/blob/main"
 
 ROOT = Path(__file__).resolve().parent.parent
