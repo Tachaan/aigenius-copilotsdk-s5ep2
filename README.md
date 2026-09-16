@@ -7,6 +7,7 @@
 -->
 
 # AI Genius — シーズン 5、エピソード 2
+※日本語版のステップガイドはこちら: https://tachaan.github.io/aigenius-copilotsdk-s5ep2/
 
 ## 🔥 Agent HQ: GitHub Copilot SDK で小売分析アシスタントを構築する
 
